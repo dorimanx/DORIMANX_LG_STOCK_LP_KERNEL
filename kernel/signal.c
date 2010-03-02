@@ -1762,7 +1762,7 @@ static void do_notify_parent_cldstop(struct task_struct *tsk,
 	 * see comment in do_notify_parent() about the following 4 lines
 	 */
 	rcu_read_lock();
-	info.si_pid = task_pid_nr_ns(tsk, parent->nsproxy->pid_ns);
+	info.si_pid = task_pid_nr_ns(tsk, task_active_pid_ns(parent));
 	info.si_uid = map_cred_ns(__task_cred(tsk),
 			task_cred_xxx(parent, user_ns));
 	rcu_read_unlock();
