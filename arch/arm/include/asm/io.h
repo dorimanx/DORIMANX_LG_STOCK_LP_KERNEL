@@ -57,46 +57,57 @@ extern void __raw_readsl(const void __iomem *addr, void *data, int longlen);
  * the bus. Rather than special-case the machine, just let the compiler
  * generate the access for CPUs prior to ARMv6.
  */
-#define __raw_readw(a)         (__chk_io_ptr(a), *(volatile unsigned short __force *)(a))
-#define __raw_writew(v,a)      ((void)(__chk_io_ptr(a), *(volatile unsigned short __force *)(a) = (v)))
+#define __raw_readw_no_log(a)         (__chk_io_ptr(a), *(volatile unsigned short __force *)(a))
+#define __raw_writew_no_log(v,a)      ((void)(__chk_io_ptr(a), *(volatile unsigned short __force *)(a) = (v)))
 #else
 /*
  * When running under a hypervisor, we want to avoid I/O accesses with
  * writeback addressing modes as these incur a significant performance
  * overhead (the address generation must be emulated in software).
  */
-static inline void __raw_writew(u16 val, volatile void __iomem *addr)
+static inline void __raw_writew_no_log(u16 val, volatile void __iomem *addr)
 {
 	asm volatile("strh %1, %0"
-		     : "+Qo" (*(volatile u16 __force *)addr)
+		     : "+Q" (*(volatile u16 __force *)addr)
 		     : "r" (val));
 }
 
-static inline u16 __raw_readw(const volatile void __iomem *addr)
+static inline u16 __raw_readw_no_log(const volatile void __iomem *addr)
 {
 	u16 val;
 	asm volatile("ldrh %1, %0"
-		     : "+Qo" (*(volatile u16 __force *)addr),
+		     : "+Q" (*(volatile u16 __force *)addr),
 		       "=r" (val));
 	return val;
 }
 #endif
 
-static inline void __raw_writeb(u8 val, volatile void __iomem *addr)
+static inline void __raw_writeb_no_log(u8 val, volatile void __iomem *addr)
 {
 	asm volatile("strb %1, %0"
 		     : "+Qo" (*(volatile u8 __force *)addr)
 		     : "r" (val));
 }
 
-static inline void __raw_writel(u32 val, volatile void __iomem *addr)
+static inline void __raw_writel_no_log(u32 val, volatile void __iomem *addr)
 {
 	asm volatile("str %1, %0"
 		     : "+Qo" (*(volatile u32 __force *)addr)
 		     : "r" (val));
 }
 
-static inline u8 __raw_readb(const volatile void __iomem *addr)
+static inline void __raw_writell_no_log(u64 val, volatile void __iomem *addr)
+{
+	register u64 v asm ("r2");
+
+	v = val;
+
+	asm volatile("strd %1, %0"
+		     : "+Qo" (*(volatile u64 __force *)addr)
+		     : "r" (v));
+}
+
+static inline u8 __raw_readb_no_log(const volatile void __iomem *addr)
 {
 	u8 val;
 	asm volatile("ldrb %1, %0"
@@ -105,7 +116,7 @@ static inline u8 __raw_readb(const volatile void __iomem *addr)
 	return val;
 }
 
-static inline u32 __raw_readl(const volatile void __iomem *addr)
+static inline u32 __raw_readl_no_log(const volatile void __iomem *addr)
 {
 	u32 val;
 	asm volatile("ldr %1, %0"
@@ -113,6 +124,17 @@ static inline u32 __raw_readl(const volatile void __iomem *addr)
 		       "=r" (val));
 	return val;
 }
+
+static inline u64 __raw_readll_no_log(const volatile void __iomem *addr)
+{
+	register u64 val asm ("r2");
+
+	asm volatile("ldrd %1, %0"
+		     : "+Qo" (*(volatile u64 __force *)addr),
+		       "=r" (val));
+	return val;
+}
+
 /*
  * There may be cases when clients don't want to support or can't support the
  * logging. The appropriate functions can be used but clients should carefully
@@ -343,12 +365,13 @@ extern void _memset_io(volatile void __iomem *, int, size_t);
 #define readll_relaxed_no_log(c) ({ u64 __r = le64_to_cpu((__force __le64) \
 					__raw_readll_no_log(c)); __r; })
 
+
 #define writeb_relaxed(v,c)	__raw_writeb(v,c)
 #define writew_relaxed(v,c)	__raw_writew((__force u16) cpu_to_le16(v),c)
 #define writel_relaxed(v,c)	__raw_writel((__force u32) cpu_to_le32(v),c)
 #define writell_relaxed(v, c)	__raw_writell((__force u64) cpu_to_le64(v), c)
-#define writel_relaxed_no_log(v, c)  __raw_writel_no_log((__force u32) cpu_to_le32(v), c)
-#define writell_relaxed_no_log(v, c)  __raw_writell_no_log((__force u64) cpu_to_le64(v), c)
+#define writel_relaxed_no_log(v, c) __raw_writel_no_log((__force u32) cpu_to_le32(v),c)
+#define writell_relaxed_no_log(v, c) __raw_writell_no_log((__force u64) cpu_to_le64(v),c)
 
 #define readb(c)		({ u8  __v = readb_relaxed(c); __iormb(); __v; })
 #define readw(c)		({ u16 __v = readw_relaxed(c); __iormb(); __v; })
@@ -430,11 +453,11 @@ static inline void memcpy_toio(volatile void __iomem *to, const void *from,
 #define iowrite8(v,p)	({ __iowmb(); __raw_writeb(v, p); })
 #define iowrite16(v,p)	({ __iowmb(); __raw_writew((__force __u16)cpu_to_le16(v), p); })
 #define iowrite32(v,p)	({ __iowmb(); __raw_writel((__force __u32)cpu_to_le32(v), p); })
-#define iowrite64(v, p)	({ __iowmb(); __raw_writell((__force __u64)cpu_to_le64(v), p); })
+#define iowrite64(v,p)	({ __iowmb(); __raw_writell((__force __u64)cpu_to_le64(v), p); })
 
 #define iowrite16be(v,p) ({ __iowmb(); __raw_writew((__force __u16)cpu_to_be16(v), p); })
 #define iowrite32be(v,p) ({ __iowmb(); __raw_writel((__force __u32)cpu_to_be32(v), p); })
-#define iowrite64be(v, p) ({ __iowmb(); __raw_writell((__force __u64)cpu_to_be64(v), p); })
+#define iowrite64be(v,p) ({ __iowmb(); __raw_writell((__force __u64)cpu_to_be64(v), p); })
 
 #define ioread8_rep(p,d,c)	__raw_readsb(p,d,c)
 #define ioread16_rep(p,d,c)	__raw_readsw(p,d,c)
