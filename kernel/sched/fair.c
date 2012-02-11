@@ -6036,7 +6036,8 @@ preempt:
 		set_last_buddy(se);
 }
 
-static struct task_struct *pick_next_task_fair(struct rq *rq)
+static struct task_struct *
+pick_next_task_fair(struct rq *rq, struct task_struct *prev)
 {
 	struct cfs_rq *cfs_rq = &rq->cfs;
 	struct sched_entity *se;
@@ -6048,6 +6049,8 @@ static struct task_struct *pick_next_task_fair(struct rq *rq)
 
 	cfs_rq = &rq->cfs;
 #endif
+	if (prev)
+		prev->sched_class->put_prev_task(rq, prev);
 
 	do {
 		se = pick_next_entity(cfs_rq, NULL);
