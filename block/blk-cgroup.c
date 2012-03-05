@@ -52,14 +52,14 @@ struct blkio_cgroup *task_blkio_cgroup(struct task_struct *tsk)
 }
 EXPORT_SYMBOL_GPL(task_blkio_cgroup);
 
-static inline void
-blkio_update_group_weight(struct blkio_group *blkg, unsigned int weight)
+static inline void blkio_update_group_weight(struct blkio_group *blkg,
+					     int plid, unsigned int weight)
 {
 	struct blkio_policy_type *blkiop;
 
 	list_for_each_entry(blkiop, &blkio_list, list) {
 		/* If this policy does not own the blkg, do not send updates */
-		if (blkiop->plid != blkg->plid)
+		if (blkiop->plid != plid)
 			continue;
 		if (blkiop->ops.blkio_update_group_weight_fn)
 			blkiop->ops.blkio_update_group_weight_fn(blkg->q,
@@ -67,15 +67,15 @@ blkio_update_group_weight(struct blkio_group *blkg, unsigned int weight)
 	}
 }
 
-static inline void blkio_update_group_bps(struct blkio_group *blkg, u64 bps,
-				int fileid)
+static inline void blkio_update_group_bps(struct blkio_group *blkg, int plid,
+					  u64 bps, int fileid)
 {
 	struct blkio_policy_type *blkiop;
 
 	list_for_each_entry(blkiop, &blkio_list, list) {
 
 		/* If this policy does not own the blkg, do not send updates */
-		if (blkiop->plid != blkg->plid)
+		if (blkiop->plid != plid)
 			continue;
 
 		if (fileid == BLKIO_THROTL_read_bps_device
@@ -91,14 +91,15 @@ static inline void blkio_update_group_bps(struct blkio_group *blkg, u64 bps,
 }
 
 static inline void blkio_update_group_iops(struct blkio_group *blkg,
-			unsigned int iops, int fileid)
+					   int plid, unsigned int iops,
+					   int fileid)
 {
 	struct blkio_policy_type *blkiop;
 
 	list_for_each_entry(blkiop, &blkio_list, list) {
 
 		/* If this policy does not own the blkg, do not send updates */
-		if (blkiop->plid != blkg->plid)
+		if (blkiop->plid != plid)
 			continue;
 
 		if (fileid == BLKIO_THROTL_read_iops_device
@@ -156,9 +157,10 @@ static void blkio_check_and_dec_stat(uint64_t *stat, bool direction, bool sync)
 #ifdef CONFIG_DEBUG_BLK_CGROUP
 /* This should be called with the blkg->stats_lock held. */
 static void blkio_set_start_group_wait_time(struct blkio_group *blkg,
-						struct blkio_group *curr_blkg)
+					    struct blkio_policy_type *pol,
+					    struct blkio_group *curr_blkg)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
+	struct blkg_policy_data *pd = blkg->pd[pol->plid];
 
 	if (blkio_blkg_waiting(&pd->stats))
 		return;
@@ -196,9 +198,10 @@ static void blkio_end_empty_time(struct blkio_group_stats *stats)
 	blkio_clear_blkg_empty(stats);
 }
 
-void blkiocg_update_set_idle_time_stats(struct blkio_group *blkg)
+void blkiocg_update_set_idle_time_stats(struct blkio_group *blkg,
+					struct blkio_policy_type *pol)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
+	struct blkg_policy_data *pd = blkg->pd[pol->plid];
 	unsigned long flags;
 
 	spin_lock_irqsave(&blkg->stats_lock, flags);
@@ -209,9 +212,10 @@ void blkiocg_update_set_idle_time_stats(struct blkio_group *blkg)
 }
 EXPORT_SYMBOL_GPL(blkiocg_update_set_idle_time_stats);
 
-void blkiocg_update_idle_time_stats(struct blkio_group *blkg)
+void blkiocg_update_idle_time_stats(struct blkio_group *blkg,
+				    struct blkio_policy_type *pol)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
+	struct blkg_policy_data *pd = blkg->pd[pol->plid];
 	unsigned long flags;
 	unsigned long long now;
 	struct blkio_group_stats *stats;
@@ -228,9 +232,10 @@ void blkiocg_update_idle_time_stats(struct blkio_group *blkg)
 }
 EXPORT_SYMBOL_GPL(blkiocg_update_idle_time_stats);
 
-void blkiocg_update_avg_queue_size_stats(struct blkio_group *blkg)
+void blkiocg_update_avg_queue_size_stats(struct blkio_group *blkg,
+					 struct blkio_policy_type *pol)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
+	struct blkg_policy_data *pd = blkg->pd[pol->plid];
 	unsigned long flags;
 	struct blkio_group_stats *stats;
 
@@ -245,9 +250,10 @@ void blkiocg_update_avg_queue_size_stats(struct blkio_group *blkg)
 }
 EXPORT_SYMBOL_GPL(blkiocg_update_avg_queue_size_stats);
 
-void blkiocg_set_start_empty_time(struct blkio_group *blkg)
+void blkiocg_set_start_empty_time(struct blkio_group *blkg,
+				  struct blkio_policy_type *pol)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
+	struct blkg_policy_data *pd = blkg->pd[pol->plid];
 	unsigned long flags;
 	struct blkio_group_stats *stats;
 
@@ -277,39 +283,43 @@ void blkiocg_set_start_empty_time(struct blkio_group *blkg)
 EXPORT_SYMBOL_GPL(blkiocg_set_start_empty_time);
 
 void blkiocg_update_dequeue_stats(struct blkio_group *blkg,
-			unsigned long dequeue)
+				  struct blkio_policy_type *pol,
+				  unsigned long dequeue)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
+	struct blkg_policy_data *pd = blkg->pd[pol->plid];
 
 	pd->stats.dequeue += dequeue;
 }
 EXPORT_SYMBOL_GPL(blkiocg_update_dequeue_stats);
 #else
 static inline void blkio_set_start_group_wait_time(struct blkio_group *blkg,
-					struct blkio_group *curr_blkg) {}
-static inline void blkio_end_empty_time(struct blkio_group_stats *stats) {}
+					struct blkio_policy_type *pol,
+					struct blkio_group *curr_blkg) { }
+static inline void blkio_end_empty_time(struct blkio_group_stats *stats) { }
 #endif
 
 void blkiocg_update_io_add_stats(struct blkio_group *blkg,
-			struct blkio_group *curr_blkg, bool direction,
-			bool sync)
+				 struct blkio_policy_type *pol,
+				 struct blkio_group *curr_blkg, bool direction,
+				 bool sync)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
+	struct blkg_policy_data *pd = blkg->pd[pol->plid];
 	unsigned long flags;
 
 	spin_lock_irqsave(&blkg->stats_lock, flags);
 	blkio_add_stat(pd->stats.stat_arr[BLKIO_STAT_QUEUED], 1, direction,
 			sync);
 	blkio_end_empty_time(&pd->stats);
-	blkio_set_start_group_wait_time(blkg, curr_blkg);
+	blkio_set_start_group_wait_time(blkg, pol, curr_blkg);
 	spin_unlock_irqrestore(&blkg->stats_lock, flags);
 }
 EXPORT_SYMBOL_GPL(blkiocg_update_io_add_stats);
 
 void blkiocg_update_io_remove_stats(struct blkio_group *blkg,
-						bool direction, bool sync)
+				    struct blkio_policy_type *pol,
+				    bool direction, bool sync)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
+	struct blkg_policy_data *pd = blkg->pd[pol->plid];
 	unsigned long flags;
 
 	spin_lock_irqsave(&blkg->stats_lock, flags);
@@ -319,10 +329,12 @@ void blkiocg_update_io_remove_stats(struct blkio_group *blkg,
 }
 EXPORT_SYMBOL_GPL(blkiocg_update_io_remove_stats);
 
-void blkiocg_update_timeslice_used(struct blkio_group *blkg, unsigned long time,
-				unsigned long unaccounted_time)
+void blkiocg_update_timeslice_used(struct blkio_group *blkg,
+				   struct blkio_policy_type *pol,
+				   unsigned long time,
+				   unsigned long unaccounted_time)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
+	struct blkg_policy_data *pd = blkg->pd[pol->plid];
 	unsigned long flags;
 
 	spin_lock_irqsave(&blkg->stats_lock, flags);
@@ -339,9 +351,10 @@ EXPORT_SYMBOL_GPL(blkiocg_update_timeslice_used);
  * is valid.
  */
 void blkiocg_update_dispatch_stats(struct blkio_group *blkg,
-				uint64_t bytes, bool direction, bool sync)
+				   struct blkio_policy_type *pol,
+				   uint64_t bytes, bool direction, bool sync)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
+	struct blkg_policy_data *pd = blkg->pd[pol->plid];
 	struct blkio_group_stats_cpu *stats_cpu;
 	unsigned long flags;
 
@@ -366,9 +379,12 @@ void blkiocg_update_dispatch_stats(struct blkio_group *blkg,
 EXPORT_SYMBOL_GPL(blkiocg_update_dispatch_stats);
 
 void blkiocg_update_completion_stats(struct blkio_group *blkg,
-	uint64_t start_time, uint64_t io_start_time, bool direction, bool sync)
+				     struct blkio_policy_type *pol,
+				     uint64_t start_time,
+				     uint64_t io_start_time, bool direction,
+				     bool sync)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
+	struct blkg_policy_data *pd = blkg->pd[pol->plid];
 	struct blkio_group_stats *stats;
 	unsigned long flags;
 	unsigned long long now = sched_clock();
@@ -386,10 +402,11 @@ void blkiocg_update_completion_stats(struct blkio_group *blkg,
 EXPORT_SYMBOL_GPL(blkiocg_update_completion_stats);
 
 /*  Merged stats are per cpu.  */
-void blkiocg_update_io_merged_stats(struct blkio_group *blkg, bool direction,
-					bool sync)
+void blkiocg_update_io_merged_stats(struct blkio_group *blkg,
+				    struct blkio_policy_type *pol,
+				    bool direction, bool sync)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
+	struct blkg_policy_data *pd = blkg->pd[pol->plid];
 	struct blkio_group_stats_cpu *stats_cpu;
 	unsigned long flags;
 
@@ -654,9 +671,9 @@ void __blkg_release(struct blkio_group *blkg)
 }
 EXPORT_SYMBOL_GPL(__blkg_release);
 
-static void blkio_reset_stats_cpu(struct blkio_group *blkg)
+static void blkio_reset_stats_cpu(struct blkio_group *blkg, int plid)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
+	struct blkg_policy_data *pd = blkg->pd[plid];
 	struct blkio_group_stats_cpu *stats_cpu;
 	int i, j, k;
 	/*
@@ -727,7 +744,7 @@ blkiocg_reset_stats(struct cgroup *cgroup, struct cftype *cftype, u64 val)
 		spin_unlock(&blkg->stats_lock);
 
 		/* Reset Per cpu stats which don't take blkg->stats_lock */
-		blkio_reset_stats_cpu(blkg);
+		blkio_reset_stats_cpu(blkg, blkg->plid);
 	}
 
 	spin_unlock_irq(&blkcg->lock);
@@ -776,10 +793,10 @@ static uint64_t blkio_fill_stat(char *str, int chars_left, uint64_t val,
 }
 
 
-static uint64_t blkio_read_stat_cpu(struct blkio_group *blkg,
+static uint64_t blkio_read_stat_cpu(struct blkio_group *blkg, int plid,
 			enum stat_type_cpu type, enum stat_sub_type sub_type)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
+	struct blkg_policy_data *pd = blkg->pd[plid];
 	int cpu;
 	struct blkio_group_stats_cpu *stats_cpu;
 	u64 val = 0, tval;
@@ -802,7 +819,7 @@ static uint64_t blkio_read_stat_cpu(struct blkio_group *blkg,
 	return val;
 }
 
-static uint64_t blkio_get_stat_cpu(struct blkio_group *blkg,
+static uint64_t blkio_get_stat_cpu(struct blkio_group *blkg, int plid,
 				   struct cgroup_map_cb *cb, const char *dname,
 				   enum stat_type_cpu type)
 {
@@ -811,7 +828,7 @@ static uint64_t blkio_get_stat_cpu(struct blkio_group *blkg,
 	enum stat_sub_type sub_type;
 
 	if (type == BLKIO_STAT_CPU_SECTORS) {
-		val = blkio_read_stat_cpu(blkg, type, 0);
+		val = blkio_read_stat_cpu(blkg, plid, type, 0);
 		return blkio_fill_stat(key_str, MAX_KEY_LEN - 1, val, cb,
 				       dname);
 	}
@@ -820,12 +837,12 @@ static uint64_t blkio_get_stat_cpu(struct blkio_group *blkg,
 			sub_type++) {
 		blkio_get_key_name(sub_type, dname, key_str, MAX_KEY_LEN,
 				   false);
-		val = blkio_read_stat_cpu(blkg, type, sub_type);
+		val = blkio_read_stat_cpu(blkg, plid, type, sub_type);
 		cb->fill(cb, key_str, val);
 	}
 
-	disk_total = blkio_read_stat_cpu(blkg, type, BLKIO_STAT_READ) +
-			blkio_read_stat_cpu(blkg, type, BLKIO_STAT_WRITE);
+	disk_total = blkio_read_stat_cpu(blkg, plid, type, BLKIO_STAT_READ) +
+		blkio_read_stat_cpu(blkg, plid, type, BLKIO_STAT_WRITE);
 
 	blkio_get_key_name(BLKIO_STAT_TOTAL, dname, key_str, MAX_KEY_LEN,
 			   false);
@@ -834,11 +851,11 @@ static uint64_t blkio_get_stat_cpu(struct blkio_group *blkg,
 }
 
 /* This should be called with blkg->stats_lock held */
-static uint64_t blkio_get_stat(struct blkio_group *blkg,
+static uint64_t blkio_get_stat(struct blkio_group *blkg, int plid,
 			       struct cgroup_map_cb *cb, const char *dname,
 			       enum stat_type type)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
+	struct blkg_policy_data *pd = blkg->pd[plid];
 	uint64_t disk_total;
 	char key_str[MAX_KEY_LEN];
 	enum stat_sub_type sub_type;
@@ -962,29 +979,29 @@ static int blkio_policy_parse_and_set(char *buf, enum blkio_policy_id plid,
 			goto out_unlock;
 
 		pd->conf.weight = temp;
-		blkio_update_group_weight(blkg, temp ?: blkcg->weight);
+		blkio_update_group_weight(blkg, plid, temp ?: blkcg->weight);
 		break;
 	case BLKIO_POLICY_THROTL:
 		switch(fileid) {
 		case BLKIO_THROTL_read_bps_device:
 			pd->conf.bps[READ] = temp;
-			blkio_update_group_bps(blkg, temp ?: -1, fileid);
+			blkio_update_group_bps(blkg, plid, temp ?: -1, fileid);
 			break;
 		case BLKIO_THROTL_write_bps_device:
 			pd->conf.bps[WRITE] = temp;
-			blkio_update_group_bps(blkg, temp ?: -1, fileid);
+			blkio_update_group_bps(blkg, plid, temp ?: -1, fileid);
 			break;
 		case BLKIO_THROTL_read_iops_device:
 			if (temp > THROTL_IOPS_MAX)
 				goto out_unlock;
 			pd->conf.iops[READ] = temp;
-			blkio_update_group_iops(blkg, temp ?: -1, fileid);
+			blkio_update_group_iops(blkg, plid, temp ?: -1, fileid);
 			break;
 		case BLKIO_THROTL_write_iops_device:
 			if (temp > THROTL_IOPS_MAX)
 				goto out_unlock;
 			pd->conf.iops[WRITE] = temp;
-			blkio_update_group_iops(blkg, temp ?: -1, fileid);
+			blkio_update_group_iops(blkg, plid, temp ?: -1, fileid);
 			break;
 		}
 		break;
@@ -1039,15 +1056,16 @@ static const char *blkg_dev_name(struct blkio_group *blkg)
 static void blkio_print_group_conf(struct cftype *cft, struct blkio_group *blkg,
 				   struct seq_file *m)
 {
-	struct blkg_policy_data *pd = blkg->pd[blkg->plid];
-	const char *dname = blkg_dev_name(blkg);
+	int plid = BLKIOFILE_POLICY(cft->private);
 	int fileid = BLKIOFILE_ATTR(cft->private);
+	struct blkg_policy_data *pd = blkg->pd[plid];
+	const char *dname = blkg_dev_name(blkg);
 	int rw = WRITE;
 
 	if (!dname)
 		return;
 
-	switch (blkg->plid) {
+	switch (plid) {
 		case BLKIO_POLICY_PROP:
 			if (pd->conf.weight)
 				seq_printf(m, "%s\t%u\n",
@@ -1139,15 +1157,17 @@ static int blkio_read_blkg_stats(struct blkio_cgroup *blkcg,
 	rcu_read_lock();
 	hlist_for_each_entry_rcu(blkg, n, &blkcg->blkg_list, blkcg_node) {
 		const char *dname = blkg_dev_name(blkg);
+		int plid = BLKIOFILE_POLICY(cft->private);
 
-		if (!dname || BLKIOFILE_POLICY(cft->private) != blkg->plid)
+		if (!dname || plid != blkg->plid)
 			continue;
-		if (pcpu)
-			cgroup_total += blkio_get_stat_cpu(blkg, cb, dname,
-							   type);
-		else {
+		if (pcpu) {
+			cgroup_total += blkio_get_stat_cpu(blkg, plid,
+							   cb, dname, type);
+		} else {
 			spin_lock_irq(&blkg->stats_lock);
-			cgroup_total += blkio_get_stat(blkg, cb, dname, type);
+			cgroup_total += blkio_get_stat(blkg, plid,
+						       cb, dname, type);
 			spin_unlock_irq(&blkg->stats_lock);
 		}
 	}
@@ -1253,7 +1273,7 @@ static int blkio_weight_write(struct blkio_cgroup *blkcg, int plid, u64 val)
 		struct blkg_policy_data *pd = blkg->pd[blkg->plid];
 
 		if (blkg->plid == plid && !pd->conf.weight)
-			blkio_update_group_weight(blkg, blkcg->weight);
+			blkio_update_group_weight(blkg, plid, blkcg->weight);
 	}
 
 	spin_unlock_irq(&blkcg->lock);
