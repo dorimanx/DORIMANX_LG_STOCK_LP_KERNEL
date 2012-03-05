@@ -1826,10 +1826,6 @@ struct cgroup_subsys blkio_subsys = {
 	.css_offline = blkcg_css_offline,
 	.can_attach = blkiocg_can_attach,
 	.attach = blkiocg_attach,
-#ifdef CONFIG_BLK_CGROUP
-	/* note: blkio_subsys_id is otherwise defined in blk-cgroup.h */
-	.subsys_id = blkio_subsys_id,
-#endif
 	.base_cftypes = blkio_files,
 	.use_id = 1,
 	.module = THIS_MODULE,
@@ -1859,17 +1855,3 @@ void blkio_policy_unregister(struct blkio_policy_type *blkiop)
 	spin_unlock(&blkio_list_lock);
 }
 EXPORT_SYMBOL_GPL(blkio_policy_unregister);
-
-static int __init init_cgroup_blkio(void)
-{
-	return cgroup_load_subsys(&blkio_subsys);
-}
-
-static void __exit exit_cgroup_blkio(void)
-{
-	cgroup_unload_subsys(&blkio_subsys);
-}
-
-module_init(init_cgroup_blkio);
-module_exit(exit_cgroup_blkio);
-MODULE_LICENSE("GPL");
