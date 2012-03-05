@@ -229,7 +229,7 @@ struct cfq_data {
 	struct request_queue *queue;
 	/* Root service tree for cfq_groups */
 	struct cfq_rb_root grp_service_tree;
-	struct cfq_group root_group;
+	struct cfq_group *root_group;
 
 	/*
 	 * The priority currently being served
@@ -1013,6 +1013,25 @@ static void cfq_group_served(struct cfq_data *cfqd, struct cfq_group *cfqg,
 	cfq_blkiocg_set_start_empty_time(&cfqg->blkg);
 }
 
+/**
+ * cfq_init_cfqg_base - initialize base part of a cfq_group
+ * @cfqg: cfq_group to initialize
+ *
+ * Initialize the base part which is used whether %CONFIG_CFQ_GROUP_IOSCHED
+ * is enabled or not.
+ */
+static void cfq_init_cfqg_base(struct cfq_group *cfqg)
+{
+	struct cfq_rb_root *st;
+	int i, j;
+
+	for_each_cfqg_st(cfqg, i, j, st)
+		*st = CFQ_RB_ROOT;
+	RB_CLEAR_NODE(&cfqg->rb_node);
+
+	cfqg->ttime.last_end_request = jiffies;
+}
+
 #ifdef CONFIG_CFQ_GROUP_IOSCHED
 static inline struct cfq_group *cfqg_of_blkg(struct blkio_group *blkg)
 {
@@ -1063,19 +1082,14 @@ static void cfq_init_add_cfqg_lists(struct cfq_data *cfqd,
  */
 static struct cfq_group * cfq_alloc_cfqg(struct cfq_data *cfqd)
 {
-	struct cfq_group *cfqg = NULL;
-	int i, j, ret;
-	struct cfq_rb_root *st;
+	struct cfq_group *cfqg;
+	int ret;
 
 	cfqg = kzalloc_node(sizeof(*cfqg), GFP_ATOMIC, cfqd->queue->node);
 	if (!cfqg)
 		return NULL;
 
-	for_each_cfqg_st(cfqg, i, j, st)
-		*st = CFQ_RB_ROOT;
-	RB_CLEAR_NODE(&cfqg->rb_node);
-
-	cfqg->ttime.last_end_request = jiffies;
+	cfq_init_cfqg_base(cfqg);
 
 	/*
 	 * Take the initial reference that will be released on destroy
@@ -1107,7 +1121,7 @@ cfq_find_cfqg(struct cfq_data *cfqd, struct blkio_cgroup *blkcg)
 	 * Avoid lookup in this case
 	 */
 	if (blkcg == &blkio_root_cgroup)
-		cfqg = &cfqd->root_group;
+		cfqg = cfqd->root_group;
 	else
 		cfqg = cfqg_of_blkg(blkiocg_lookup_group(blkcg, key));
 
@@ -1170,7 +1184,7 @@ static struct cfq_group *cfq_get_cfqg(struct cfq_data *cfqd)
 	}
 
 	if (!cfqg)
-		cfqg = &cfqd->root_group;
+		cfqg = cfqd->root_group;
 
 	cfq_init_add_cfqg_lists(cfqd, cfqg, blkcg);
 	rcu_read_unlock();
@@ -1187,7 +1201,7 @@ static void cfq_link_cfqq_cfqg(struct cfq_queue *cfqq, struct cfq_group *cfqg)
 {
 	/* Currently, all async queues are mapped to root group */
 	if (!cfq_cfqq_sync(cfqq))
-		cfqg = &cfqq->cfqd->root_group;
+		cfqg = cfqq->cfqd->root_group;
 
 	cfqq->cfqg = cfqg;
 	/* cfqq reference on cfqg */
@@ -1269,7 +1283,7 @@ static void cfq_unlink_blkio_group(void *key, struct blkio_group *blkg)
 #else /* GROUP_IOSCHED */
 static struct cfq_group *cfq_get_cfqg(struct cfq_data *cfqd)
 {
-	return &cfqd->root_group;
+	return cfqd->root_group;
 }
 
 static inline struct cfq_group *cfq_ref_get_cfqg(struct cfq_group *cfqg)
@@ -3654,9 +3668,8 @@ static void cfq_exit_queue(struct elevator_queue *e)
 	if (wait)
 		synchronize_rcu();
 
-#ifdef CONFIG_CFQ_GROUP_IOSCHED
-	/* Free up per cpu stats for root group */
-	free_percpu(cfqd->root_group.blkg.stats_cpu);
+#ifndef CONFIG_CFQ_GROUP_IOSCHED
+	kfree(cfqd->root_group);
 #endif
 	kfree(cfqd);
 }
@@ -3664,44 +3677,41 @@ static void cfq_exit_queue(struct elevator_queue *e)
 static int cfq_init_queue(struct request_queue *q)
 {
 	struct cfq_data *cfqd;
-	int i, j;
-	struct cfq_group *cfqg;
-	struct cfq_rb_root *st;
+	int i;
 
 	cfqd = kmalloc_node(sizeof(*cfqd), GFP_KERNEL | __GFP_ZERO, q->node);
 	if (!cfqd)
 		return -ENOMEM;
 
+	cfqd->queue = q;
+	q->elevator->elevator_data = cfqd;
+
 	/* Init root service tree */
 	cfqd->grp_service_tree = CFQ_RB_ROOT;
 
-	/* Init root group */
-	cfqg = &cfqd->root_group;
-	for_each_cfqg_st(cfqg, i, j, st)
-		*st = CFQ_RB_ROOT;
-	RB_CLEAR_NODE(&cfqg->rb_node);
-
-	/* Give preference to root group over other groups */
-	cfqg->weight = 2*BLKIO_WEIGHT_DEFAULT;
-
+	/* Init root group and prefer root group over other groups by default */
 #ifdef CONFIG_CFQ_GROUP_IOSCHED
-	/*
-	 * Set root group reference to 2. One reference will be dropped when
-	 * all groups on cfqd->cfqg_list are being deleted during queue exit.
-	 * Other reference will remain there as we don't want to delete this
-	 * group as it is statically allocated and gets destroyed when
-	 * throtl_data goes away.
-	 */
-	cfqg->ref = 2;
+	rcu_read_lock();
+	spin_lock_irq(q->queue_lock);
 
-	if (blkio_alloc_blkg_stats(&cfqg->blkg)) {
-		kfree(cfqg);
+	cfqd->root_group = cfq_get_cfqg(cfqd, &blkio_root_cgroup);
+
+	spin_unlock_irq(q->queue_lock);
+	rcu_read_unlock();
+#else
+	cfqd->root_group = kzalloc_node(sizeof(*cfqd->root_group),
+					GFP_KERNEL, cfqd->queue->node);
+	if (cfqd->root_group)
+		cfq_init_cfqg_base(cfqd->root_group);
+#endif
+	if (!cfqd->root_group) {
 		kfree(cfqd);
 		return -ENOMEM;
 	}
 
-	rcu_read_lock();
+	cfqd->root_group->weight = 2*BLKIO_WEIGHT_DEFAULT;
 
+<<<<<<< HEAD
 	cfq_blkiocg_add_blkio_group(&blkio_root_cgroup, &cfqg->blkg,
 					(void *)cfqd, 0);
 	rcu_read_unlock();
@@ -3710,6 +3720,8 @@ static int cfq_init_queue(struct request_queue *q)
 	/* Add group on cfqd->cfqg_list */
 	hlist_add_head(&cfqg->cfqd_node, &cfqd->cfqg_list);
 #endif
+=======
+>>>>>>> f51b802... blkcg: use the usual get blkg path for root blkio_group
 	/*
 	 * Not strictly needed (since RB_ROOT just clears the node and we
 	 * zeroed cfqd on alloc), but better be safe in case someone decides
@@ -3721,14 +3733,14 @@ static int cfq_init_queue(struct request_queue *q)
 	/*
 	 * Our fallback cfqq if cfq_find_alloc_queue() runs into OOM issues.
 	 * Grab a permanent reference to it, so that the normal code flow
-	 * will not attempt to free it.
+	 * will not attempt to free it.  oom_cfqq is linked to root_group
+	 * but shouldn't hold a reference as it'll never be unlinked.  Lose
+	 * the reference from linking right away.
 	 */
 	cfq_init_cfqq(cfqd, &cfqd->oom_cfqq, 1, 0);
 	cfqd->oom_cfqq.ref++;
-	cfq_link_cfqq_cfqg(&cfqd->oom_cfqq, &cfqd->root_group);
-
-	cfqd->queue = q;
-	q->elevator->elevator_data = cfqd;
+	cfq_link_cfqq_cfqg(&cfqd->oom_cfqq, cfqd->root_group);
+	cfq_put_cfqg(cfqd->root_group);
 
 	init_timer(&cfqd->idle_slice_timer);
 	cfqd->idle_slice_timer.function = cfq_idle_slice_timer;
