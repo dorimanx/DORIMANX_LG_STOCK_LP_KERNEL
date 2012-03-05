@@ -209,7 +209,7 @@ extern unsigned int blkcg_get_write_iops(struct blkio_cgroup *blkcg,
 				     dev_t dev);
 
 typedef void (blkio_unlink_group_fn) (void *key, struct blkio_group *blkg);
-
+typedef bool (blkio_clear_queue_fn)(struct request_queue *q);
 typedef void (blkio_update_group_weight_fn) (void *key,
 			struct blkio_group *blkg, unsigned int weight);
 typedef void (blkio_update_group_read_bps_fn) (void * key,
@@ -223,6 +223,7 @@ typedef void (blkio_update_group_write_iops_fn) (void *key,
 
 struct blkio_policy_ops {
 	blkio_unlink_group_fn *blkio_unlink_group_fn;
+	blkio_clear_queue_fn *blkio_clear_queue_fn;
 	blkio_update_group_weight_fn *blkio_update_group_weight_fn;
 	blkio_update_group_read_bps_fn *blkio_update_group_read_bps_fn;
 	blkio_update_group_write_bps_fn *blkio_update_group_write_bps_fn;
@@ -243,6 +244,7 @@ extern void blkcg_exit_queue(struct request_queue *q);
 /* Blkio controller policy registration */
 extern void blkio_policy_register(struct blkio_policy_type *);
 extern void blkio_policy_unregister(struct blkio_policy_type *);
+extern void blkg_destroy_all(struct request_queue *q);
 
 static inline char *blkg_path(struct blkio_group *blkg)
 {
@@ -262,6 +264,7 @@ static inline void blkcg_drain_queue(struct request_queue *q) { }
 static inline void blkcg_exit_queue(struct request_queue *q) { }
 static inline void blkio_policy_register(struct blkio_policy_type *blkiop) { }
 static inline void blkio_policy_unregister(struct blkio_policy_type *blkiop) { }
+static inline void blkg_destroy_all(struct request_queue *q) { }
 
 static inline char *blkg_path(struct blkio_group *blkg) { return NULL; }
 
