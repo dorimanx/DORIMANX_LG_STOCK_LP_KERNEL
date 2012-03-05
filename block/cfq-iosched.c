@@ -208,9 +208,7 @@ struct cfq_group {
 	unsigned long saved_workload_slice;
 	enum wl_type_t saved_workload;
 	enum wl_prio_t saved_serving_prio;
-#ifdef CONFIG_CFQ_GROUP_IOSCHED
-	struct hlist_node cfqd_node;
-#endif
+
 	/* number of requests that are on the dispatch list or inside driver */
 	int dispatched;
 	struct cfq_ttime ttime;
@@ -295,7 +293,6 @@ struct cfq_data {
 	unsigned int cfq_slice_idle;
 	unsigned int cfq_group_idle;
 	unsigned int cfq_latency;
-	unsigned int cfq_target_latency;
 
 	/*
 	 * Fallback dummy cfqq for extreme OOM conditions
@@ -303,12 +300,6 @@ struct cfq_data {
 	struct cfq_queue oom_cfqq;
 
 	unsigned long last_delayed_sync;
-
-	/* List of cfq groups being managed on this device*/
-	struct hlist_head cfqg_list;
-
-	/* Number of groups which are on blkcg->blkg_list */
-	unsigned int nr_blkcg_linked_grps;
 };
 
 static inline struct cfq_group *blkg_to_cfqg(struct blkio_group *blkg)
@@ -615,7 +606,7 @@ cfq_group_slice(struct cfq_data *cfqd, struct cfq_group *cfqg)
 {
 	struct cfq_rb_root *st = &cfqd->grp_service_tree;
 
-	return cfqd->cfq_target_latency * cfqg->weight / st->total_weight;
+	return cfq_target_latency * cfqg->weight / st->total_weight;
 }
 
 static inline unsigned
@@ -1057,13 +1048,9 @@ static void cfq_update_blkio_group_weight(struct request_queue *q,
 static void cfq_link_blkio_group(struct request_queue *q,
 				 struct blkio_group *blkg)
 {
-	struct cfq_data *cfqd = q->elevator->elevator_data;
-	struct cfq_group *cfqg = blkg_to_cfqg(blkg);
-
-	cfqd->nr_blkcg_linked_grps++;
-
-	/* Add group on cfqd list */
-	hlist_add_head(&cfqg->cfqd_node, &cfqd->cfqg_list);
+	list_add(&blkg->q_node[BLKIO_POLICY_PROP],
+		 &q->blkg_list[BLKIO_POLICY_PROP]);
+	q->nr_blkgs[BLKIO_POLICY_PROP]++;
 }
 
 static void cfq_init_blkio_group(struct blkio_group *blkg)
@@ -1111,13 +1098,15 @@ static void cfq_link_cfqq_cfqg(struct cfq_queue *cfqq, struct cfq_group *cfqg)
 
 static void cfq_destroy_cfqg(struct cfq_data *cfqd, struct cfq_group *cfqg)
 {
+	struct blkio_group *blkg = cfqg_to_blkg(cfqg);
+
 	/* Something wrong if we are trying to remove same group twice */
-	BUG_ON(hlist_unhashed(&cfqg->cfqd_node));
+	BUG_ON(list_empty(&blkg->q_node[BLKIO_POLICY_PROP]));
 
-	hlist_del_init(&cfqg->cfqd_node);
+	list_del_init(&blkg->q_node[BLKIO_POLICY_PROP]);
 
-	BUG_ON(cfqd->nr_blkcg_linked_grps <= 0);
-	cfqd->nr_blkcg_linked_grps--;
+	BUG_ON(cfqd->queue->nr_blkgs[BLKIO_POLICY_PROP] <= 0);
+	cfqd->queue->nr_blkgs[BLKIO_POLICY_PROP]--;
 
 	/*
 	 * Put the reference taken at the time of creation so that when all
@@ -1128,18 +1117,19 @@ static void cfq_destroy_cfqg(struct cfq_data *cfqd, struct cfq_group *cfqg)
 
 static bool cfq_release_cfq_groups(struct cfq_data *cfqd)
 {
-	struct hlist_node *n;
-	struct cfq_group *cfqg;
+	struct request_queue *q = cfqd->queue;
+	struct blkio_group *blkg, *n;
 	bool empty = true;
 
-	hlist_for_each_entry_safe(cfqg, n, &cfqd->cfqg_list, cfqd_node) {
+	list_for_each_entry_safe(blkg, n, &q->blkg_list[BLKIO_POLICY_PROP],
+				 q_node[BLKIO_POLICY_PROP]) {
 		/*
 		 * If cgroup removal path got to blk_group first and removed
 		 * it from cgroup list, then it will take care of destroying
 		 * cfqg also.
 		 */
-		if (!cfq_blkiocg_del_blkio_group(cfqg_to_blkg(cfqg)))
-			cfq_destroy_cfqg(cfqd, cfqg);
+		if (!cfq_blkiocg_del_blkio_group(blkg))
+			cfq_destroy_cfqg(cfqd, blkg_to_cfqg(blkg));
 		else
 			empty = false;
 	}
@@ -2194,8 +2184,7 @@ new_workload:
 		 * to have higher weight. A more accurate thing would be to
 		 * calculate system wide asnc/sync ratio.
 		 */
-		tmp = cfqd->cfq_target_latency *
-			cfqg_busy_async_queues(cfqd, cfqg);
+		tmp = cfq_target_latency * cfqg_busy_async_queues(cfqd, cfqg);
 		tmp = tmp/cfqd->busy_queues;
 		slice = min_t(unsigned, slice, tmp);
 
@@ -2226,9 +2215,6 @@ static struct cfq_group *cfq_get_next_cfqg(struct cfq_data *cfqd)
 static void cfq_choose_cfqg(struct cfq_data *cfqd)
 {
 	struct cfq_group *cfqg = cfq_get_next_cfqg(cfqd);
-
-	if (!cfqg)
-		return;
 
 	cfqd->serving_group = cfqg;
 
@@ -3563,13 +3549,13 @@ static void cfq_exit_queue(struct elevator_queue *e)
 	cfq_put_async_queues(cfqd);
 	cfq_release_cfq_groups(cfqd);
 
+#ifdef CONFIG_BLK_CGROUP
 	/*
 	 * If there are groups which we could not unlink from blkcg list,
 	 * wait for a rcu period for them to be freed.
 	 */
-	if (cfqd->nr_blkcg_linked_grps)
-		wait = true;
-
+	wait = q->nr_blkgs[BLKIO_POLICY_PROP];
+#endif
 	spin_unlock_irq(q->queue_lock);
 
 	cfq_shutdown_timer_wq(cfqd);
@@ -3635,17 +3621,6 @@ static int cfq_init_queue(struct request_queue *q)
 
 	cfqd->root_group->weight = 2*BLKIO_WEIGHT_DEFAULT;
 
-<<<<<<< HEAD
-	cfq_blkiocg_add_blkio_group(&blkio_root_cgroup, &cfqg->blkg,
-				    cfqd->queue, 0);
-	rcu_read_unlock();
-	cfqd->nr_blkcg_linked_grps++;
-
-	/* Add group on cfqd->cfqg_list */
-	hlist_add_head(&cfqg->cfqd_node, &cfqd->cfqg_list);
-#endif
-=======
->>>>>>> f51b802... blkcg: use the usual get blkg path for root blkio_group
 	/*
 	 * Not strictly needed (since RB_ROOT just clears the node and we
 	 * zeroed cfqd on alloc), but better be safe in case someone decides
@@ -3682,7 +3657,6 @@ static int cfq_init_queue(struct request_queue *q)
 	cfqd->cfq_back_penalty = cfq_back_penalty;
 	cfqd->cfq_slice[0] = cfq_slice_async;
 	cfqd->cfq_slice[1] = cfq_slice_sync;
-	cfqd->cfq_target_latency = cfq_target_latency;
 	cfqd->cfq_slice_async_rq = cfq_slice_async_rq;
 	cfqd->cfq_slice_idle = cfq_slice_idle;
 	cfqd->cfq_group_idle = cfq_group_idle;
@@ -3696,25 +3670,13 @@ static int cfq_init_queue(struct request_queue *q)
 	return 0;
 }
 
-static void cfq_registered_queue(struct request_queue *q)
-{
-	struct elevator_queue *e = q->elevator;
-	struct cfq_data *cfqd = e->elevator_data;
-
-	/*
-	 * Default to IOPS mode with no idling for SSDs
-	 */
-	if (blk_queue_nonrot(q))
-		cfqd->cfq_slice_idle = 0;
-}
-
 /*
  * sysfs parts below -->
  */
 static ssize_t
 cfq_var_show(unsigned int var, char *page)
 {
-	return sprintf(page, "%u\n", var);
+	return sprintf(page, "%d\n", var);
 }
 
 static ssize_t
@@ -3746,7 +3708,6 @@ SHOW_FUNCTION(cfq_slice_sync_show, cfqd->cfq_slice[1], 1);
 SHOW_FUNCTION(cfq_slice_async_show, cfqd->cfq_slice[0], 1);
 SHOW_FUNCTION(cfq_slice_async_rq_show, cfqd->cfq_slice_async_rq, 0);
 SHOW_FUNCTION(cfq_low_latency_show, cfqd->cfq_latency, 0);
-SHOW_FUNCTION(cfq_target_latency_show, cfqd->cfq_target_latency, 1);
 #undef SHOW_FUNCTION
 
 #define STORE_FUNCTION(__FUNC, __PTR, MIN, MAX, __CONV)			\
@@ -3780,7 +3741,6 @@ STORE_FUNCTION(cfq_slice_async_store, &cfqd->cfq_slice[0], 1, UINT_MAX, 1);
 STORE_FUNCTION(cfq_slice_async_rq_store, &cfqd->cfq_slice_async_rq, 1,
 		UINT_MAX, 0);
 STORE_FUNCTION(cfq_low_latency_store, &cfqd->cfq_latency, 0, 1, 0);
-STORE_FUNCTION(cfq_target_latency_store, &cfqd->cfq_target_latency, 1, UINT_MAX, 1);
 #undef STORE_FUNCTION
 
 #define CFQ_ATTR(name) \
@@ -3798,7 +3758,6 @@ static struct elv_fs_entry cfq_attrs[] = {
 	CFQ_ATTR(slice_idle),
 	CFQ_ATTR(group_idle),
 	CFQ_ATTR(low_latency),
-	CFQ_ATTR(target_latency),
 	__ATTR_NULL
 };
 
@@ -3823,7 +3782,6 @@ static struct elevator_type iosched_cfq = {
 		.elevator_may_queue_fn =	cfq_may_queue,
 		.elevator_init_fn =		cfq_init_queue,
 		.elevator_exit_fn =		cfq_exit_queue,
-		.elevator_registered_fn =	cfq_registered_queue,
 	},
 	.icq_size	=	sizeof(struct cfq_io_cq),
 	.icq_align	=	__alignof__(struct cfq_io_cq),
@@ -3844,8 +3802,6 @@ static struct blkio_policy_type blkio_policy_cfq = {
 	.plid = BLKIO_POLICY_PROP,
 	.pdata_size = sizeof(struct cfq_group),
 };
-#else
-static struct blkio_policy_type blkio_policy_cfq;
 #endif
 
 static int __init cfq_init(void)
@@ -3876,14 +3832,17 @@ static int __init cfq_init(void)
 		return ret;
 	}
 
+#ifdef CONFIG_CFQ_GROUP_IOSCHED
 	blkio_policy_register(&blkio_policy_cfq);
-
+#endif
 	return 0;
 }
 
 static void __exit cfq_exit(void)
 {
+#ifdef CONFIG_CFQ_GROUP_IOSCHED
 	blkio_policy_unregister(&blkio_policy_cfq);
+#endif
 	elv_unregister(&iosched_cfq);
 	kmem_cache_destroy(cfq_pool);
 }
