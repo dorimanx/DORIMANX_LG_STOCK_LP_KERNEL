@@ -108,7 +108,7 @@ blkio_update_group_weight(struct blkio_group *blkg, unsigned int weight)
 		if (blkiop->plid != blkg->plid)
 			continue;
 		if (blkiop->ops.blkio_update_group_weight_fn)
-			blkiop->ops.blkio_update_group_weight_fn(blkg->key,
+			blkiop->ops.blkio_update_group_weight_fn(blkg->q,
 							blkg, weight);
 	}
 }
@@ -126,12 +126,12 @@ static inline void blkio_update_group_bps(struct blkio_group *blkg, u64 bps,
 
 		if (fileid == BLKIO_THROTL_read_bps_device
 		    && blkiop->ops.blkio_update_group_read_bps_fn)
-			blkiop->ops.blkio_update_group_read_bps_fn(blkg->key,
+			blkiop->ops.blkio_update_group_read_bps_fn(blkg->q,
 								blkg, bps);
 
 		if (fileid == BLKIO_THROTL_write_bps_device
 		    && blkiop->ops.blkio_update_group_write_bps_fn)
-			blkiop->ops.blkio_update_group_write_bps_fn(blkg->key,
+			blkiop->ops.blkio_update_group_write_bps_fn(blkg->q,
 								blkg, bps);
 	}
 }
@@ -149,12 +149,12 @@ static inline void blkio_update_group_iops(struct blkio_group *blkg,
 
 		if (fileid == BLKIO_THROTL_read_iops_device
 		    && blkiop->ops.blkio_update_group_read_iops_fn)
-			blkiop->ops.blkio_update_group_read_iops_fn(blkg->key,
+			blkiop->ops.blkio_update_group_read_iops_fn(blkg->q,
 								blkg, iops);
 
 		if (fileid == BLKIO_THROTL_write_iops_device
 		    && blkiop->ops.blkio_update_group_write_iops_fn)
-			blkiop->ops.blkio_update_group_write_iops_fn(blkg->key,
+			blkiop->ops.blkio_update_group_write_iops_fn(blkg->q,
 								blkg,iops);
 	}
 }
@@ -457,14 +457,14 @@ int blkio_alloc_blkg_stats(struct blkio_group *blkg)
 EXPORT_SYMBOL_GPL(blkio_alloc_blkg_stats);
 
 void blkiocg_add_blkio_group(struct blkio_cgroup *blkcg,
-		struct blkio_group *blkg, void *key, dev_t dev,
+		struct blkio_group *blkg, struct request_queue *q, dev_t dev,
 		enum blkio_policy_id plid)
 {
 	unsigned long flags;
 
 	spin_lock_irqsave(&blkcg->lock, flags);
 	spin_lock_init(&blkg->stats_lock);
-	rcu_assign_pointer(blkg->key, key);
+	rcu_assign_pointer(blkg->q, q);
 	blkg->blkcg_id = css_id(&blkcg->css);
 	hlist_add_head_rcu(&blkg->blkcg_node, &blkcg->blkg_list);
 	blkg->plid = plid;
@@ -510,17 +510,15 @@ int blkiocg_del_blkio_group(struct blkio_group *blkg)
 EXPORT_SYMBOL_GPL(blkiocg_del_blkio_group);
 
 /* called under rcu_read_lock(). */
-struct blkio_group *blkiocg_lookup_group(struct blkio_cgroup *blkcg, void *key)
+struct blkio_group *blkiocg_lookup_group(struct blkio_cgroup *blkcg,
+					 struct request_queue *q,
+					 enum blkio_policy_id plid)
 {
 	struct blkio_group *blkg;
-	void *__key;
 
-	hlist_for_each_entry_rcu(blkg, &blkcg->blkg_list, blkcg_node) {
-		__key = blkg->key;
-		if (__key == key)
+	hlist_for_each_entry_rcu(blkg, &blkcg->blkg_list, blkcg_node)
+		if (blkg->q == q && blkg->plid == plid)
 			return blkg;
-	}
-
 	return NULL;
 }
 EXPORT_SYMBOL_GPL(blkiocg_lookup_group);
@@ -1566,7 +1564,7 @@ static void blkcg_css_offline(struct cgroup *cgroup)
 	struct blkio_cgroup *blkcg = cgroup_to_blkio_cgroup(cgroup);
 	unsigned long flags;
 	struct blkio_group *blkg;
-	void *key;
+	struct request_queue *q;
 	struct blkio_policy_type *blkiop;
 	struct blkio_policy_node *pn, *pntmp;
 
@@ -1581,7 +1579,7 @@ static void blkcg_css_offline(struct cgroup *cgroup)
 
 		blkg = hlist_entry(blkcg->blkg_list.first, struct blkio_group,
 					blkcg_node);
-		key = rcu_dereference(blkg->key);
+		q = rcu_dereference(blkg->q);
 		__blkiocg_del_blkio_group(blkg);
 
 		spin_unlock_irqrestore(&blkcg->lock, flags);
@@ -1595,7 +1593,7 @@ static void blkcg_css_offline(struct cgroup *cgroup)
 		list_for_each_entry(blkiop, &blkio_list, list) {
 			if (blkiop->plid != blkg->plid)
 				continue;
-			blkiop->ops.blkio_unlink_group_fn(key, blkg);
+			blkiop->ops.blkio_unlink_group_fn(q, blkg);
 		}
 		spin_unlock(&blkio_list_lock);
 	} while (1);
