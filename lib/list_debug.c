@@ -10,6 +10,7 @@
 #include <linux/list.h>
 #include <linux/bug.h>
 #include <linux/kernel.h>
+#include <linux/rculist.h>
 #include <linux/bug.h>
 
 /*
