@@ -2025,7 +2025,7 @@ TASK_PFA_CLEAR(SPREAD_SLAB, spread_slab)
  */
 extern unsigned long long notrace sched_clock(void);
 /*
- * See the comment in kernel/sched_clock.c
+ * See the comment in kernel/sched/clock.c
  */
 extern u64 cpu_clock(int cpu);
 extern u64 local_clock(void);
