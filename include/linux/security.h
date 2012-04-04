@@ -641,10 +641,7 @@ static inline void security_free_mnt_opts(struct security_mnt_opts *opts)
  *	to receive an open file descriptor via socket IPC.
  *	@file contains the file structure being received.
  *	Return 0 if permission is granted.
- *
- * Security hook for dentry
- *
- * @dentry_open
+ * @file_open
  *	Save open-time permission checking state for later use upon
  *	file_permission, and recheck access if anything has changed
  *	since inode_permission.
@@ -1506,7 +1503,7 @@ struct security_operations {
 	int (*file_send_sigiotask) (struct task_struct *tsk,
 				    struct fown_struct *fown, int sig);
 	int (*file_receive) (struct file *file);
-	int (*dentry_open) (struct file *file, const struct cred *cred);
+	int (*file_open) (struct file *file, const struct cred *cred);
 	int (*file_close) (struct file *file);
 	bool (*allow_merge_bio)(struct bio *bio1, struct bio *bio2);
 
@@ -1774,7 +1771,7 @@ int security_file_set_fowner(struct file *file);
 int security_file_send_sigiotask(struct task_struct *tsk,
 				 struct fown_struct *fown, int sig);
 int security_file_receive(struct file *file);
-int security_dentry_open(struct file *file, const struct cred *cred);
+int security_file_open(struct file *file, const struct cred *cred);
 int security_file_close(struct file *file);
 bool security_allow_merge_bio(struct bio *bio1, struct bio *bio2);
 
@@ -2275,8 +2272,8 @@ static inline int security_file_receive(struct file *file)
 	return 0;
 }
 
-static inline int security_dentry_open(struct file *file,
-				       const struct cred *cred)
+static inline int security_file_open(struct file *file,
+				     const struct cred *cred)
 {
 	return 0;
 }
