@@ -3516,10 +3516,11 @@ static int cfq_init_queue(struct request_queue *q)
 	rcu_read_lock();
 	spin_lock_irq(q->queue_lock);
 
-	blkg = blkg_lookup_create(&blkio_root_cgroup, q, BLKIO_POLICY_PROP,
-				  true);
-	if (!IS_ERR(blkg))
+	blkg = blkg_lookup_create(&blkio_root_cgroup, q, true);
+	if (!IS_ERR(blkg)) {
+		q->root_blkg = blkg;
 		cfqd->root_group = blkg_to_cfqg(blkg);
+	}
 
 	spin_unlock_irq(q->queue_lock);
 	rcu_read_unlock();

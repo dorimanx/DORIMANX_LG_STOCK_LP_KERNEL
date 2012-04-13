@@ -32,6 +32,7 @@ struct blk_trace;
 struct request;
 struct sg_io_hdr;
 struct bsg_job;
+struct blkio_group;
 
 #define BLKDEV_MIN_RQ	4
 #define BLKDEV_MAX_RQ	128	/* Default maximum */
@@ -385,7 +386,7 @@ struct request_queue {
 
 	struct list_head	icq_list;
 #ifdef CONFIG_BLK_CGROUP
-	/* XXX: array size hardcoded to avoid include dependency (temporary) */
+	struct blkio_group	*root_blkg;
 	struct list_head	blkg_list;
 	int			nr_blkgs;
 #endif
@@ -1059,12 +1060,8 @@ static inline struct request *blk_map_queue_find_tag(struct blk_queue_tag *bqt,
 extern int blkdev_issue_flush(struct block_device *, gfp_t, sector_t *);
 extern int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
 		sector_t nr_sects, gfp_t gfp_mask, unsigned long flags);
-<<<<<<< HEAD
-extern int blkdev_issue_sanitize(struct block_device *bdev, gfp_t gfp_mask);
-=======
 extern int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
 		sector_t nr_sects, gfp_t gfp_mask, struct page *page);
->>>>>>> 4363ac7... block: Implement support for WRITE SAME
 extern int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
 			sector_t nr_sects, gfp_t gfp_mask);
 static inline int sb_issue_discard(struct super_block *sb, sector_t block,

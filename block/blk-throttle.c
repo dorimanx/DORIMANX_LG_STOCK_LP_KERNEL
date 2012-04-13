@@ -83,7 +83,6 @@ struct throtl_data
 	/* service tree for active throtl groups */
 	struct throtl_rb_root tg_service_tree;
 
-	struct throtl_grp *root_tg;
 	struct request_queue *queue;
 
 	/* Total Number of queued bios on READ and WRITE lists */
@@ -108,6 +107,11 @@ static inline struct throtl_grp *blkg_to_tg(struct blkio_group *blkg)
 static inline struct blkio_group *tg_to_blkg(struct throtl_grp *tg)
 {
 	return pdata_to_blkg(tg, &blkio_policy_throtl);
+}
+
+static inline struct throtl_grp *td_root_tg(struct throtl_data *td)
+{
+	return blkg_to_tg(td->queue->root_blkg);
 }
 
 enum tg_state_flags {
@@ -165,7 +169,7 @@ throtl_grp *throtl_lookup_tg(struct throtl_data *td, struct blkio_cgroup *blkcg)
 	 * Avoid lookup in this case
 	 */
 	if (blkcg == &blkio_root_cgroup)
-		return td->root_tg;
+		return td_root_tg(td);
 
 	return blkg_to_tg(blkg_lookup(blkcg, td->queue));
 }
@@ -181,7 +185,7 @@ static struct throtl_grp *throtl_lookup_create_tg(struct throtl_data *td,
 	 * Avoid lookup in this case
 	 */
 	if (blkcg == &blkio_root_cgroup) {
-		tg = td->root_tg;
+		tg = td_root_tg(td);
 	} else {
 		struct blkio_group *blkg;
 
@@ -191,7 +195,7 @@ static struct throtl_grp *throtl_lookup_create_tg(struct throtl_data *td,
 		if (!IS_ERR(blkg))
 			tg = blkg_to_tg(blkg);
 		else if (!blk_queue_dead(q))
-			tg = td->root_tg;
+			tg = td_root_tg(td);
 	}
 
 	return tg;
@@ -1027,12 +1031,12 @@ int blk_throtl_init(struct request_queue *q)
 	blkg = blkg_lookup_create(&blkio_root_cgroup, q, BLKIO_POLICY_THROTL,
 				  true);
 	if (!IS_ERR(blkg))
-		td->root_tg = blkg_to_tg(blkg);
+		q->root_blkg = blkg;
 
 	spin_unlock_irq(q->queue_lock);
 	rcu_read_unlock();
 
-	if (!td->root_tg) {
+	if (!q->root_blkg) {
 		kfree(td);
 		return -ENOMEM;
 	}
