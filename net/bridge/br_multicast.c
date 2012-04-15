@@ -519,8 +519,8 @@ static struct net_bridge_mdb_entry *br_multicast_get_group(
 {
 	struct net_bridge_mdb_htable *mdb;
 	struct net_bridge_mdb_entry *mp;
-	unsigned count = 0;
-	unsigned max;
+	unsigned int count = 0;
+	unsigned int max;
 	int elasticity;
 	int err;
 
@@ -1296,8 +1296,8 @@ static int br_multicast_ipv4_rcv(struct net_bridge *br,
 	struct sk_buff *skb2 = skb;
 	const struct iphdr *iph;
 	struct igmphdr *ih;
-	unsigned len;
-	unsigned offset;
+	unsigned int len;
+	unsigned int offset;
 	int err;
 
 	/* We treat OOM as packet loss for now. */
@@ -1397,7 +1397,7 @@ static int br_multicast_ipv6_rcv(struct net_bridge *br,
 	u8 icmp6_type;
 	u8 nexthdr;
 	__be16 frag_off;
-	unsigned len;
+	unsigned int len;
 	int offset;
 	int err;
 

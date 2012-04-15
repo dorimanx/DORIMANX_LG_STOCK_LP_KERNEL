@@ -108,7 +108,7 @@ extern void tc_qdisc_flow_control(struct net_device *dev, u32 tcm_handle,
 /* Calculate maximal size of packet seen by hard_start_xmit
    routine of this device.
  */
-static inline unsigned psched_mtu(const struct net_device *dev)
+static inline unsigned int psched_mtu(const struct net_device *dev)
 {
 	return dev->mtu + dev->hard_header_len;
 }

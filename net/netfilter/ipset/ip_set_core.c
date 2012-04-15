@@ -1613,7 +1613,7 @@ static struct nfnetlink_subsystem ip_set_netlink_subsys __read_mostly = {
 static int
 ip_set_sockfn_get(struct sock *sk, int optval, void __user *user, int *len)
 {
-	unsigned *op;
+	unsigned int *op;
 	void *data;
 	int copylen = *len, ret = 0;
 
@@ -1621,7 +1621,7 @@ ip_set_sockfn_get(struct sock *sk, int optval, void __user *user, int *len)
 		return -EPERM;
 	if (optval != SO_IP_SET)
 		return -EBADF;
-	if (*len < sizeof(unsigned))
+	if (*len < sizeof(unsigned int))
 		return -EINVAL;
 
 	data = vmalloc(*len);
@@ -1631,7 +1631,7 @@ ip_set_sockfn_get(struct sock *sk, int optval, void __user *user, int *len)
 		ret = -EFAULT;
 		goto done;
 	}
-	op = (unsigned *) data;
+	op = (unsigned int *) data;
 
 	if (*op < IP_SET_OP_VERSION) {
 		/* Check the version at the beginning of operations */
