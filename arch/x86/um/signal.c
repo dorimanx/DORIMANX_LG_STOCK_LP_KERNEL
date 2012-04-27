@@ -483,7 +483,6 @@ long sys_sigreturn(struct pt_regs *regs)
 	    copy_from_user(&set.sig[1], extramask, sig_size))
 		goto segfault;
 
-	sigdelsetmask(&set, ~_BLOCKABLE);
 	set_current_blocked(&set);
 
 	if (copy_sc_from_user(&current->thread.regs, sc))
@@ -597,7 +596,6 @@ long sys_rt_sigreturn(struct pt_regs *regs)
 	if (copy_from_user(&set, &uc->uc_sigmask, sizeof(set)))
 		goto segfault;
 
-	sigdelsetmask(&set, ~_BLOCKABLE);
 	set_current_blocked(&set);
 
 	if (copy_sc_from_user(&current->thread.regs, &uc->uc_mcontext))

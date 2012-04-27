@@ -2464,7 +2464,7 @@ extern int do_sigaltstack(const stack_t __user *, stack_t __user *, unsigned lon
 static inline void restore_saved_sigmask(void)
 {
 	if (test_and_clear_restore_sigmask())
-		set_current_blocked(&current->saved_sigmask);
+		__set_current_blocked(&current->saved_sigmask);
 }
 
 static inline int kill_cad_pid(int sig, int priv)
