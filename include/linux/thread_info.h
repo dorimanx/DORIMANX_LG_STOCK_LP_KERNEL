@@ -8,6 +8,7 @@
 #define _LINUX_THREAD_INFO_H
 
 #include <linux/types.h>
+#include <linux/bug.h>
 
 struct timespec;
 struct compat_timespec;
@@ -129,7 +130,7 @@ static inline int test_ti_thread_flag(struct thread_info *ti, int flag)
 static inline void set_restore_sigmask(void)
 {
 	set_thread_flag(TIF_RESTORE_SIGMASK);
-	set_thread_flag(TIF_SIGPENDING);
+	WARN_ON(!test_thread_flag(TIF_SIGPENDING));
 }
 #endif	/* TIF_RESTORE_SIGMASK && !HAVE_SET_RESTORE_SIGMASK */
 

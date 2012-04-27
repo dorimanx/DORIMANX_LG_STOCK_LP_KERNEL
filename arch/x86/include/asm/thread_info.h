@@ -262,7 +262,7 @@ static inline void set_restore_sigmask(void)
 {
 	struct thread_info *ti = current_thread_info();
 	ti->status |= TS_RESTORE_SIGMASK;
-	set_bit(TIF_SIGPENDING, (unsigned long *)&ti->flags);
+	WARN_ON(!test_bit(TIF_SIGPENDING, (unsigned long *)&ti->flags));
 }
 
 static inline bool is_ia32_task(void)
