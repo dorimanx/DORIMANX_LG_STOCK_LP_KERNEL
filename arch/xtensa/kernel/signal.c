@@ -534,7 +534,7 @@ int do_signal(struct pt_regs *regs, sigset_t *oldset)
 		if (ret)
 			return ret;
 
-		block_sigmask(&ka, signr);
+		signal_delivered(signr, info, ka, regs, 0);
 		if (current->ptrace & PT_SINGLESTEP)
 			task_pt_regs(current)->icountlevel = 1;
 
