@@ -972,10 +972,11 @@ static inline struct sk_buff *skb_unshare(struct sk_buff *skb,
  */
 static inline struct sk_buff *skb_peek(const struct sk_buff_head *list_)
 {
-	struct sk_buff *list = ((const struct sk_buff *)list_)->next;
-	if (list == (struct sk_buff *)list_)
-		list = NULL;
-	return list;
+	struct sk_buff *skb = list_->next;
+
+	if (skb == (struct sk_buff *)list_)
+		skb = NULL;
+	return skb;
 }
 
 /**
@@ -991,6 +992,7 @@ static inline struct sk_buff *skb_peek_next(struct sk_buff *skb,
 		const struct sk_buff_head *list_)
 {
 	struct sk_buff *next = skb->next;
+
 	if (next == (struct sk_buff *)list_)
 		next = NULL;
 	return next;
@@ -1011,10 +1013,12 @@ static inline struct sk_buff *skb_peek_next(struct sk_buff *skb,
  */
 static inline struct sk_buff *skb_peek_tail(const struct sk_buff_head *list_)
 {
-	struct sk_buff *list = ((const struct sk_buff *)list_)->prev;
-	if (list == (struct sk_buff *)list_)
-		list = NULL;
-	return list;
+	struct sk_buff *skb = list_->prev;
+
+	if (skb == (struct sk_buff *)list_)
+		skb = NULL;
+	return skb;
+
 }
 
 /**
