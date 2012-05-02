@@ -542,11 +542,11 @@ setup_rt_frame(int usig, struct k_sigaction *ka, siginfo_t *info,
  */	
 static int
 handle_signal(unsigned long sig, struct k_sigaction *ka,
-	      siginfo_t *info, sigset_t *oldset,
-	      struct pt_regs * regs)
+	      siginfo_t *info, struct pt_regs *regs)
 {
 	struct thread_info *thread = current_thread_info();
 	struct task_struct *tsk = current;
+	sigset_t *oldset = sigmask_to_save();
 	int usig = sig;
 	int ret;
 
@@ -637,8 +637,6 @@ static int do_signal(struct pt_regs *regs, int syscall)
 	if (regs->ARM_pc != restart_addr)
 		restart = 0;
 	if (signr > 0) {
-		sigset_t *oldset;
-
 		if (unlikely(restart)) {
 			if (retval == -ERESTARTNOHAND ||
 			    retval == -ERESTART_RESTARTBLOCK
@@ -649,11 +647,7 @@ static int do_signal(struct pt_regs *regs, int syscall)
 			}
 		}
 
-		if (test_thread_flag(TIF_RESTORE_SIGMASK))
-			oldset = &current->saved_sigmask;
-		else
-			oldset = &current->blocked;
-		if (handle_signal(signr, &ka, &info, oldset, regs) == 0) {
+		if (handle_signal(signr, &ka, &info, regs) == 0) {
 			/*
 			 * A signal was successfully delivered; the saved
 			 * sigmask will have been stored in the signal frame,

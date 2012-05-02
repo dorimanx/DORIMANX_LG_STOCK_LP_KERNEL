@@ -244,8 +244,7 @@ do_restart:
  */
 static int handle_signal(int sig,
 			 siginfo_t *info, struct k_sigaction *ka,
-			 sigset_t *oldset, struct pt_regs *regs,
-			 int syscall)
+			 struct pt_regs *regs, int syscall)
 {
 	int ret;
 
@@ -272,7 +271,7 @@ static int handle_signal(int sig,
 	}
 
 	/* Set up the stack frame */
-	ret = setup_rt_frame(sig, ka, info, oldset, regs);
+	ret = setup_rt_frame(sig, ka, info, sigmask_to_save(), regs);
 	if (ret == 0)
 		block_sigmask(ka, sig);
 
@@ -286,7 +285,6 @@ static void do_signal(struct pt_regs *regs, int syscall)
 {
 	struct k_sigaction ka;
 	siginfo_t info;
-	sigset_t *oldset;
 	int signr;
 
 	/* we want the common case to go fast, which is why we may in certain
@@ -294,15 +292,9 @@ static void do_signal(struct pt_regs *regs, int syscall)
 	if (!user_mode(regs))
 		return;
 
-	if (test_thread_flag(TIF_RESTORE_SIGMASK))
-		oldset = &current->saved_sigmask;
-	else
-		oldset = &current->blocked;
-
 	signr = get_signal_to_deliver(&info, &ka, regs, NULL);
 	if (signr > 0) {
-		if (handle_signal(signr, &info, &ka, oldset,
-				  regs, syscall) == 0) {
+		if (handle_signal(signr, &info, &ka, regs, syscall) == 0) {
 			/* a signal was successfully delivered; the saved
 			 * sigmask will have been stored in the signal frame,
 			 * and will be restored by sigreturn, so we can simply
