@@ -175,7 +175,8 @@ config ARCH_TASK_STRUCT_ALLOCATOR
 config ARCH_THREAD_INFO_ALLOCATOR
 	bool
 
-config HAVE_GENERIC_INIT_TASK
+# Select if arch init_task initializer is different to init/init_task.c
+config ARCH_INIT_TASK
        bool
 
 config HAVE_REGS_AND_STACK_ACCESS_API
