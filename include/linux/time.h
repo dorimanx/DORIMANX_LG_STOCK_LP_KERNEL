@@ -213,6 +213,8 @@ extern int timekeeping_valid_for_hres(void);
 extern u64 timekeeping_max_deferment(void);
 extern void timekeeping_leap_insert(int leapsecond);
 extern int timekeeping_inject_offset(struct timespec *ts);
+extern s32 timekeeping_get_tai_offset(void);
+extern void timekeeping_set_tai_offset(s32 tai_offset);
 
 struct tms;
 extern void do_sys_times(struct tms *);
