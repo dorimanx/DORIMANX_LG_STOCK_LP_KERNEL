@@ -22,28 +22,14 @@ mmu-y	:= clear_user.o getuser.o putuser.o cmp_page.o
 ifneq ($(CONFIG_HAS_MACH_MEMUTILS),y)
   mmu-y += copy_page.o
   lib-y += memcpy.o memmove.o
-ifeq ($(CONFIG_PREEMPT),y)
+endif
   mmu-y	+= copy_from_user.o copy_to_user.o
-else
-ifneq ($(CONFIG_CPU_32v3),y)
-  mmu-y	+= copy_from_user.o copy_to_user.o
-else
-  mmu-y	+= uaccess.o
-endif
-endif
-endif
 
 # using lib_ here won't override already available weak symbols
 obj-$(CONFIG_UACCESS_WITH_MEMCPY) += uaccess_with_memcpy.o
 
-lib-$(CONFIG_MMU) += $(mmu-y)
-
-ifeq ($(CONFIG_CPU_32v3),y)
-  lib-y	+= io-readsw-armv3.o io-writesw-armv3.o
-else
-  lib-y	+= io-readsw-armv4.o io-writesw-armv4.o
-endif
-
+lib-$(CONFIG_MMU)		+= $(mmu-y)
+lib-y				+= io-readsw-armv4.o io-writesw-armv4.o
 lib-$(CONFIG_ARCH_RPC)		+= ecard.o io-acorn.o floppydma.o
 lib-$(CONFIG_ARCH_SHARK)	+= io-shark.o
 
