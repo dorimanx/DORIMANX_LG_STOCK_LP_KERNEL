@@ -2888,7 +2888,8 @@ int skb_gro_receive(struct sk_buff **head, struct sk_buff *skb)
 		skb_frag_size_sub(frag, offset);
 
 		/* all fragments truesize : remove (head size + sk_buff) */
-		delta_truesize = skb->truesize - SKB_TRUESIZE(skb_end_pointer(skb) - skb->head);
+		delta_truesize = skb->truesize -
+				 SKB_TRUESIZE(skb_end_offset(skb));
 
 		skb->truesize -= skb->data_len;
 		skb->len -= skb->data_len;
