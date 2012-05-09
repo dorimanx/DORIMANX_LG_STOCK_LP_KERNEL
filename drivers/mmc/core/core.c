@@ -63,6 +63,7 @@ static void mmc_clk_scaling(struct mmc_host *host, bool from_wq);
 #define MMC_FLUSH_REQ_TIMEOUT_MS 180000 /* msec */
 
 static struct workqueue_struct *workqueue;
+static const unsigned freqs[] = { 400000, 300000, 200000, 100000 };
 
 /*
  * Enabling software CRCs on the data blocks can be a significant (30%)
@@ -2005,6 +2006,9 @@ void mmc_power_up(struct mmc_host *host)
 {
 	int bit;
 
+	if (host->ios.power_mode == MMC_POWER_ON)
+		return;
+
 	mmc_host_clk_hold(host);
 
 	/* If ocr is set, we use it */
@@ -2063,16 +2067,8 @@ void mmc_power_up(struct mmc_host *host)
 
 void mmc_power_off(struct mmc_host *host)
 {
-	#ifdef CONFIG_MACH_LGE
-		/* LGE_CHANGE
-		 * If it is already power-off, skip below.
-		 * 2014-01-16, B2-BSP-FS@lge.com
-		 */
-		if (host->ios.power_mode == MMC_POWER_OFF) {
-            pr_info("[LGE][MMC][%-18s( )] host->index:%d, already power-off, skip below\n", __func__, host->index);
-			return;
-		}
-	#endif
+	if (host->ios.power_mode == MMC_POWER_OFF)
+		return;
 
 	mmc_host_clk_hold(host);
 
@@ -3428,7 +3424,8 @@ void mmc_rescan(struct work_struct *work)
 
 void mmc_start_host(struct mmc_host *host)
 {
-	mmc_power_off(host);
+	host->f_init = max(freqs[0], host->f_min);
+	mmc_power_up(host);
 	mmc_detect_change(host, 0);
 }
 
