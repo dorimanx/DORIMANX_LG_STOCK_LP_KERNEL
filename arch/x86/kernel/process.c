@@ -34,9 +34,15 @@ static DEFINE_PER_CPU(unsigned char, is_idle);
 struct kmem_cache *task_xstate_cachep;
 EXPORT_SYMBOL_GPL(task_xstate_cachep);
 
+/*
+ * this gets called so that we can store lazy state into memory and copy the
+ * current task into the new thread.
+ */
 int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src)
 {
 	int ret;
+
+	unlazy_fpu(src);
 
 	*dst = *src;
 	if (fpu_allocated(&src->thread.fpu)) {
