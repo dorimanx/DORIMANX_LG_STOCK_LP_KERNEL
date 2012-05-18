@@ -2892,7 +2892,7 @@ _scsih_ublock_io_all_device(struct MPT2SAS_ADAPTER *ioc)
 		dewtprintk(ioc, sdev_printk(KERN_INFO, sdev, "device_running, "
 		    "handle(0x%04x)\n",
 		    sas_device_priv_data->sas_target->handle));
-		scsi_internal_device_unblock(sdev);
+		scsi_internal_device_unblock(sdev, SDEV_RUNNING);
 	}
 }
 /**
@@ -2919,7 +2919,7 @@ _scsih_ublock_io_device(struct MPT2SAS_ADAPTER *ioc, u16 handle)
 			    MPT2SAS_INFO_FMT "SDEV_RUNNING: "
 			    "handle(0x%04x)\n", ioc->name, handle));
 			sas_device_priv_data->block = 0;
-			scsi_internal_device_unblock(sdev);
+			scsi_internal_device_unblock(sdev, SDEV_RUNNING);
 		}
 	}
 }
