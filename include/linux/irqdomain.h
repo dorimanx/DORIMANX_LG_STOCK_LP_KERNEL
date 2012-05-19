@@ -149,9 +149,6 @@ static inline struct irq_domain *irq_domain_add_legacy_isa(
 
 extern void irq_domain_remove(struct irq_domain *host);
 
-extern struct irq_domain *irq_find_host(struct device_node *node);
-extern void irq_set_default_host(struct irq_domain *host);
-
 extern int irq_domain_associate_many(struct irq_domain *domain,
 				     unsigned int irq_base,
 				     irq_hw_number_t hwirq_base, int count);
