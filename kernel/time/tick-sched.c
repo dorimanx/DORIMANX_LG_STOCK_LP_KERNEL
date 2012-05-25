@@ -1133,6 +1133,14 @@ static enum hrtimer_restart tick_sched_timer(struct hrtimer *timer)
 
 static int sched_skew_tick;
 
+static int __init skew_tick(char *str)
+{
+	get_option(&str, &sched_skew_tick);
+
+	return 0;
+}
+early_param("skew_tick", skew_tick);
+
 /**
  * tick_setup_sched_timer - setup the tick emulation timer
  */
@@ -1240,11 +1248,3 @@ int tick_check_oneshot_change(int allow_nohz)
 	tick_nohz_switch_to_nohz();
 	return 0;
 }
-
-static int __init skew_tick(char *str)
-{
-	get_option(&str, &sched_skew_tick);
-
-	return 0;
-}
-early_param("skew_tick", skew_tick);
