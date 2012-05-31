@@ -844,6 +844,8 @@ extern int group_balance_cpu(struct sched_group *sg);
  */
 #define group_rq_capacity(group) capacity(cpu_rq(group_first_cpu(group)))
 
+extern int group_balance_cpu(struct sched_group *sg);
+
 #endif /* CONFIG_SMP */
 
 #include "stats.h"
