@@ -447,14 +447,10 @@ out:
 	return result;
 }
 
-static void nfs_direct_free_writedata(struct nfs_direct_req *dreq)
+static void nfs_inode_dio_write_done(struct inode *inode)
 {
-	while (!list_empty(&dreq->rewrite_list)) {
-		struct nfs_write_data *data = list_entry(dreq->rewrite_list.next, struct nfs_write_data, pages);
-		list_del(&data->pages);
-		nfs_direct_release_pages(data->pagevec, data->npages);
-		nfs_writedata_free(data);
-	}
+	nfs_zap_mapping(inode, inode->i_mapping);
+	inode_dio_done(inode);
 }
 
 #if defined(CONFIG_NFS_V3) || defined(CONFIG_NFS_V4)
@@ -613,10 +609,7 @@ static void nfs_direct_write_complete(struct nfs_direct_req *dreq, struct inode 
 			nfs_direct_write_reschedule(dreq);
 			break;
 		default:
-			if (dreq->commit_data != NULL)
-				nfs_commit_free(dreq->commit_data);
-			nfs_direct_free_writedata(dreq);
-			nfs_zap_mapping(inode, inode->i_mapping);
+			nfs_inode_dio_write_done(dreq->inode);
 			nfs_direct_complete(dreq);
 	}
 }
@@ -635,8 +628,7 @@ static inline void nfs_alloc_commit_data(struct nfs_direct_req *dreq)
 
 static void nfs_direct_write_complete(struct nfs_direct_req *dreq, struct inode *inode)
 {
-	nfs_direct_free_writedata(dreq);
-	nfs_zap_mapping(inode, inode->i_mapping);
+	nfs_inode_dio_write_done(inode);
 	nfs_direct_complete(dreq);
 }
 #endif
@@ -819,11 +811,17 @@ static ssize_t nfs_direct_write_schedule_iovec(struct nfs_direct_req *dreq,
 					       unsigned long nr_segs,
 					       loff_t pos, int sync)
 {
+	struct nfs_pageio_descriptor desc;
+	struct inode *inode = dreq->inode;
 	ssize_t result = 0;
 	size_t requested_bytes = 0;
 	unsigned long seg;
 
+	nfs_pageio_init_write(&desc, inode, FLUSH_COND_STABLE,
+			      &nfs_direct_write_completion_ops);
+	desc.pg_dreq = dreq;
 	get_dreq(dreq);
+	atomic_inc(&inode->i_dio_count);
 
 	for (seg = 0; seg < nr_segs; seg++) {
 		const struct iovec *vec = &iov[seg];
@@ -842,6 +840,7 @@ static ssize_t nfs_direct_write_schedule_iovec(struct nfs_direct_req *dreq,
 	 * generic layer handle the completion.
 	 */
 	if (requested_bytes == 0) {
+		inode_dio_done(inode);
 		nfs_direct_req_release(dreq);
 		return result < 0 ? result : -EIO;
 	}

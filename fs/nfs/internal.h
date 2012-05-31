@@ -333,6 +333,14 @@ extern int nfs_migrate_page(struct address_space *,
 #define nfs_migrate_page NULL
 #endif
 
+/* direct.c */
+void nfs_init_cinfo_from_dreq(struct nfs_commit_info *cinfo,
+			      struct nfs_direct_req *dreq);
+static inline void nfs_inode_dio_wait(struct inode *inode)
+{
+	inode_dio_wait(inode);
+}
+
 /* nfs4proc.c */
 extern void __nfs4_read_done_cb(struct nfs_read_data *);
 extern void nfs4_reset_read(struct rpc_task *task, struct nfs_read_data *data);

@@ -2655,8 +2655,6 @@ enum {
 };
 
 void dio_end_io(struct bio *bio, int error);
-void inode_dio_wait(struct inode *inode);
-void inode_dio_done(struct inode *inode);
 struct inode *dio_bio_get_inode(struct bio *bio);
 
 ssize_t __blockdev_direct_IO(int rw, struct kiocb *iocb, struct inode *inode,
@@ -2672,11 +2670,10 @@ static inline ssize_t blockdev_direct_IO(int rw, struct kiocb *iocb,
 				    offset, nr_segs, get_block, NULL, NULL,
 				    DIO_LOCKING | DIO_SKIP_HOLES);
 }
-#else
-static inline void inode_dio_wait(struct inode *inode)
-{
-}
 #endif
+
+void inode_dio_wait(struct inode *inode);
+void inode_dio_done(struct inode *inode);
 
 extern const struct file_operations generic_ro_fops;
 
