@@ -818,9 +818,9 @@ static void check_stack_usage(void)
 	spin_unlock(&low_water_lock);
 
 	if (islower) {
-		printk(KERN_WARNING "%s used greatest stack depth: %lu bytes "
-				"left\n",
-				current->comm, free);
+		printk(KERN_WARNING "%s (%d) used greatest stack depth: "
+				"%lu bytes left\n",
+				current->comm, task_pid_nr(current), free);
 	}
 }
 #else
