@@ -870,15 +870,11 @@ static struct request *__get_request(struct request_queue *q, int rw_flags,
 {
 	struct request *rq;
 	struct request_list *rl = &q->rq;
-	struct elevator_type *et;
-	struct io_context *ioc;
+	struct elevator_type *et = q->elevator->type;
+	struct io_context *ioc = rq_ioc(bio);
 	struct io_cq *icq = NULL;
 	const bool is_sync = rw_is_sync(rw_flags) != 0;
-	bool retried = false;
 	int may_queue;
-retry:
-	et = q->elevator->type;
-	ioc = rq_ioc(bio);
 
 	if (unlikely(blk_queue_dead(q)))
 		return NULL;
@@ -889,20 +885,6 @@ retry:
 
 	if (rl->count[is_sync]+1 >= queue_congestion_on_threshold(q)) {
 		if (rl->count[is_sync]+1 >= q->nr_requests) {
-			/*
-			 * We want ioc to record batching state.  If it's
-			 * not already there, creating a new one requires
-			 * dropping queue_lock, which in turn requires
-			 * retesting conditions to avoid queue hang.
-			 */
-			if (!ioc && !retried) {
-				spin_unlock_irq(q->queue_lock);
-				create_io_context(gfp_mask, q->node);
-				spin_lock_irq(q->queue_lock);
-				retried = true;
-				goto retry;
-			}
-
 			/*
 			 * The queue will fill after this allocation, so set
 			 * it as full, and mark this process as "batching".
@@ -970,12 +952,8 @@ retry:
 	/* init elvpriv */
 	if (rw_flags & REQ_ELVPRIV) {
 		if (unlikely(et->icq_cache && !icq)) {
-			create_io_context(gfp_mask, q->node);
-			ioc = rq_ioc(bio);
-			if (!ioc)
-				goto fail_elvpriv;
-
-			icq = ioc_create_icq(ioc, q, gfp_mask);
+			if (ioc)
+				icq = ioc_create_icq(ioc, q, gfp_mask);
 			if (!icq)
 				goto fail_elvpriv;
 		}
@@ -1086,7 +1064,6 @@ retry:
 	 * to allocate at least one request, and up to a big batch of them
 	 * for a small period time.  See ioc_batching, ioc_set_batching
 	 */
-	create_io_context(GFP_NOIO, q->node);
 	ioc_set_batching(q, current->io_context);
 
 	spin_lock_irq(q->queue_lock);
@@ -1098,6 +1075,9 @@ retry:
 struct request *blk_get_request(struct request_queue *q, int rw, gfp_t gfp_mask)
 {
 	struct request *rq;
+
+	/* create ioc upfront */
+	create_io_context(gfp_mask, q->node);
 
 	spin_lock_irq(q->queue_lock);
 	rq = get_request(q, rw, NULL, gfp_mask);
@@ -1790,6 +1770,14 @@ generic_make_request_checks(struct bio *bio)
 		err = -EOPNOTSUPP;
 		goto end_io;
 	}
+
+	/*
+	 * Various block parts want %current->io_context and lazy ioc
+	 * allocation ends up trading a lot of pain for a small amount of
+	 * memory.  Just allocate it upfront.  This may fail and block
+	 * layer knows how to live with it.
+	 */
+	create_io_context(GFP_ATOMIC, q->node);
 
 	if ((bio->bi_rw & REQ_SANITIZE) &&
 	    (!blk_queue_sanitize(q))) {
