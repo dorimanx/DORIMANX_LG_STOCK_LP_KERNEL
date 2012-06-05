@@ -66,16 +66,16 @@ queue_requests_store(struct request_queue *q, const char *page, size_t count)
 		blk_clear_queue_congested(q, BLK_RW_ASYNC);
 
 	if (rl->count[BLK_RW_SYNC] >= q->nr_requests) {
-		blk_set_queue_full(q, BLK_RW_SYNC);
+		blk_set_rl_full(rl, BLK_RW_SYNC);
 	} else {
-		blk_clear_queue_full(q, BLK_RW_SYNC);
+		blk_clear_rl_full(rl, BLK_RW_SYNC);
 		wake_up(&rl->wait[BLK_RW_SYNC]);
 	}
 
 	if (rl->count[BLK_RW_ASYNC] >= q->nr_requests) {
-		blk_set_queue_full(q, BLK_RW_ASYNC);
+		blk_set_rl_full(rl, BLK_RW_ASYNC);
 	} else {
-		blk_clear_queue_full(q, BLK_RW_ASYNC);
+		blk_clear_rl_full(rl, BLK_RW_ASYNC);
 		wake_up(&rl->wait[BLK_RW_ASYNC]);
 	}
 	spin_unlock_irq(q->queue_lock);
@@ -478,7 +478,6 @@ static void blk_release_queue(struct kobject *kobj)
 {
 	struct request_queue *q =
 		container_of(kobj, struct request_queue, kobj);
-	struct request_list *rl = &q->rq;
 
 	blk_sync_queue(q);
 
@@ -491,8 +490,7 @@ static void blk_release_queue(struct kobject *kobj)
 		elevator_exit(q->elevator);
 	}
 
-	if (rl->rq_pool)
-		mempool_destroy(rl->rq_pool);
+	blk_exit_rl(&q->rq);
 
 	if (q->queue_tags)
 		__blk_queue_free_tags(q);
