@@ -444,6 +444,7 @@ struct vfsmount;
 struct cred;
 struct swap_info_struct;
 struct seq_file;
+struct opendata;
 
 extern void __init inode_init(void);
 extern void __init inode_init_early(void);
@@ -1845,6 +1846,9 @@ struct inode_operations {
 	int (*fiemap)(struct inode *, struct fiemap_extent_info *, u64 start,
 		      u64 len);
 	int (*update_time)(struct inode *, struct timespec *, int);
+	struct file * (*atomic_open)(struct inode *, struct dentry *,
+				     struct opendata *, unsigned open_flag,
+				     umode_t create_mode, bool *created);
 } ____cacheline_aligned;
 
 ssize_t rw_copy_check_uvector(int type, const struct iovec __user * uvector,
@@ -2222,6 +2226,9 @@ extern struct file * dentry_open(struct dentry *, struct vfsmount *, int,
 				 const struct cred *);
 extern int filp_close(struct file *, fl_owner_t id);
 extern char * getname(const char __user *);
+extern struct file *finish_open(struct opendata *od, struct dentry *dentry,
+				int (*open)(struct inode *, struct file *));
+extern void finish_no_open(struct opendata *od, struct dentry *dentry);
 
 /* fs/ioctl.c */
 
