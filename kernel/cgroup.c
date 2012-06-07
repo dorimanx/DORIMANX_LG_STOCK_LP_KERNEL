@@ -5056,8 +5056,7 @@ void __css_put(struct cgroup_subsys_state *css)
 	struct cgroup *cgrp = css->cgroup;
 
 	rcu_read_lock();
-	atomic_dec(&css->refcnt);
-	switch (css_refcnt(css)) {
+	switch (atomic_dec_return(&css->refcnt)) {
 	case 1:
 		check_for_release(cgrp);
 		cgroup_wakeup_rmdir_waiter(cgrp);
