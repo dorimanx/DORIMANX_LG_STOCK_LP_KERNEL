@@ -111,7 +111,7 @@ struct dentry {
 	 * d_alias and d_rcu can share memory
 	 */
 	union {
-		struct list_head d_alias;	/* inode alias list */
+		struct hlist_node d_alias;	/* inode alias list */
 	 	struct rcu_head d_rcu;
 	} d_u;
 };

@@ -897,7 +897,7 @@ struct inode {
 	struct list_head	i_lru;		/* inode LRU list */
 	struct list_head	i_sb_list;
 	union {
-		struct list_head	i_dentry;
+		struct hlist_head	i_dentry;
 		struct rcu_head		i_rcu;
 	};
 	atomic_t		i_count;
