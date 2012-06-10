@@ -793,7 +793,7 @@ static struct cgroup *task_cgroup_from_root(struct task_struct *task,
  */
 
 static int cgroup_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode);
-static struct dentry *cgroup_lookup(struct inode *, struct dentry *, struct nameidata *);
+static struct dentry *cgroup_lookup(struct inode *, struct dentry *, unsigned int);
 static int cgroup_rmdir(struct inode *unused_dir, struct dentry *dentry);
 static int cgroup_populate_dir(struct cgroup *cgrp, bool base_files,
 			       unsigned long subsys_mask);
@@ -2641,7 +2641,7 @@ static const struct inode_operations cgroup_dir_inode_operations = {
 	.removexattr = cgroup_removexattr,
 };
 
-static struct dentry *cgroup_lookup(struct inode *dir, struct dentry *dentry, struct nameidata *nd)
+static struct dentry *cgroup_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
 {
 	if (dentry->d_name.len > NAME_MAX)
 		return ERR_PTR(-ENAMETOOLONG);

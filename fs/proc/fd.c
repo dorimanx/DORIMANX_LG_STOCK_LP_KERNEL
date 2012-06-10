@@ -292,7 +292,7 @@ const struct file_operations proc_fd_operations = {
 };
 
 static struct dentry *proc_lookupfd(struct inode *dir, struct dentry *dentry,
-				    struct nameidata *nd)
+				    unsigned int flags)
 {
 	return proc_lookupfd_common(dir, dentry, proc_fd_instantiate);
 }
@@ -355,8 +355,7 @@ proc_fdinfo_instantiate(struct inode *dir, struct dentry *dentry,
 }
 
 static struct dentry *
-proc_lookupfdinfo(struct inode *dir, struct dentry *dentry,
-					struct nameidata *nd)
+proc_lookupfdinfo(struct inode *dir, struct dentry *dentry, unsigned int flags)
 {
 	return proc_lookupfd_common(dir, dentry, proc_fdinfo_instantiate);
 }

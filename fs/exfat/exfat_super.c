@@ -696,13 +696,8 @@ static int exfat_d_anon_disconn(struct dentry *dentry)
 	return IS_ROOT(dentry) && (dentry->d_flags & DCACHE_DISCONNECTED);
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,00)
 static struct dentry *exfat_lookup(struct inode *dir, struct dentry *dentry,
 						   unsigned int flags)
-#else
-static struct dentry *exfat_lookup(struct inode *dir, struct dentry *dentry,
-						   struct nameidata *nd)
-#endif
 {
 	struct super_block *sb = dir->i_sb;
 	struct inode *inode;
