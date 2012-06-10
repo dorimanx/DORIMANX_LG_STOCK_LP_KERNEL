@@ -722,7 +722,7 @@ error:
 
 static int
 v9fs_vfs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
-		struct nameidata *nd)
+		bool excl)
 {
 	int err;
 	u32 perm;

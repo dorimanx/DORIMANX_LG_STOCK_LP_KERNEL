@@ -740,7 +740,7 @@ static int ceph_mknod(struct inode *dir, struct dentry *dentry,
 }
 
 static int ceph_create(struct inode *dir, struct dentry *dentry, umode_t mode,
-		       struct nameidata *nd)
+		       bool excl)
 {
 	dout("create in dir %p dentry %p name '%.*s'\n",
 	     dir, dentry, dentry->d_name.len, dentry->d_name.name);
