@@ -24,8 +24,6 @@
 #include "spm.h"
 #include "platsmp.h"
 
-extern volatile int pen_release;
-
 static cpumask_t cpu_dying_mask;
 
 static DEFINE_PER_CPU(unsigned int, warm_boot_flag);
