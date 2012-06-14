@@ -447,6 +447,8 @@ struct mmc_host *mmc_alloc_host(int extra, struct device *dev)
 	if (!host)
 		return NULL;
 
+	/* scanning will be enabled when we're ready */
+	host->rescan_disable = 1;
 	idr_preload(GFP_KERNEL);
 	spin_lock(&mmc_host_lock);
 	err = idr_alloc(&mmc_host_idr, host, 0, 0, GFP_NOWAIT);
