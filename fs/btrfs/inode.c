@@ -4437,34 +4437,12 @@ int btrfs_dirty_inode(struct inode *inode)
  */
 int btrfs_update_time(struct file *file)
 {
-	struct inode *inode = file_inode(file);
-	struct timespec now;
-	int ret;
-	enum { S_MTIME = 1, S_CTIME = 2, S_VERSION = 4 } sync_it = 0;
+	struct btrfs_root *root = BTRFS_I(inode)->root;
 
-	/* First try to exhaust all avenues to not sync */
-	if (IS_NOCMTIME(inode))
-		return 0;
+	if (btrfs_root_readonly(root))
+		return -EROFS;
 
-	now = current_fs_time(inode->i_sb);
-	if (!timespec_equal(&inode->i_mtime, &now))
-		sync_it = S_MTIME;
-
-	if (!timespec_equal(&inode->i_ctime, &now))
-		sync_it |= S_CTIME;
-
-	if (IS_I_VERSION(inode))
-		sync_it |= S_VERSION;
-
-	if (!sync_it)
-		return 0;
-
-	/* Finally allowed to write? Takes lock. */
-	if (mnt_want_write_file(file))
-		return 0;
-
-	/* Only change inode inside the lock region */
-	if (sync_it & S_VERSION)
+	if (flags & S_VERSION)
 		inode_inc_iversion(inode);
 	if (sync_it & S_CTIME)
 		inode->i_ctime = now;
