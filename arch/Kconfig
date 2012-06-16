@@ -359,6 +359,9 @@ config HAVE_CONTEXT_TRACKING
 	  rcu_irq_enter/rcu_irq_exit() but preemption or signal handling on
 	  irq exit still need to be protected.
 
+config HAVE_VIRT_CPU_ACCOUNTING
+	bool
+
 config HAVE_ARCH_MMAP_RND_BITS
 	bool
 	help
