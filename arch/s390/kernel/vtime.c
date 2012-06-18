@@ -86,7 +86,7 @@ static void do_account_vtime(struct task_struct *tsk, int hardirq_offset)
 	}
 }
 
-void account_vtime(struct task_struct *prev, struct task_struct *next)
+void account_switch_vtime(struct task_struct *prev)
 {
 	struct thread_info *ti;
 
@@ -94,7 +94,7 @@ void account_vtime(struct task_struct *prev, struct task_struct *next)
 	ti = task_thread_info(prev);
 	ti->user_timer = S390_lowcore.user_timer;
 	ti->system_timer = S390_lowcore.system_timer;
-	ti = task_thread_info(next);
+	ti = task_thread_info(current);
 	S390_lowcore.user_timer = ti->user_timer;
 	S390_lowcore.system_timer = ti->system_timer;
 }
