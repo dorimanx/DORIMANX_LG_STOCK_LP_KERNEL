@@ -910,6 +910,91 @@ error:
 	return ERR_PTR(result);
 }
 
+static int
+v9fs_vfs_atomic_open(struct inode *dir, struct dentry *dentry,
+		     struct opendata *od, unsigned flags, umode_t mode,
+		     int *opened)
+{
+	int err;
+	u32 perm;
+	struct file *filp;
+	struct v9fs_inode *v9inode;
+	struct v9fs_session_info *v9ses;
+	struct p9_fid *fid, *inode_fid;
+	struct dentry *res = NULL;
+
+	if (d_unhashed(dentry)) {
+		res = v9fs_vfs_lookup(dir, dentry, NULL);
+		if (IS_ERR(res))
+			return PTR_ERR(res);
+
+		if (res)
+			dentry = res;
+	}
+
+	/* Only creates */
+	if (!(flags & O_CREAT) || dentry->d_inode) {
+		finish_no_open(od, res);
+		return 1;
+	}
+
+	err = 0;
+	fid = NULL;
+	v9ses = v9fs_inode2v9ses(dir);
+	perm = unixmode2p9mode(v9ses, mode);
+	fid = v9fs_create(v9ses, dir, dentry, NULL, perm,
+				v9fs_uflags2omode(flags,
+						v9fs_proto_dotu(v9ses)));
+	if (IS_ERR(fid)) {
+		err = PTR_ERR(fid);
+		fid = NULL;
+		goto error;
+	}
+
+	v9fs_invalidate_inode_attr(dir);
+	v9inode = V9FS_I(dentry->d_inode);
+	mutex_lock(&v9inode->v_mutex);
+	if (v9ses->cache && !v9inode->writeback_fid &&
+	    ((flags & O_ACCMODE) != O_RDONLY)) {
+		/*
+		 * clone a fid and add it to writeback_fid
+		 * we do it during open time instead of
+		 * page dirty time via write_begin/page_mkwrite
+		 * because we want write after unlink usecase
+		 * to work.
+		 */
+		inode_fid = v9fs_writeback_fid(dentry);
+		if (IS_ERR(inode_fid)) {
+			err = PTR_ERR(inode_fid);
+			mutex_unlock(&v9inode->v_mutex);
+			goto error;
+		}
+		v9inode->writeback_fid = (void *) inode_fid;
+	}
+	mutex_unlock(&v9inode->v_mutex);
+	filp = finish_open(od, dentry, generic_file_open, opened);
+	if (IS_ERR(filp)) {
+		err = PTR_ERR(filp);
+		goto error;
+	}
+
+	filp->private_data = fid;
+#ifdef CONFIG_9P_FSCACHE
+	if (v9ses->cache)
+		v9fs_cache_inode_set_cookie(dentry->d_inode, filp);
+#endif
+
+	*opened |= FILE_CREATED;
+out:
+	dput(res);
+	return err;
+
+error:
+	if (fid)
+		p9_client_clunk(fid);
+	goto out;
+}
+
 /**
  * v9fs_vfs_unlink - VFS unlink hook to delete an inode
  * @i:  inode that is being unlinked
