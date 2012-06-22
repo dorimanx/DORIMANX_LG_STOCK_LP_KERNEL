@@ -261,9 +261,20 @@ v9fs_vfs_create_dotl(struct inode *dir, struct dentry *dentry, umode_t omode,
 
 static int
 v9fs_vfs_atomic_open_dotl(struct inode *dir, struct dentry *dentry,
-			  struct opendata *od, unsigned flags, umode_t omode,
+			  struct file *file, unsigned flags, umode_t omode,
 			  int *opened)
 {
+	int err = 0;
+	gid_t gid;
+	umode_t mode;
+	char *name = NULL;
+	struct p9_qid qid;
+	struct inode *inode;
+	struct p9_fid *fid = NULL;
+	struct v9fs_inode *v9inode;
+	struct p9_fid *dfid, *ofid, *inode_fid;
+	struct v9fs_session_info *v9ses;
+	struct posix_acl *pacl = NULL, *dacl = NULL;
 	struct dentry *res = NULL;
 
 	if (d_unhashed(dentry)) {
@@ -277,7 +288,7 @@ v9fs_vfs_atomic_open_dotl(struct inode *dir, struct dentry *dentry,
 
 	/* Only creates */
 	if (!(flags & O_CREAT) || dentry->d_inode) {
-		finish_no_open(od, res);
+		finish_no_open(file, res);
 		return 1;
 	}
 
@@ -374,15 +385,13 @@ v9fs_vfs_atomic_open_dotl(struct inode *dir, struct dentry *dentry,
 	}
 	mutex_unlock(&v9inode->v_mutex);
 	/* Since we are opening a file, assign the open fid to the file */
-	filp = lookup_instantiate_filp(nd, dentry, generic_file_open);
-	if (IS_ERR(filp)) {
-		err = PTR_ERR(filp);
+	err = finish_open(file, dentry, generic_file_open, opened);
+	if (err)
 		goto err_clunk_old_fid;
-	}
-	filp->private_data = ofid;
+	file->private_data = ofid;
 #ifdef CONFIG_9P_FSCACHE
 	if (v9ses->cache)
-		v9fs_cache_inode_set_cookie(inode, filp);
+		v9fs_cache_inode_set_cookie(inode, file);
 #endif
 	*opened |= FILE_CREATED;
 out:

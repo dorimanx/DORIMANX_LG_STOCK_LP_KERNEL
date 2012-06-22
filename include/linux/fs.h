@@ -444,7 +444,6 @@ struct vfsmount;
 struct cred;
 struct swap_info_struct;
 struct seq_file;
-struct opendata;
 
 extern void __init inode_init(void);
 extern void __init inode_init_early(void);
@@ -1847,7 +1846,7 @@ struct inode_operations {
 		      u64 len);
 	int (*update_time)(struct inode *, struct timespec *, int);
 	int (*atomic_open)(struct inode *, struct dentry *,
-			   struct opendata *, unsigned open_flag,
+			   struct file *, unsigned open_flag,
 			   umode_t create_mode, int *opened);
 } ____cacheline_aligned;
 
@@ -2230,10 +2229,10 @@ enum {
 	FILE_CREATED = 1,
 	FILE_OPENED = 2
 };
-extern struct file *finish_open(struct opendata *od, struct dentry *dentry,
-				int (*open)(struct inode *, struct file *),
-				int *opened);
-extern void finish_no_open(struct opendata *od, struct dentry *dentry);
+extern int finish_open(struct file *file, struct dentry *dentry,
+			int (*open)(struct inode *, struct file *),
+			int *opened);
+extern void finish_no_open(struct file *file, struct dentry *dentry);
 
 /* fs/ioctl.c */
 

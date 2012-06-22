@@ -216,12 +216,11 @@ out:
  * ceph_release gets called).  So fear not!
  */
 int ceph_lookup_open(struct inode *dir, struct dentry *dentry,
-		     struct opendata *od, unsigned flags, umode_t mode,
+		     struct file *file, unsigned flags, umode_t mode,
 		     int *opened)
 {
 	struct ceph_fs_client *fsc = ceph_sb_to_client(dir->i_sb);
 	struct ceph_mds_client *mdsc = fsc->mdsc;
-	struct file *file;
 	struct ceph_mds_request *req;
 	struct dentry *ret;
 	int err;
@@ -251,9 +250,7 @@ int ceph_lookup_open(struct inode *dir, struct dentry *dentry,
 		err = ceph_handle_notrace_create(dir, dentry);
 	if (err)
 		goto out;
-	file = lookup_instantiate_filp(nd, req->r_dentry, ceph_open);
-	if (IS_ERR(file))
-		err = PTR_ERR(file);
+	err = finish_open(file, req->r_dentry, ceph_open, opened);
 out:
 	ret = ceph_finish_lookup(req, dentry, err);
 	ceph_mdsc_put_request(req);
