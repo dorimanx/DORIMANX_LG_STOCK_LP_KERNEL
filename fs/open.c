@@ -708,6 +708,7 @@ static int do_dentry_open(struct file *f,
 
 cleanup_all:
 	fops_put(f->f_op);
+	file_sb_list_del(f);
 	if (f->f_mode & FMODE_WRITE) {
 		put_write_access(inode);
 		if (!special_file(inode->i_mode)) {
@@ -721,7 +722,6 @@ cleanup_all:
 			mnt_drop_write(f->f_path.mnt);
 		}
 	}
-	file_sb_list_del(f);
 cleanup_file:
 	path_put(&f->f_path);
 	f->f_path.mnt = NULL;
