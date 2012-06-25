@@ -520,7 +520,7 @@ static struct dentry *ecryptfs_mount(struct file_system_type *fs_type, int flags
 	}
 	mount_crypt_stat = &sbi->mount_crypt_stat;
 
-	s = sget(fs_type, NULL, set_anon_super, NULL);
+	s = sget(fs_type, NULL, set_anon_super, flags, NULL);
 	if (IS_ERR(s)) {
 		rc = PTR_ERR(s);
 		goto out;
