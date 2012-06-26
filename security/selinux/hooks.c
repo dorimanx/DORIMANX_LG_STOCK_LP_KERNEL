@@ -2282,8 +2282,7 @@ static inline void flush_unauthorized_files(const struct cred *cred,
 	if (!n) /* none found? */
 		return;
 
-	devnull = dentry_open(dget(selinux_null), mntget(selinuxfs_mount),
-			O_RDWR, cred);
+	devnull = dentry_open(&selinux_null, O_RDWR, cred);
 	if (IS_ERR(devnull))
 		devnull = NULL;
 	/* replace all the matching ones with this */
