@@ -93,11 +93,6 @@ ENTRY(ret_from_fork)
 	adrne	lr, BSYM(1f)
 	movne	pc, r5
 1:	get_thread_info tsk
-	ldr	r1, [tsk, #TI_FLAGS]		@ check for syscall tracing
-	tst	r1, #_TIF_SYSCALL_WORK		@ are we tracing syscalls?
-	beq	ret_slow_syscall
-	mov	r1, sp
-	mov	r0, #1				@ trace exit [IP = 1]
 	b	ret_slow_syscall
 ENDPROC(ret_from_fork)
 
