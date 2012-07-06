@@ -298,6 +298,7 @@ static int sysfs_dentry_revalidate(struct dentry *dentry, unsigned int flags)
 {
 	struct sysfs_dirent *sd;
 	int is_dir;
+	int type;
 
 	if (flags & LOOKUP_RCU)
 		return -ECHILD;
@@ -315,6 +316,13 @@ static int sysfs_dentry_revalidate(struct dentry *dentry, unsigned int flags)
 
 	/* The sysfs dirent has been renamed */
 	if (strcmp(dentry->d_name.name, sd->s_name) != 0)
+		goto out_bad;
+
+	/* The sysfs dirent has been moved to a different namespace */
+	type = KOBJ_NS_TYPE_NONE;
+	if (sd->s_parent)
+		type = sysfs_ns_type(sd->s_parent);
+	if (type && (sysfs_info(dentry->d_sb)->ns[type] != sd->s_ns))
 		goto out_bad;
 
 	mutex_unlock(&sysfs_mutex);
