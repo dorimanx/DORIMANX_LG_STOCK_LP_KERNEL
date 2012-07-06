@@ -908,29 +908,48 @@ long arch_ptrace(struct task_struct *child, long request,
 	return ret;
 }
 
-asmlinkage int syscall_trace(int why, struct pt_regs *regs, int scno)
+enum ptrace_syscall_dir {
+	PTRACE_SYSCALL_ENTER = 0,
+	PTRACE_SYSCALL_EXIT,
+};
+
+static int ptrace_syscall_trace(struct pt_regs *regs, int scno,
+				enum ptrace_syscall_dir dir)
 {
 	unsigned long ip;
-	current_thread_info()->syscall = scno;
 
 	if (!test_thread_flag(TIF_SYSCALL_TRACE))
-		goto out_no_trace;
+		return scno;
+
+	current_thread_info()->syscall = scno;
 
 	/*
 	 * IP is used to denote syscall entry/exit:
 	 * IP = 0 -> entry, =1 -> exit
 	 */
 	ip = regs->ARM_ip;
-	regs->ARM_ip = why;
-	ptrace_report_syscall(regs);
-	regs->ARM_ip = ip;
-	scno = current_thread_info()->syscall;
+	regs->ARM_ip = dir;
 
-out_no_trace:
-	if (why)
-		audit_syscall_exit(regs);
-	else
-		audit_syscall_entry(AUDIT_ARCH_ARM, scno, regs->ARM_r0,
-				    regs->ARM_r1, regs->ARM_r2, regs->ARM_r3);
-	return scno;
+	if (dir == PTRACE_SYSCALL_EXIT)
+		tracehook_report_syscall_exit(regs, 0);
+	else if (tracehook_report_syscall_entry(regs))
+		current_thread_info()->syscall = -1;
+
+	regs->ARM_ip = ip;
+	return current_thread_info()->syscall;
+}
+
+asmlinkage int syscall_trace_enter(struct pt_regs *regs, int scno)
+{
+	int ret = ptrace_syscall_trace(regs, scno, PTRACE_SYSCALL_ENTER);
+	audit_syscall_entry(AUDIT_ARCH_ARM, scno, regs->ARM_r0, regs->ARM_r1,
+			    regs->ARM_r2, regs->ARM_r3);
+	return ret;
+}
+
+asmlinkage int syscall_trace_exit(struct pt_regs *regs, int scno)
+{
+	int ret = ptrace_syscall_trace(regs, scno, PTRACE_SYSCALL_EXIT);
+	audit_syscall_exit(regs);
+	return ret;
 }
