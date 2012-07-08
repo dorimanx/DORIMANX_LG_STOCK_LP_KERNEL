@@ -156,6 +156,7 @@ struct scsi_device {
 	unsigned no_read_capacity_16:1; /* Avoid READ_CAPACITY_16 cmds */
 	unsigned try_rc_10_first:1;	/* Try READ_CAPACACITY_10 first */
 	unsigned is_visible:1;	/* is the device visible in sysfs */
+	unsigned wce_default_on:1;	/* Cache is ON by default */
 	unsigned broken_fua:1;	/* Don't set FUA bit */
 	unsigned use_rpm_auto:1; /* Enable runtime PM auto suspend */
 
