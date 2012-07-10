@@ -93,7 +93,7 @@ EXPORT_SYMBOL(scsi_logging_level);
 #endif
 
 /* sd, scsi core and power management need to coordinate flushing async actions */
-LIST_HEAD(scsi_sd_probe_domain);
+ASYNC_DOMAIN(scsi_sd_probe_domain);
 EXPORT_SYMBOL(scsi_sd_probe_domain);
 
 /* NB: These are exposed through /proc/scsi/scsi and form part of the ABI.
