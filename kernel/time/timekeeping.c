@@ -1016,7 +1016,7 @@ static void timekeeping_adjust(s64 offset)
  *
  * Returns the unconsumed cycles.
  */
-static cycle_t logarithmic_accumulation(cycle_t offset, int shift,
+static cycle_t logarithmic_accumulation(cycle_t offset, u32 shift,
 							unsigned int *clock_set)
 {
 	u64 nsecps = (u64)NSEC_PER_SEC << timekeeper.shift;
