@@ -1981,6 +1981,13 @@ static void ptrace_do_notify(int signr, int exit_code, int why)
 void ptrace_notify(int exit_code)
 {
 	BUG_ON((exit_code & (0x7f | ~0xffff)) != SIGTRAP);
+	if (unlikely(current->task_works)) {
+		if (test_and_clear_ti_thread_flag(current_thread_info(),
+						   TIF_NOTIFY_RESUME)) {
+			smp_mb__after_clear_bit();
+			task_work_run();
+		}
+	}
 
 	spin_lock_irq(&current->sighand->siglock);
 	ptrace_do_notify(SIGTRAP, exit_code, CLD_TRAPPED);
@@ -2201,8 +2208,13 @@ int get_signal_to_deliver(siginfo_t *info, struct k_sigaction *return_ka,
 	struct signal_struct *signal = current->signal;
 	int signr;
 
-	if (unlikely(current->task_works))
-		task_work_run();
+	if (unlikely(current->task_works)) {
+		if (test_and_clear_ti_thread_flag(current_thread_info(),
+						   TIF_NOTIFY_RESUME)) {
+			smp_mb__after_clear_bit();
+			task_work_run();
+		}
+	}
 
 	/*
 	 * Do this once, we can't return to user-mode if freezing() == T.
