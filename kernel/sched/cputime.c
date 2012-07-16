@@ -319,8 +319,6 @@ void thread_group_cputime(struct task_struct *tsk, struct task_cputime *times)
 	rcu_read_unlock();
 }
 
-#ifndef CONFIG_VIRT_CPU_ACCOUNTING
-
 #ifdef CONFIG_IRQ_TIME_ACCOUNTING
 /*
  * Account a tick to a process and cpustat
@@ -385,11 +383,12 @@ static void irqtime_account_idle_ticks(int ticks)
 		irqtime_account_process_tick(current, 0, rq);
 }
 #else /* CONFIG_IRQ_TIME_ACCOUNTING */
-static void irqtime_account_idle_ticks(int ticks) {}
-static void irqtime_account_process_tick(struct task_struct *p, int user_tick,
+static inline void irqtime_account_idle_ticks(int ticks) {}
+static inline void irqtime_account_process_tick(struct task_struct *p, int user_tick,
 						struct rq *rq) {}
 #endif /* CONFIG_IRQ_TIME_ACCOUNTING */
 
+#ifndef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
 /*
  * Account a single tick of cpu time.
  * @p: the process that the cpu time gets accounted to
@@ -399,6 +398,9 @@ void account_process_tick(struct task_struct *p, int user_tick)
 {
 	cputime_t one_jiffy_scaled = cputime_to_scaled(cputime_one_jiffy);
 	struct rq *rq = this_rq();
+
+	if (vtime_accounting_enabled())
+		return;
 
 	if (sched_clock_irqtime) {
 		irqtime_account_process_tick(p, user_tick, rq);
@@ -441,8 +443,7 @@ void account_idle_ticks(unsigned long ticks)
 
 	account_idle_time(jiffies_to_cputime(ticks));
 }
-
-#endif
+#endif /* !CONFIG_VIRT_CPU_ACCOUNTING_NATIVE */
 
 /*
  * Use precise platform statistics if available:
@@ -477,6 +478,9 @@ EXPORT_SYMBOL_GPL(vtime_account_system_irqsafe);
 #ifndef __ARCH_HAS_VTIME_TASK_SWITCH
 void vtime_task_switch(struct task_struct *prev)
 {
+	if (!vtime_accounting_enabled())
+		return;
+
 	if (is_idle_task(prev))
 		vtime_account_idle(prev);
 	else
@@ -500,6 +504,9 @@ void vtime_task_switch(struct task_struct *prev)
 #ifndef __ARCH_HAS_VTIME_ACCOUNT
 void vtime_account(struct task_struct *tsk)
 {
+	if (!vtime_accounting_enabled())
+		return;
+
 	if (!in_interrupt()) {
 		/*
 		 * If we interrupted user, context_tracking_in_user()
@@ -522,7 +529,7 @@ void vtime_account(struct task_struct *tsk)
 EXPORT_SYMBOL_GPL(vtime_account);
 #endif /* __ARCH_HAS_VTIME_ACCOUNT */
 
-#else
+#else /* !CONFIG_VIRT_CPU_ACCOUNTING */
 
 /*
  * Perform (stime * rtime) / total, but avoid multiplication overflow by
@@ -646,7 +653,7 @@ void thread_group_cputime_adjusted(struct task_struct *p, cputime_t *ut, cputime
 	thread_group_cputime(p, &cputime);
 	cputime_adjust(&cputime, &p->signal->prev_cputime, ut, st);
 }
-#endif
+#endif /* !CONFIG_VIRT_CPU_ACCOUNTING */
 
 #ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
 static DEFINE_PER_CPU(unsigned long long, cputime_snap);
@@ -664,14 +671,23 @@ static cputime_t get_vtime_delta(void)
 
 void vtime_account_system(struct task_struct *tsk)
 {
-	cputime_t delta_cpu = get_vtime_delta();
+	cputime_t delta_cpu;
 
+	if (!vtime_accounting_enabled())
+		return;
+
+	delta_cpu = get_vtime_delta();
 	account_system_time(tsk, irq_count(), delta_cpu, cputime_to_scaled(delta_cpu));
 }
 
 void vtime_account_user(struct task_struct *tsk)
 {
-	cputime_t delta_cpu = get_vtime_delta();
+	cputime_t delta_cpu;
+
+	if (!vtime_accounting_enabled())
+		return;
+
+	delta_cpu = get_vtime_delta();
 
 	account_user_time(tsk, delta_cpu, cputime_to_scaled(delta_cpu));
 }
@@ -681,5 +697,10 @@ void vtime_account_idle(struct task_struct *tsk)
 	cputime_t delta_cpu = get_vtime_delta();
 
 	account_idle_time(delta_cpu);
+}
+
+bool vtime_accounting_enabled(void)
+{
+	return context_tracking_active();
 }
 #endif /* CONFIG_VIRT_CPU_ACCOUNTING_GEN */
