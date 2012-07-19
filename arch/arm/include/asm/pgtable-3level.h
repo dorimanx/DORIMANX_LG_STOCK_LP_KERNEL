@@ -67,7 +67,8 @@
  * These bits overlap with the hardware bits but the naming is preserved for
  * consistency with the classic page table format.
  */
-#define L_PTE_PRESENT		(_AT(pteval_t, 3) << 0)		/* Valid */
+#define L_PTE_VALID		(_AT(pteval_t, 1) << 0)		/* Valid */
+#define L_PTE_PRESENT		(_AT(pteval_t, 3) << 0)		/* Present */
 #define L_PTE_FILE		(_AT(pteval_t, 1) << 2)		/* only when !PRESENT */
 #define L_PTE_BUFFERABLE	(_AT(pteval_t, 1) << 2)		/* AttrIndx[0] */
 #define L_PTE_CACHEABLE		(_AT(pteval_t, 1) << 3)		/* AttrIndx[1] */
