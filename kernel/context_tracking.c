@@ -69,15 +69,9 @@ void user_enter(void)
 	local_irq_save(flags);
 	if (__this_cpu_read(context_tracking.active) &&
 	    __this_cpu_read(context_tracking.state) != IN_USER) {
-		__this_cpu_write(context_tracking.state, IN_USER);
-		/*
-		 * At this stage, only low level arch entry code remains and
-		 * then we'll run in userspace. We can assume there won't be
-		 * any RCU read-side critical section until the next call to
-		 * user_exit() or rcu_irq_enter(). Let's remove RCU's dependency
-		 * on the tick.
-		 */
+		vtime_user_enter(current);
 		rcu_user_enter();
+		__this_cpu_write(context_tracking.state, IN_USER);
 	}
 	local_irq_restore(flags);
 }
@@ -143,12 +137,9 @@ void user_exit(void)
 
 	local_irq_save(flags);
 	if (__this_cpu_read(context_tracking.state) == IN_USER) {
-		__this_cpu_write(context_tracking.state, IN_KERNEL);
-		/*
-		 * We are going to run code that may use RCU. Inform
-		 * RCU core about that (ie: we may need the tick again).
-		 */
 		rcu_user_exit();
+		vtime_user_exit(current);
+		__this_cpu_write(context_tracking.state, IN_KERNEL);
 	}
 	local_irq_restore(flags);
 }
