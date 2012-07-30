@@ -47,6 +47,7 @@ config CRIS
 	default y
 	select HAVE_IDE
 	select HAVE_GENERIC_HARDIRQS
+	select ARCH_WANT_IPC_PARSE_VERSION
 	select GENERIC_IRQ_SHOW
 	select GENERIC_IOMAP
 
