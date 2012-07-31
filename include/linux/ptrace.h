@@ -142,8 +142,6 @@ extern void exit_ptrace(struct task_struct *tracer);
 #define PTRACE_MODE_READ	0x01
 #define PTRACE_MODE_ATTACH	0x02
 #define PTRACE_MODE_NOAUDIT	0x04
-/* Returns 0 on success, -errno on denial. */
-extern int __ptrace_may_access(struct task_struct *task, unsigned int mode);
 
 #define PTRACE_MODE_FSCREDS 0x08
 #define PTRACE_MODE_REALCREDS 0x10
