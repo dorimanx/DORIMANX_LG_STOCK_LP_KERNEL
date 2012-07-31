@@ -395,14 +395,6 @@ static void ixgbevf_alloc_rx_buffers(struct ixgbevf_adapter *adapter,
 				adapter->alloc_rx_buff_failed++;
 				goto no_buffers;
 			}
-
-			/*
-			 * Make buffer alignment 2 beyond a 16 byte boundary
-			 * this will result in a 16 byte aligned IP header after
-			 * the 14 byte MAC header is removed
-			 */
-			skb_reserve(skb, NET_IP_ALIGN);
-
 			bi->skb = skb;
 		}
 		if (!bi->dma) {
