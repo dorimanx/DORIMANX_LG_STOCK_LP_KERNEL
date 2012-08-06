@@ -727,7 +727,6 @@ static struct file *do_create(struct ipc_namespace *ipc_ns, struct inode *dir,
 			struct mq_attr *attr)
 {
 	const struct cred *cred = current_cred();
-	struct file *result;
 	int ret;
 
 	if (attr) {
@@ -749,21 +748,11 @@ static struct file *do_create(struct ipc_namespace *ipc_ns, struct inode *dir,
 	}
 
 	mode &= ~current_umask();
-	ret = mnt_want_write(path->mnt);
-	if (ret)
-		return ERR_PTR(ret);
 	ret = vfs_create(dir, path->dentry, mode, true);
 	path->dentry->d_fsdata = NULL;
-	if (!ret)
-		result = dentry_open(path, oflag, cred);
-	else
-		result = ERR_PTR(ret);
-	/*
-	 * dentry_open() took a persistent mnt_want_write(),
-	 * so we can now drop this one.
-	 */
-	mnt_drop_write(path->mnt);
-	return result;
+	if (ret)
+		return ERR_PTR(ret);
+	return dentry_open(path, oflag, cred);
 }
 
 /* Opens existing queue */
@@ -789,7 +778,9 @@ SYSCALL_DEFINE4(mq_open, const char __user *, u_name, int, oflag, umode_t, mode,
 	struct mq_attr attr;
 	int fd, error;
 	struct ipc_namespace *ipc_ns = current->nsproxy->ipc_ns;
-	struct dentry *root = ipc_ns->mq_mnt->mnt_root;
+	struct vfsmount *mnt = ipc_ns->mq_mnt;
+	struct dentry *root = mnt->mnt_root;
+	int ro;
 
 	if (u_attr && copy_from_user(&attr, u_attr, sizeof(struct mq_attr)))
 		return -EFAULT;
@@ -803,6 +794,7 @@ SYSCALL_DEFINE4(mq_open, const char __user *, u_name, int, oflag, umode_t, mode,
 	if (fd < 0)
 		goto out_putname;
 
+	ro = mnt_want_write(mnt);	/* we'll drop it in any case */
 	error = 0;
 	mutex_lock(&root->d_inode->i_mutex);
 	path.dentry = lookup_one_len(name, root, strlen(name));
@@ -810,7 +802,7 @@ SYSCALL_DEFINE4(mq_open, const char __user *, u_name, int, oflag, umode_t, mode,
 		error = PTR_ERR(path.dentry);
 		goto out_putfd;
 	}
-	path.mnt = mntget(ipc_ns->mq_mnt);
+	path.mnt = mntget(mnt);
 
 	if (oflag & O_CREAT) {
 		if (path.dentry->d_inode) {	/* entry already exists */
@@ -821,6 +813,10 @@ SYSCALL_DEFINE4(mq_open, const char __user *, u_name, int, oflag, umode_t, mode,
 			}
 			filp = do_open(&path, oflag);
 		} else {
+			if (ro) {
+				error = ro;
+				goto out;
+			}
 			filp = do_create(ipc_ns, root->d_inode,
 						&path, oflag, mode,
 						u_attr ? &attr : NULL);
@@ -846,6 +842,7 @@ out_putfd:
 		fd = error;
 	}
 	mutex_unlock(&root->d_inode->i_mutex);
+	mnt_drop_write(mnt);
 out_putname:
 	putname(name);
 	return fd;
@@ -858,40 +855,38 @@ SYSCALL_DEFINE1(mq_unlink, const char __user *, u_name)
 	struct dentry *dentry;
 	struct inode *inode = NULL;
 	struct ipc_namespace *ipc_ns = current->nsproxy->ipc_ns;
+	struct vfsmount *mnt = ipc_ns->mq_mnt;
 
 	name = getname(u_name);
 	if (IS_ERR(name))
 		return PTR_ERR(name);
 
-	mutex_lock_nested(&ipc_ns->mq_mnt->mnt_root->d_inode->i_mutex,
-			I_MUTEX_PARENT);
-	dentry = lookup_one_len(name, ipc_ns->mq_mnt->mnt_root, strlen(name));
+	err = mnt_want_write(mnt);
+	if (err)
+		goto out_name;
+	mutex_lock_nested(&mnt->mnt_root->d_inode->i_mutex, I_MUTEX_PARENT);
+	dentry = lookup_one_len(name, mnt->mnt_root, strlen(name));
 	if (IS_ERR(dentry)) {
 		err = PTR_ERR(dentry);
 		goto out_unlock;
 	}
 
-	if (!dentry->d_inode) {
-		err = -ENOENT;
-		goto out_err;
-	}
-
 	inode = dentry->d_inode;
-	if (inode)
+	if (!inode) {
+		err = -ENOENT;
+	} else {
 		ihold(inode);
-	err = mnt_want_write(ipc_ns->mq_mnt);
-	if (err)
-		goto out_err;
-	err = vfs_unlink(dentry->d_parent->d_inode, dentry);
-	mnt_drop_write(ipc_ns->mq_mnt);
-out_err:
+		err = vfs_unlink(dentry->d_parent->d_inode, dentry);
+	}
 	dput(dentry);
 
 out_unlock:
-	mutex_unlock(&ipc_ns->mq_mnt->mnt_root->d_inode->i_mutex);
-	putname(name);
+	mutex_unlock(&mnt->mnt_root->d_inode->i_mutex);
 	if (inode)
 		iput(inode);
+	mnt_drop_write(mnt);
+out_name:
+	putname(name);
 
 	return err;
 }
