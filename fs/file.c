@@ -524,11 +524,10 @@ void daemonize_descriptors(void)
 /*
  * allocate a file descriptor, mark it busy.
  */
-int alloc_fd(unsigned start, unsigned flags)
+int __alloc_fd(struct files_struct *files,
+	       unsigned start, unsigned end, unsigned flags)
 {
-	struct files_struct *files = current->files;
 	unsigned int fd;
-	unsigned end = rlimit(RLIMIT_NOFILE);
 	int error;
 	struct fdtable *fdt;
 
@@ -584,9 +583,14 @@ out:
 }
 EXPORT_SYMBOL(alloc_fd);
 
+int alloc_fd(unsigned start, unsigned flags)
+{
+	return __alloc_fd(current->files, start, rlimit(RLIMIT_NOFILE), flags);
+}
+
 int get_unused_fd_flags(unsigned flags)
 {
-	return alloc_fd(0, flags);
+	return __alloc_fd(current->files, 0, rlimit(RLIMIT_NOFILE), flags);
 }
 EXPORT_SYMBOL(get_unused_fd_flags);
 
