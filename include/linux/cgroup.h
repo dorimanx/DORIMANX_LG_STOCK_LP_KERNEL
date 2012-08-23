@@ -17,6 +17,7 @@
 #include <linux/rwsem.h>
 #include <linux/idr.h>
 #include <linux/workqueue.h>
+#include <linux/xattr.h>
 
 #ifdef CONFIG_CGROUPS
 
@@ -207,6 +208,9 @@ struct cgroup {
 	/* List of events which userspace want to receive */
 	struct list_head event_list;
 	spinlock_t event_list_lock;
+
+	/* directory xattrs */
+	struct simple_xattrs xattrs;
 };
 
 /*
@@ -301,6 +305,9 @@ struct cftype {
 	/* CFTYPE_* flags */
 	unsigned int flags;
 
+	/* file xattrs */
+	struct simple_xattrs xattrs;
+
 	int (*open)(struct inode *inode, struct file *file);
 	ssize_t (*read)(struct cgroup *cgrp, struct cftype *cft,
 			struct file *file,
@@ -386,7 +393,7 @@ struct cftype {
  */
 struct cftype_set {
 	struct list_head		node;	/* chained at subsys->cftsets */
-	const struct cftype		*cfts;
+	struct cftype			*cfts;
 };
 
 struct cgroup_scanner {
@@ -398,8 +405,8 @@ struct cgroup_scanner {
 	void *data;
 };
 
-int cgroup_add_cftypes(struct cgroup_subsys *ss, const struct cftype *cfts);
-int cgroup_rm_cftypes(struct cgroup_subsys *ss, const struct cftype *cfts);
+int cgroup_add_cftypes(struct cgroup_subsys *ss, struct cftype *cfts);
+int cgroup_rm_cftypes(struct cgroup_subsys *ss, struct cftype *cfts);
 
 int cgroup_is_removed(const struct cgroup *cgrp);
 
