@@ -84,6 +84,58 @@ __ip_vs_dst_check(struct ip_vs_dest *dest, u32 rtos)
 	return dst;
 }
 
+static inline bool
+__mtu_check_toobig_v6(const struct sk_buff *skb, u32 mtu)
+{
+	if (IP6CB(skb)->frag_max_size) {
+		/* frag_max_size tell us that, this packet have been
+		 * defragmented by netfilter IPv6 conntrack module.
+		 */
+		if (IP6CB(skb)->frag_max_size > mtu)
+			return true; /* largest fragment violate MTU */
+	}
+	else if (skb->len > mtu && !skb_is_gso(skb)) {
+		return true; /* Packet size violate MTU size */
+	}
+	return false;
+}
+
+/* Get route to daddr, update *saddr, optionally bind route to saddr */
+static struct rtable *do_output_route4(struct net *net, __be32 daddr,
+				       u32 rtos, int rt_mode, __be32 *saddr)
+{
+	struct flowi4 fl4;
+	struct rtable *rt;
+	int loop = 0;
+
+	memset(&fl4, 0, sizeof(fl4));
+	fl4.daddr = daddr;
+	fl4.saddr = (rt_mode & IP_VS_RT_MODE_CONNECT) ? *saddr : 0;
+	fl4.flowi4_tos = rtos;
+
+retry:
+	rt = ip_route_output_key(net, &fl4);
+	if (IS_ERR(rt)) {
+		/* Invalid saddr ? */
+		if (PTR_ERR(rt) == -EINVAL && *saddr &&
+		    rt_mode & IP_VS_RT_MODE_CONNECT && !loop) {
+			*saddr = 0;
+			flowi4_update_output(&fl4, 0, rtos, daddr, 0);
+			goto retry;
+		}
+		IP_VS_DBG_RL("ip_route_output error, dest: %pI4\n", &daddr);
+		return NULL;
+	} else if (!*saddr && rt_mode & IP_VS_RT_MODE_CONNECT && fl4.saddr) {
+		ip_rt_put(rt);
+		*saddr = fl4.saddr;
+		flowi4_update_output(&fl4, 0, rtos, daddr, fl4.saddr);
+		loop++;
+		goto retry;
+	}
+	*saddr = fl4.saddr;
+	return rt;
+}
+
 /* Get route to destination or remote server */
 static struct rtable *
 __ip_vs_get_out_rt(struct sk_buff *skb, struct ip_vs_dest *dest,
