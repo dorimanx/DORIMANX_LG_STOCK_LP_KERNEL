@@ -972,6 +972,9 @@ static int scsi_add_lun(struct scsi_device *sdev, unsigned char *inq_result,
 	if (*bflags & BLIST_RETRY_HWERROR)
 		sdev->retry_hwerror = 1;
 
+	if (*bflags & BLIST_NO_DIF)
+		sdev->no_dif = 1;
+
 	transport_configure_device(&sdev->sdev_gendev);
 
 	/* The LLD can override auto suspend tunables in ->slave_configure() */
