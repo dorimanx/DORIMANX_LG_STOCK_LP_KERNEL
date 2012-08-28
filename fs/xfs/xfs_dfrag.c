@@ -50,44 +50,44 @@ xfs_swapext(
 	xfs_swapext_t	*sxp)
 {
 	xfs_inode_t     *ip, *tip;
-	struct file	*file, *tmp_file;
-	int		error = 0, fput_needed, fput_needed_tmp;
+	struct fd	f, tmp;
+	int		error = 0;
 
 	/* Pull information for the target fd */
-	file = fget_light((int)sxp->sx_fdtarget, &fput_needed);
-	if (!file) {
+	f = fdget((int)sxp->sx_fdtarget);
+	if (!f.file) {
 		error = XFS_ERROR(EINVAL);
 		goto out;
 	}
 
-	if (!(file->f_mode & FMODE_WRITE) ||
-	    !(file->f_mode & FMODE_READ) ||
-	    (file->f_flags & O_APPEND)) {
+	if (!(f.file->f_mode & FMODE_WRITE) ||
+	    !(f.file->f_mode & FMODE_READ) ||
+	    (f.file->f_flags & O_APPEND)) {
 		error = XFS_ERROR(EBADF);
 		goto out_put_file;
 	}
 
-	tmp_file = fget_light((int)sxp->sx_fdtmp, &fput_needed_tmp);
-	if (!tmp_file) {
+	tmp = fdget((int)sxp->sx_fdtmp);
+	if (!tmp.file) {
 		error = XFS_ERROR(EINVAL);
 		goto out_put_file;
 	}
 
-	if (!(tmp_file->f_mode & FMODE_WRITE) ||
-	    !(tmp_file->f_mode & FMODE_READ) ||
-	    (tmp_file->f_flags & O_APPEND)) {
+	if (!(tmp.file->f_mode & FMODE_WRITE) ||
+	    !(tmp.file->f_mode & FMODE_READ) ||
+	    (tmp.file->f_flags & O_APPEND)) {
 		error = XFS_ERROR(EBADF);
 		goto out_put_tmp_file;
 	}
 
-	if (IS_SWAPFILE(file_inode(f_file)) ||
-	    IS_SWAPFILE(file_inode(tmp_file))) {
+	if (IS_SWAPFILE(file_inode(f.file)) ||
+	    IS_SWAPFILE(file_inode(tmp.file))) {
 		error = XFS_ERROR(EINVAL);
 		goto out_put_tmp_file;
 	}
 
-	ip = XFS_I(file_inode(f_file));
-	tip = XFS_I(file_inode(tmp_file));
+	ip = XFS_I(file_inode(f.file));
+	tip = XFS_I(file_inode(tmp.file));
 
 	if (ip->i_mount != tip->i_mount) {
 		error = XFS_ERROR(EINVAL);
@@ -107,9 +107,9 @@ xfs_swapext(
 	error = xfs_swap_extents(ip, tip, sxp);
 
  out_put_tmp_file:
-	fput_light(tmp_file, fput_needed_tmp);
+	fdput(tmp);
  out_put_file:
-	fput_light(file, fput_needed);
+	fdput(f);
  out:
 	return error;
 }

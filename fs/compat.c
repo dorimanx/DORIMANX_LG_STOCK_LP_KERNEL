@@ -872,22 +872,20 @@ asmlinkage long compat_sys_old_readdir(unsigned int fd,
 	struct compat_old_linux_dirent __user *dirent, unsigned int count)
 {
 	int error;
-	struct file *file;
-	int fput_needed;
+	struct fd f = fdget(fd);
 	struct compat_readdir_callback buf;
 
-	file = fget_light(fd, &fput_needed);
-	if (!file)
+	if (!f.file)
 		return -EBADF;
 
 	buf.result = 0;
 	buf.dirent = dirent;
 
-	error = vfs_readdir(file, compat_fillonedir, &buf);
+	error = vfs_readdir(f.file, compat_fillonedir, &buf);
 	if (buf.result)
 		error = buf.result;
 
-	fput_light(file, fput_needed);
+	fdput(f);
 	return error;
 }
 
@@ -951,17 +949,16 @@ efault:
 asmlinkage long compat_sys_getdents(unsigned int fd,
 		struct compat_linux_dirent __user *dirent, unsigned int count)
 {
-	struct file * file;
+	struct fd f;
 	struct compat_linux_dirent __user * lastdirent;
 	struct compat_getdents_callback buf;
-	int fput_needed;
 	int error;
 
 	if (!access_ok(VERIFY_WRITE, dirent, count))
 		return -EFAULT;
 
-	file = fget_light(fd, &fput_needed);
-	if (!file)
+	f = fdget(fd);
+	if (!f.file)
 		return -EBADF;
 
 	buf.current_dir = dirent;
@@ -969,17 +966,17 @@ asmlinkage long compat_sys_getdents(unsigned int fd,
 	buf.count = count;
 	buf.error = 0;
 
-	error = vfs_readdir(file, compat_filldir, &buf);
+	error = vfs_readdir(f.file, compat_filldir, &buf);
 	if (error >= 0)
 		error = buf.error;
 	lastdirent = buf.previous;
 	if (lastdirent) {
-		if (put_user(file->f_pos, &lastdirent->d_off))
+		if (put_user(f.file->f_pos, &lastdirent->d_off))
 			error = -EFAULT;
 		else
 			error = count - buf.count;
 	}
-	fput_light(file, fput_needed);
+	fdput(f);
 	return error;
 }
 
@@ -1037,17 +1034,16 @@ efault:
 asmlinkage long compat_sys_getdents64(unsigned int fd,
 		struct linux_dirent64 __user * dirent, unsigned int count)
 {
-	struct file * file;
+	struct fd f;
 	struct linux_dirent64 __user * lastdirent;
 	struct compat_getdents_callback64 buf;
-	int fput_needed;
 	int error;
 
 	if (!access_ok(VERIFY_WRITE, dirent, count))
 		return -EFAULT;
 
-	file = fget_light(fd, &fput_needed);
-	if (!file)
+	f = fdget(fd);
+	if (!f.file)
 		return -EBADF;
 
 	buf.current_dir = dirent;
@@ -1055,18 +1051,18 @@ asmlinkage long compat_sys_getdents64(unsigned int fd,
 	buf.count = count;
 	buf.error = 0;
 
-	error = vfs_readdir(file, compat_filldir64, &buf);
+	error = vfs_readdir(f.file, compat_filldir64, &buf);
 	if (error >= 0)
 		error = buf.error;
 	lastdirent = buf.previous;
 	if (lastdirent) {
-		typeof(lastdirent->d_off) d_off = file->f_pos;
+		typeof(lastdirent->d_off) d_off = f.file->f_pos;
 		if (__put_user_unaligned(d_off, &lastdirent->d_off))
 			error = -EFAULT;
 		else
 			error = count - buf.count;
 	}
-	fput_light(file, fput_needed);
+	fdput(f);
 	return error;
 }
 #endif /* ! __ARCH_OMIT_COMPAT_SYS_GETDENTS64 */

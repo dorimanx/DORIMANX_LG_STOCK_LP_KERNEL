@@ -292,19 +292,17 @@ static const struct file_operations timerfd_fops = {
 	.llseek		= noop_llseek,
 };
 
-static struct file *timerfd_fget(int fd, int *fput_needed)
+static int timerfd_fget(int fd, struct fd *p)
 {
-	struct file *file;
-
-	file = fget_light(fd, fput_needed);
-	if (!file)
-		return ERR_PTR(-EBADF);
-	if (file->f_op != &timerfd_fops) {
-		fput_light(file, *fput_needed);
-		return ERR_PTR(-EINVAL);
+	struct fd f = fdget(fd);
+	if (!f.file)
+		return -EBADF;
+	if (f.file->f_op != &timerfd_fops) {
+		fdput(f);
+		return -EINVAL;
 	}
-
-	return file;
+	*p = f;
+	return 0;
 }
 
 SYSCALL_DEFINE2(timerfd_create, int, clockid, int, flags)
@@ -354,19 +352,19 @@ static int do_timerfd_settime(int ufd, int flags,
 		const struct itimerspec *new,
 		struct itimerspec *old)
 {
-	struct file *file;
+	struct fd f;
 	struct timerfd_ctx *ctx;
-	int ret, fput_needed;
+	int ret;
 
 	if ((flags & ~TFD_SETTIME_FLAGS) ||
 	    !timespec_valid(&new->it_value) ||
 	    !timespec_valid(&new->it_interval))
 		return -EINVAL;
 
-	file = timerfd_fget(ufd, &fput_needed);
-	if (IS_ERR(file))
-		return PTR_ERR(file);
-	ctx = file->private_data;
+	ret = timerfd_fget(ufd, &f);
+	if (ret)
+		return ret;
+	ctx = f.file->private_data;
 
 	timerfd_setup_cancel(ctx, flags);
 
@@ -414,20 +412,18 @@ static int do_timerfd_settime(int ufd, int flags,
 	if (ctx->clockid == CLOCK_POWEROFF_ALARM)
 		set_power_on_alarm();
 
-	fput_light(file, fput_needed);
+	fdput(f);
 	return ret;
 }
 
 static int do_timerfd_gettime(int ufd, struct itimerspec *t)
 {
-	struct file *file;
+	struct fd f;
 	struct timerfd_ctx *ctx;
-	int fput_needed;
-
-	file = timerfd_fget(ufd, &fput_needed);
-	if (IS_ERR(file))
-		return PTR_ERR(file);
-	ctx = file->private_data;
+	int ret = timerfd_fget(ufd, &f);
+	if (ret)
+		return ret;
+	ctx = f.file->private_data;
 
 	spin_lock_irq(&ctx->wqh.lock);
 	if (ctx->expired && ctx->tintv.tv64) {
@@ -448,7 +444,7 @@ static int do_timerfd_gettime(int ufd, struct itimerspec *t)
 	t->it_value = ktime_to_timespec(timerfd_get_remaining(ctx));
 	t->it_interval = ktime_to_timespec(ctx->tintv);
 	spin_unlock_irq(&ctx->wqh.lock);
-	fput_light(file, fput_needed);
+	fdput(f);
 	return 0;
 }
 

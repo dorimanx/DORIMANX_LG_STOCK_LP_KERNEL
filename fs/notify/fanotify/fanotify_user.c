@@ -477,24 +477,22 @@ static int fanotify_find_path(int dfd, const char __user *filename,
 		 dfd, filename, flags);
 
 	if (filename == NULL) {
-		struct file *file;
-		int fput_needed;
+		struct fd f = fdget(dfd);
 
 		ret = -EBADF;
-		file = fget_light(dfd, &fput_needed);
-		if (!file)
+		if (!f.file)
 			goto out;
 
 		ret = -ENOTDIR;
 		if ((flags & FAN_MARK_ONLYDIR) &&
-		    !(S_ISDIR(file_inode(file)->i_mode))) {
-			fput_light(file, fput_needed);
+		    !(S_ISDIR(file_inode(f.file)->i_mode))) {
+			fdput(f);
 			goto out;
 		}
 
-		*path = file->f_path;
+		*path = f.file->f_path;
 		path_get(path);
-		fput_light(file, fput_needed);
+		fdput(f);
 	} else {
 		unsigned int lookup_flags = 0;
 
@@ -774,9 +772,9 @@ SYSCALL_DEFINE(fanotify_mark)(int fanotify_fd, unsigned int flags,
 	struct inode *inode = NULL;
 	struct vfsmount *mnt = NULL;
 	struct fsnotify_group *group;
-	struct file *filp;
+	struct fd f;
 	struct path path;
-	int ret, fput_needed;
+	int ret;
 
 	pr_debug("%s: fanotify_fd=%d flags=%x dfd=%d pathname=%p mask=%llx\n",
 		 __func__, fanotify_fd, flags, dfd, pathname, mask);
@@ -810,15 +808,15 @@ SYSCALL_DEFINE(fanotify_mark)(int fanotify_fd, unsigned int flags,
 #endif
 		return -EINVAL;
 
-	filp = fget_light(fanotify_fd, &fput_needed);
-	if (unlikely(!filp))
+	f = fdget(fanotify_fd);
+	if (unlikely(!f.file))
 		return -EBADF;
 
 	/* verify that this is indeed an fanotify instance */
 	ret = -EINVAL;
-	if (unlikely(filp->f_op != &fanotify_fops))
+	if (unlikely(f.file->f_op != &fanotify_fops))
 		goto fput_and_out;
-	group = filp->private_data;
+	group = f.file->private_data;
 
 	/*
 	 * group->priority == FS_PRIO_0 == FAN_CLASS_NOTIF.  These are not
@@ -865,7 +863,7 @@ SYSCALL_DEFINE(fanotify_mark)(int fanotify_fd, unsigned int flags,
 
 	path_put(&path);
 fput_and_out:
-	fput_light(filp, fput_needed);
+	fdput(f);
 	return ret;
 }
 
