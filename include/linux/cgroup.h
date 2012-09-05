@@ -87,7 +87,6 @@ struct cgroup_subsys_state {
 /* bits in struct cgroup_subsys_state flags field */
 enum {
 	CSS_ROOT, /* This CSS is the root of the subsystem */
-	CSS_REMOVED, /* This CSS is dead */
 };
 
 /*
@@ -103,11 +102,6 @@ static inline void css_get(struct cgroup_subsys_state *css)
 	/* We don't need to reference count the root state */
 	if (!test_bit(CSS_ROOT, &css->flags))
 		__css_get(css, 1);
-}
-
-static inline bool css_is_removed(struct cgroup_subsys_state *css)
-{
-	return test_bit(CSS_REMOVED, &css->flags);
 }
 
 /*
