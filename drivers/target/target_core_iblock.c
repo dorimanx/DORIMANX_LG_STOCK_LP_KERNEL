@@ -448,12 +448,21 @@ static ssize_t iblock_show_configfs_dev_params(
 	return bl;
 }
 
-static void iblock_bio_destructor(struct bio *bio)
+static void iblock_complete_cmd(struct se_cmd *cmd)
 {
-	struct se_task *task = bio->bi_private;
-	struct iblock_dev *ib_dev = task->task_se_cmd->se_dev->dev_ptr;
+	struct iblock_req *ibr = cmd->priv;
+	u8 status;
 
-	bio_free(bio, ib_dev->ibd_bio_set);
+	if (!atomic_dec_and_test(&ibr->pending))
+		return;
+
+	if (atomic_read(&ibr->ib_bio_err_cnt))
+		status = SAM_STAT_CHECK_CONDITION;
+	else
+		status = SAM_STAT_GOOD;
+
+	target_complete_cmd(cmd, status);
+	kfree(ibr);
 }
 
 static struct bio *
@@ -481,8 +490,7 @@ iblock_get_bio(struct se_task *task, sector_t lba, u32 sg_num)
 	pr_debug("Allocated bio: %p task_size: %u\n", bio, task->task_size);
 
 	bio->bi_bdev = ib_dev->ibd_bd;
-	bio->bi_private = task;
-	bio->bi_destructor = iblock_bio_destructor;
+	bio->bi_private = cmd;
 	bio->bi_end_io = &iblock_bio_done;
 	bio->bi_sector = lba;
 	atomic_inc(&ib_req->pending);
