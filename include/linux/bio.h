@@ -241,6 +241,7 @@ extern void bio_advance(struct bio *, unsigned); /* disabled by dorimanx */
 #endif
 
 extern void bio_init(struct bio *);
+extern void bio_reset(struct bio *);
 
 extern int bio_add_page(struct bio *, struct page *, unsigned int,unsigned int);
 extern int bio_add_pc_page(struct request_queue *, struct bio *, struct page *,
