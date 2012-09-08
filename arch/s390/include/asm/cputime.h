@@ -14,6 +14,9 @@
 #include <linux/spinlock.h>
 #include <asm/div64.h>
 
+
+#define __ARCH_HAS_VTIME_ACCOUNT
+
 /* We want to use full resolution of the CPU timer: 2**-12 micro-seconds. */
 
 typedef unsigned long long __nocast cputime_t;
