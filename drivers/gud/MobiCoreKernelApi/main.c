@@ -153,7 +153,7 @@ static int __init mcapi_init(void)
 		return -ENOMEM;
 	}
 	mod_ctx->sk = netlink_kernel_create(&init_net, MC_DAEMON_NETLINK,
-					    THIS_MODULE, &cfg);
+				&cfg);
 
 	if (!mod_ctx->sk) {
 		MCDRV_ERROR(mc_kapi, "register of receive handler failed");

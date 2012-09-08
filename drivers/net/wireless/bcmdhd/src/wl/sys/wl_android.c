@@ -2869,7 +2869,7 @@ static int wl_netlink_init(void)
 		return BCME_ERROR;
 	}
 
-	nl_sk = netlink_kernel_create(&init_net, NETLINK_OXYGEN, THIS_MODULE, &cfg);
+	nl_sk = netlink_kernel_create(&init_net, NETLINK_OXYGEN, &cfg);
 
 	if (nl_sk == NULL) {
 		WL_ERR(("nl_sk is not ready\n"));
