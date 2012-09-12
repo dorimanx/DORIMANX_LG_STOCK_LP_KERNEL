@@ -69,6 +69,7 @@
 #include <net/netns/generic.h>
 #include <net/rtnetlink.h>
 #include <net/sock.h>
+#include <net/cls_cgroup.h>
 
 #include <asm/uaccess.h>
 
