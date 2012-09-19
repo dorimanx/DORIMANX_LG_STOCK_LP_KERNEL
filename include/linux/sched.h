@@ -234,6 +234,8 @@ extern void register_task_migration_notifier(struct notifier_block *n);
 
 extern unsigned long get_parent_ip(unsigned long addr);
 
+extern void dump_cpu_task(int cpu);
+
 struct seq_file;
 struct cfs_rq;
 struct task_group;
