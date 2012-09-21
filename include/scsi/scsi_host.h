@@ -880,6 +880,9 @@ static inline unsigned int scsi_host_dif_capable(struct Scsi_Host *shost, unsign
 				       SHOST_DIF_TYPE2_PROTECTION,
 				       SHOST_DIF_TYPE3_PROTECTION };
 
+	if (target_type > SHOST_DIF_TYPE3_PROTECTION)
+		return 0;
+
 	return shost->prot_capabilities & cap[target_type] ? target_type : 0;
 }
 
@@ -890,6 +893,9 @@ static inline unsigned int scsi_host_dix_capable(struct Scsi_Host *shost, unsign
 				       SHOST_DIX_TYPE1_PROTECTION,
 				       SHOST_DIX_TYPE2_PROTECTION,
 				       SHOST_DIX_TYPE3_PROTECTION };
+
+	if (target_type > SHOST_DIX_TYPE3_PROTECTION)
+		return 0;
 
 	return shost->prot_capabilities & cap[target_type];
 #endif
