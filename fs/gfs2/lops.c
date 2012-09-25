@@ -195,16 +195,18 @@ static struct buffer_head *gfs2_log_get_buf(struct gfs2_sbd *sdp)
 
 static void gfs2_fake_write_endio(struct buffer_head *bh, int uptodate)
 {
-	struct buffer_head *real_bh = bh->b_private;
-	struct gfs2_bufdata *bd = real_bh->b_private;
-	struct gfs2_sbd *sdp = bd->bd_gl->gl_sbd;
+	struct bio *bio = sdp->sd_log_bio;
+	u64 nblk;
 
-	end_buffer_write_sync(bh, uptodate);
-	mempool_free(bh, gfs2_bh_pool);
-	unlock_buffer(real_bh);
-	brelse(real_bh);
-	if (atomic_dec_and_test(&sdp->sd_log_in_flight))
-		wake_up(&sdp->sd_log_flush_wait);
+	if (bio) {
+		nblk = bio_end_sector(bio);
+		nblk >>= sdp->sd_fsb2bb_shift;
+		if (blkno == nblk)
+			return bio;
+		gfs2_log_flush_bio(sdp, WRITE);
+	}
+
+	return gfs2_log_alloc_bio(sdp, blkno);
 }
 
 /**
