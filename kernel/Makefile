@@ -39,7 +39,7 @@ obj-y += up.o
 endif
 obj-$(CONFIG_UID16) += uid16.o
 obj-$(CONFIG_MODULES) += module.o
-obj-$(CONFIG_MODULE_SIG) += module_signing.o
+obj-$(CONFIG_MODULE_SIG) += module_signing.o modsign_pubkey.o
 obj-$(CONFIG_KALLSYMS) += kallsyms.o
 obj-$(CONFIG_BSD_PROCESS_ACCT) += acct.o
 obj-$(CONFIG_KEXEC) += kexec.o
@@ -112,6 +112,13 @@ $(obj)/timeconst.h: $(src)/timeconst.pl FORCE
 	$(call if_changed,timeconst)
 
 ifeq ($(CONFIG_MODULE_SIG),y)
+#
+# Pull the signing certificate and any extra certificates into the kernel
+#
+extra_certificates:
+	touch $@
+
+kernel/modsign_pubkey.o: signing_key.x509 extra_certificates
 
 ###############################################################################
 #
@@ -158,4 +165,4 @@ x509.genkey:
 	@echo >>x509.genkey "subjectKeyIdentifier=hash"
 	@echo >>x509.genkey "authorityKeyIdentifier=keyid"
 endif
-CLEAN_FILES += signing_key.priv signing_key.x509 x509.genkey
+CLEAN_FILES += signing_key.priv signing_key.x509 x509.genkey extra_certificates
