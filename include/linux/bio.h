@@ -235,6 +235,7 @@ extern int bio_phys_segments(struct request_queue *, struct bio *);
 
 extern void __bio_clone(struct bio *, struct bio *);
 extern struct bio *bio_clone(struct bio *, gfp_t);
+extern void bio_advance(struct bio *, unsigned);
 
 extern void bio_init(struct bio *);
 
