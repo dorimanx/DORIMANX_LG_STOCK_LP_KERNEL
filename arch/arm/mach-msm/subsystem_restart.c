@@ -459,7 +459,7 @@ static void subsystem_shutdown(struct subsys_device *dev, void *data)
 	const char *name = dev->desc->name;
 
 	pr_info("[%p]: Shutting down %s\n", current, name);
-	if (dev->desc->shutdown(dev->desc) < 0) {
+	if (dev->desc->shutdown(dev->desc, true) < 0) {
 #ifdef CONFIG_LGE_HANDLE_PANIC
 		lge_set_magic_subsystem(name, LGE_ERR_SUB_SD);
 #endif
@@ -533,8 +533,11 @@ static int subsys_start(struct subsys_device *subsys)
 {
 	int ret;
 
+	notify_each_subsys_device(&subsys, 1, SUBSYS_BEFORE_POWERUP,
+								NULL);
+
 	init_completion(&subsys->err_ready);
-	ret = subsys->desc->start(subsys->desc);
+	ret = subsys->desc->powerup(subsys->desc);
 	if (ret){
 		notify_each_subsys_device(&subsys, 1, SUBSYS_POWERUP_FAILURE,
 									NULL);
@@ -553,17 +556,23 @@ static int subsys_start(struct subsys_device *subsys)
 		 */
 		notify_each_subsys_device(&subsys, 1, SUBSYS_POWERUP_FAILURE,
 									NULL);
-		subsys->desc->stop(subsys->desc);
-	} else
+		subsys->desc->shutdown(subsys->desc, false);
+		return ret;
+	} else {
 		subsys_set_state(subsys, SUBSYS_ONLINE);
+	}
 
+	notify_each_subsys_device(&subsys, 1, SUBSYS_AFTER_POWERUP,
+								NULL);
 	return ret;
 }
 
 static void subsys_stop(struct subsys_device *subsys)
 {
-	subsys->desc->stop(subsys->desc);
+	notify_each_subsys_device(&subsys, 1, SUBSYS_BEFORE_SHUTDOWN, NULL);
+	subsys->desc->shutdown(subsys->desc, false);
 	subsys_set_state(subsys, SUBSYS_OFFLINE);
+	notify_each_subsys_device(&subsys, 1, SUBSYS_AFTER_SHUTDOWN, NULL);
 }
 
 static struct subsys_tracking *subsys_get_track(struct subsys_device *subsys)
@@ -1208,6 +1217,7 @@ static int subsys_setup_irqs(struct subsys_device *subsys)
 				desc->name, ret);
 			return ret;
 		}
+		disable_irq(desc->wdog_bite_irq);
 	}
 
 	if (desc->err_ready_irq) {

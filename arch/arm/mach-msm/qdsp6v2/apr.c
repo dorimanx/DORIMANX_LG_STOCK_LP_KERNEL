@@ -738,6 +738,13 @@ void dispatch_event(unsigned long code, uint16_t proc)
 static int modem_notifier_cb(struct notifier_block *this, unsigned long code,
 			     void *_cmd)
 {
+	static int boot_count = 2;
+
+	if (boot_count) {
+		boot_count--;
+		return NOTIFY_OK;
+	}
+
 	switch (code) {
 	case SUBSYS_BEFORE_SHUTDOWN:
 		pr_debug("M-Notify: Shutdown started\n");
@@ -771,6 +778,13 @@ static struct notifier_block mnb = {
 static int lpass_notifier_cb(struct notifier_block *this, unsigned long code,
 			     void *_cmd)
 {
+	static int boot_count = 2;
+
+	if (boot_count) {
+		boot_count--;
+		return NOTIFY_OK;
+	}
+
 	switch (code) {
 	case SUBSYS_BEFORE_SHUTDOWN:
 		pr_debug("L-Notify: Shutdown started\n");

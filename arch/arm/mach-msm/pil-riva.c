@@ -366,23 +366,7 @@ static void riva_post_bootup(struct work_struct *work)
 	wcnss_wlan_power(&pdev->dev, pwlanconfig, WCNSS_WLAN_SWITCH_OFF, NULL);
 }
 
-static int riva_start(const struct subsys_desc *desc)
-{
-	struct riva_data *drv;
-
-	drv = container_of(desc, struct riva_data, subsys_desc);
-	return pil_boot(&drv->pil_desc);
-}
-
-static void riva_stop(const struct subsys_desc *desc)
-{
-	struct riva_data *drv;
-
-	drv = container_of(desc, struct riva_data, subsys_desc);
-	pil_shutdown(&drv->pil_desc);
-}
-
-static int riva_shutdown(const struct subsys_desc *desc)
+static int riva_shutdown(const struct subsys_desc *desc, bool force_stop)
 {
 	struct riva_data *drv;
 
@@ -391,7 +375,6 @@ static int riva_shutdown(const struct subsys_desc *desc)
 	flush_delayed_work(&drv->cancel_work);
 	wcnss_flush_delayed_boot_votes();
 	disable_irq_nosync(drv->irq);
-
 	return 0;
 }
 
@@ -412,7 +395,6 @@ static int riva_powerup(const struct subsys_desc *desc)
 	drv->rst_in_progress = 0;
 	enable_irq(drv->irq);
 	schedule_delayed_work(&drv->cancel_work, msecs_to_jiffies(5000));
-
 	return ret;
 }
 
@@ -514,8 +496,6 @@ static int __devinit pil_riva_probe(struct platform_device *pdev)
 	drv->subsys_desc.name = "wcnss";
 	drv->subsys_desc.dev = &pdev->dev;
 	drv->subsys_desc.owner = THIS_MODULE;
-	drv->subsys_desc.start = riva_start;
-	drv->subsys_desc.stop = riva_stop;
 	drv->subsys_desc.shutdown = riva_shutdown;
 	drv->subsys_desc.powerup = riva_powerup;
 	drv->subsys_desc.ramdump = riva_ramdump;
@@ -541,6 +521,7 @@ static int __devinit pil_riva_probe(struct platform_device *pdev)
 			IRQF_TRIGGER_RISING, "riva_wdog", drv);
 	if (ret < 0)
 		goto err;
+	disable_irq(drv->irq);
 
 	return 0;
 err:
