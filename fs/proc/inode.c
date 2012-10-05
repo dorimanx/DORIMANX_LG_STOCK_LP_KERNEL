@@ -451,7 +451,6 @@ struct inode *proc_get_inode(struct super_block *sb, struct proc_dir_entry *de)
 	if (inode) {
 		inode->i_ino = de->low_ino;
 		inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
-		PROC_I(inode)->fd = 0;
 		PROC_I(inode)->pde = de;
 
 		if (de->mode) {
