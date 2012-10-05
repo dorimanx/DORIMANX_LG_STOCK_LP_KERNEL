@@ -53,6 +53,7 @@
 #include "rcu.h"
 
 module_param(rcu_expedited, int, 0);
+
 #ifdef CONFIG_PREEMPT_RCU
 
 /*
