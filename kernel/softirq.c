@@ -225,7 +225,7 @@ asmlinkage void __do_softirq(void)
 	current->flags &= ~PF_MEMALLOC;
 
 	pending = local_softirq_pending();
-	vtime_account(current);
+	vtime_account_irq_enter(current);
 
 	__local_bh_disable((unsigned long)__builtin_return_address(0),
 				SOFTIRQ_OFFSET);
@@ -278,7 +278,7 @@ restart:
 
 	lockdep_softirq_exit();
 
-	vtime_account(current);
+	vtime_account_irq_exit(current);
 	__local_bh_enable(SOFTIRQ_OFFSET);
 	tsk_restore_flags(current, old_flags, PF_MEMALLOC);
 }
@@ -365,7 +365,7 @@ void irq_exit(void)
 	WARN_ON_ONCE(!irqs_disabled());
 #endif
 
-	vtime_account(current);
+	vtime_account_irq_exit(current);
 	trace_hardirq_exit();
 	sub_preempt_count(HARDIRQ_OFFSET);
 	if (!in_interrupt() && local_softirq_pending())
