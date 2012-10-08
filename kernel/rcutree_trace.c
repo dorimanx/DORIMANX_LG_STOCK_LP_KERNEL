@@ -252,7 +252,7 @@ static const struct file_operations rcu_node_boost_fops = {
 	.owner = THIS_MODULE,
 	.open = rcu_node_boost_open,
 	.read = seq_read,
-	.llseek = seq_lseek,
+	.llseek = no_llseek,
 	.release = single_release,
 };
 
