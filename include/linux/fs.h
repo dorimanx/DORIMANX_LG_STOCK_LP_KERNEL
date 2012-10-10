@@ -2212,6 +2212,10 @@ static inline int break_lease(struct inode *inode, unsigned int mode)
 #endif /* CONFIG_FILE_LOCKING */
 
 /* fs/open.c */
+struct filename {
+	const char *name;		/* pointer to actual string */
+	const __user char *uptr;	/* original userland pointer */
+};
 
 extern long vfs_truncate(struct path *, loff_t);
 extern int do_truncate(struct dentry *, loff_t start, unsigned int time_attrs,
@@ -2225,7 +2229,9 @@ extern struct file *file_open_root(struct dentry *, struct vfsmount *,
 				   const char *, int);
 extern struct file * dentry_open(const struct path *, int, const struct cred *);
 extern int filp_close(struct file *, fl_owner_t id);
-extern char * getname(const char __user *);
+
+extern struct filename *getname(const char __user *);
+
 enum {
 	FILE_CREATED = 1,
 	FILE_OPENED = 2
@@ -2245,13 +2251,16 @@ extern void __init vfs_caches_init(unsigned long);
 
 extern struct kmem_cache *names_cachep;
 
+extern void final_putname(struct filename *name);
+
 #define __getname_gfp(gfp)	kmem_cache_alloc(names_cachep, (gfp))
 #define __getname()		__getname_gfp(GFP_KERNEL)
+
 #define __putname(name)		kmem_cache_free(names_cachep, (void *)(name))
 #ifndef CONFIG_AUDITSYSCALL
-#define putname(name)   __putname(name)
+#define putname(name)		final_putname(name)
 #else
-extern void putname(const char *name);
+extern void putname(struct filename *name);
 #endif
 
 #ifdef CONFIG_BLOCK
