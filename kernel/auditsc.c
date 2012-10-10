@@ -120,6 +120,7 @@ struct audit_names {
 	struct audit_cap_data fcap;
 	unsigned int	fcap_ver;
 	int		name_len;	/* number of name's characters to log */
+	unsigned char	type;		/* record type */
 	bool		name_put;	/* call __putname() for this name */
 	/*
 	 * This was an allocated audit_names and not from the array of
@@ -2008,7 +2009,8 @@ retry:
 #endif
 }
 
-static struct audit_names *audit_alloc_name(struct audit_context *context)
+static struct audit_names *audit_alloc_name(struct audit_context *context,
+						unsigned char type)
 {
 	struct audit_names *aname;
 
@@ -2023,6 +2025,7 @@ static struct audit_names *audit_alloc_name(struct audit_context *context)
 	}
 
 	aname->ino = (unsigned long)-1;
+	aname->type = type;
 	list_add_tail(&aname->list, &context->names_list);
 
 	context->name_count++;
@@ -2053,7 +2056,7 @@ void __audit_getname(const char *name)
 		return;
 	}
 
-	n = audit_alloc_name(context);
+	n = audit_alloc_name(context, AUDIT_TYPE_UNKNOWN);
 	if (!n)
 		return;
 
@@ -2170,12 +2173,13 @@ void __audit_inode(const char *name, const struct dentry *dentry)
 
 out_alloc:
 	/* unable to find the name from a previous getname() */
-	n = audit_alloc_name(context);
+	n = audit_alloc_name(context, AUDIT_TYPE_NORMAL);
 	if (!n)
 		return;
 out:
 	handle_path(dentry);
 	audit_copy_inode(n, dentry, inode);
+	n->type = AUDIT_TYPE_NORMAL;
 }
 
 /**
@@ -2232,6 +2236,7 @@ void __audit_inode_child(const struct inode *parent,
 				audit_copy_inode(n, dentry, inode);
 			else
 				n->ino = (unsigned long)-1;
+			n->type = AUDIT_TYPE_NORMAL;
 			found_child = n->name;
 			goto add_names;
 		}
@@ -2239,14 +2244,14 @@ void __audit_inode_child(const struct inode *parent,
 
 add_names:
 	if (!found_parent) {
-		n = audit_alloc_name(context);
+		n = audit_alloc_name(context, AUDIT_TYPE_NORMAL);
 		if (!n)
 			return;
 		audit_copy_inode(n, NULL, parent);
 	}
 
 	if (!found_child) {
-		n = audit_alloc_name(context);
+		n = audit_alloc_name(context, AUDIT_TYPE_NORMAL);
 		if (!n)
 			return;
 
