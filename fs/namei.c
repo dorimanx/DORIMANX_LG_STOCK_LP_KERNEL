@@ -1986,7 +1986,7 @@ static int do_path_lookup(int dfd, const char *name,
 		retval = path_lookupat(dfd, name, flags | LOOKUP_REVAL, nd);
 
 	if (likely(!retval))
-		audit_inode(name, nd->path.dentry);
+		audit_inode(name, nd->path.dentry, flags & LOOKUP_PARENT);
 	return retval;
 }
 
@@ -2673,7 +2673,7 @@ static int do_last(struct nameidata *nd, struct path *path,
 		error = complete_walk(nd);
 		if (error)
 			return error;
-		audit_inode(pathname, nd->path.dentry);
+		audit_inode(pathname, nd->path.dentry, 0);
 		if (open_flag & O_CREAT) {
 			error = -EISDIR;
 			goto out;
@@ -2683,7 +2683,7 @@ static int do_last(struct nameidata *nd, struct path *path,
 		error = complete_walk(nd);
 		if (error)
 			return error;
-		audit_inode(pathname, dir);
+		audit_inode(pathname, dir, 0);
 		goto finish_open;
 	}
 
@@ -2712,7 +2712,7 @@ static int do_last(struct nameidata *nd, struct path *path,
 		if (error)
 			return error;
 
-		audit_inode(pathname, dir);
+		audit_inode(pathname, dir, 0);
 		error = -EISDIR;
 		/* trailing slashes? */
 		if (nd->last.name[nd->last.len])
@@ -2742,7 +2742,7 @@ retry_lookup:
 		    !S_ISREG(file->f_path.dentry->d_inode->i_mode))
 			will_truncate = false;
 
-		audit_inode(pathname, file->f_path.dentry);
+		audit_inode(pathname, file->f_path.dentry, 0);
 		goto opened;
 	}
 
@@ -2759,7 +2759,7 @@ retry_lookup:
 	 * create/update audit record if it already exists.
 	 */
 	if (path->dentry->d_inode)
-		audit_inode(pathname, path->dentry);
+		audit_inode(pathname, path->dentry, 0);
 
 	/*
 	 * If atomic_open() acquired write access it is dropped now due to
@@ -2824,7 +2824,7 @@ finish_lookup:
 	error = -ENOTDIR;
 	if ((nd->flags & LOOKUP_DIRECTORY) && !nd->inode->i_op->lookup)
 		goto out;
-	audit_inode(pathname, nd->path.dentry);
+	audit_inode(pathname, nd->path.dentry, 0);
 finish_open:
 	if (!S_ISREG(nd->inode->i_mode))
 		will_truncate = false;
