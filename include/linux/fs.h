@@ -2217,6 +2217,7 @@ struct filename {
 	const char		*name;	/* pointer to actual string */
 	const __user char	*uptr;	/* original userland pointer */
 	struct audit_names	*aname;
+	bool			separate; /* should "name" be freed? */
 };
 
 extern long vfs_truncate(struct path *, loff_t);
