@@ -61,6 +61,7 @@ config ARM
 	select OLD_SIGSUSPEND3
 	select OLD_SIGACTION
 	select GENERIC_KERNEL_THREAD
+	select GENERIC_KERNEL_EXECVE
 	help
 	  The ARM series is a line of low-power-consumption RISC chip designs
 	  licensed by ARM Ltd and targeted at embedded applications and
