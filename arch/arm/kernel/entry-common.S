@@ -90,9 +90,9 @@ ENTRY(ret_from_fork)
 	bl	schedule_tail
 	cmp	r5, #0
 	movne	r0, r4
-	movne	lr, pc
+	adrne	lr, BSYM(1f)
 	movne	pc, r5
-	get_thread_info tsk
+1:	get_thread_info tsk
 	ldr	r1, [tsk, #TI_FLAGS]		@ check for syscall tracing
 	tst	r1, #_TIF_SYSCALL_WORK		@ are we tracing syscalls?
 	beq	ret_slow_syscall
