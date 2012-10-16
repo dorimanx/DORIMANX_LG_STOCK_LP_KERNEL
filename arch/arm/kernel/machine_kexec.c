@@ -50,9 +50,8 @@ int machine_kexec_prepare(struct kimage *image)
 	for (i = 0; i < image->nr_segments; i++) {
 		current_segment = &image->segment[i];
 
-		err = memblock_is_region_memory(current_segment->mem,
-						current_segment->memsz);
-		if (!err)
+		if (!memblock_is_region_memory(current_segment->mem,
+						current_segment->memsz))
 			return - EINVAL;
 
 #ifdef CONFIG_KEXEC_HARDBOOT
