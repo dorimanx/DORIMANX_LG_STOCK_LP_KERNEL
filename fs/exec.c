@@ -1461,14 +1461,14 @@ int search_binary_handler(struct linux_binprm *bprm)
 	for (try=0; try<2; try++) {
 		read_lock(&binfmt_lock);
 		list_for_each_entry(fmt, &formats, lh) {
-			int (*fn)(struct linux_binprm *, struct pt_regs *) = fmt->load_binary;
+			int (*fn)(struct linux_binprm *) = fmt->load_binary;
 			if (!fn)
 				continue;
 			if (!try_module_get(fmt->module))
 				continue;
 			read_unlock(&binfmt_lock);
 			bprm->recursion_depth = depth + 1;
-			retval = fn(bprm, current_pt_regs());
+			retval = fn(bprm);
 			bprm->recursion_depth = depth;
 			if (retval >= 0) {
 				if (depth == 0) {
