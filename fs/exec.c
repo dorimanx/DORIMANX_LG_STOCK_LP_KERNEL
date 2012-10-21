@@ -1432,7 +1432,7 @@ EXPORT_SYMBOL(remove_arg_zero);
 /*
  * cycle the list of binary formats handler, until one recognizes the image
  */
-int search_binary_handler(struct linux_binprm *bprm,struct pt_regs *regs)
+int search_binary_handler(struct linux_binprm *bprm)
 {
 	unsigned int depth = bprm->recursion_depth;
 	int try,retval;
@@ -1468,7 +1468,7 @@ int search_binary_handler(struct linux_binprm *bprm,struct pt_regs *regs)
 				continue;
 			read_unlock(&binfmt_lock);
 			bprm->recursion_depth = depth + 1;
-			retval = fn(bprm, regs);
+			retval = fn(bprm, current_pt_regs());
 			bprm->recursion_depth = depth;
 			if (retval >= 0) {
 				if (depth == 0) {
@@ -1607,7 +1607,7 @@ static int do_execve_common(const char *filename,
 	if (retval < 0)
 		goto out;
 
-	retval = search_binary_handler(bprm,regs);
+	retval = search_binary_handler(bprm);
 	if (retval < 0)
 		goto out;
 
