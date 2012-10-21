@@ -485,6 +485,9 @@
 #define __ARCH_WANT_SYS_SOCKETCALL
 #endif
 #define __ARCH_WANT_SYS_EXECVE
+#define __ARCH_WANT_SYS_FORK
+#define __ARCH_WANT_SYS_VFORK
+#define __ARCH_WANT_SYS_CLONE
 
 /*
  * "Conditional" syscalls
