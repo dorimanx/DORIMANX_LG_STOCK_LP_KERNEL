@@ -335,7 +335,7 @@ static u64 vtime_delta(struct task_struct *tsk,
 	return delta;
 }
 
-void vtime_account_system(struct task_struct *tsk)
+void __vtime_account_system(struct task_struct *tsk)
 {
 	u64 delta, sys_scaled, stolen;
 
@@ -345,7 +345,7 @@ void vtime_account_system(struct task_struct *tsk)
 		account_steal_time(stolen);
 }
 
-void vtime_account_idle(struct task_struct *tsk)
+void __vtime_account_idle(struct task_struct *tsk)
 {
 	u64 delta, sys_scaled, stolen;
 
