@@ -1017,6 +1017,8 @@ void task_tick_numa(struct rq *rq, struct task_struct *curr)
 	period = (u64)curr->numa_scan_period * NSEC_PER_MSEC;
 
 	if (now - curr->node_stamp > period) {
+		if (!curr->node_stamp)
+			curr->numa_scan_period = sysctl_numa_balancing_scan_period_min;
 		curr->node_stamp = now;
 
 		if (!time_before(jiffies, curr->mm->numa_next_scan)) {
