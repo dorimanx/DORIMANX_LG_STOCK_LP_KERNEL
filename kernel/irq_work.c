@@ -135,9 +135,12 @@ void irq_work_run(void)
 		/*
 		 * Clear the PENDING bit, after this point the @work
 		 * can be re-used.
+		 * Make it immediately visible so that other CPUs trying
+		 * to claim that work don't rely on us to handle their data
+		 * while we are in the middle of the func.
 		 */
 		flags = work->flags & ~IRQ_WORK_PENDING;
-		work->flags = flags;
+		xchg(&work->flags, flags);
 
 		work->func(work);
 		/*
