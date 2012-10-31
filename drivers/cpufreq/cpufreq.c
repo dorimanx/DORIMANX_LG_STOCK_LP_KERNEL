@@ -1720,6 +1720,10 @@ int __cpufreq_driver_target(struct cpufreq_policy *policy,
 #endif
 	pr_debug("target for CPU %u: %u kHz, relation %u \n", policy->cpu,
 		target_freq, relation );
+
+	if (target_freq == policy->cur)
+		return 0;
+
 #if defined(CONFIG_LGE_LOW_BATT_LIMIT)
 #if defined(CONFIG_MACH_MSM8974_G3_GLOBAL_COM) || defined(CONFIG_MACH_MSM8974_G3_TMO_US)
 	if (old_max_freq == 0)
