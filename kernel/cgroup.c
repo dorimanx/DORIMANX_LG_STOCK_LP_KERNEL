@@ -2012,11 +2012,6 @@ int cgroup_attach_task(struct cgroup *cgrp, struct task_struct *tsk)
 	/* put_css_set will not destroy cg until after an RCU grace period */
 	put_css_set(cg);
 
-	/*
-	 * wake up rmdir() waiter. the rmdir should fail since the cgroup
-	 * is no longer empty.
-	 */
-	cgroup_wakeup_rmdir_waiter(cgrp);
 out:
 	if (retval) {
 		for_each_subsys(root, ss) {
@@ -2185,7 +2180,6 @@ static int cgroup_attach_proc(struct cgroup *cgrp, struct task_struct *leader)
 	/*
 	 * step 5: success! and cleanup
 	 */
-	cgroup_wakeup_rmdir_waiter(cgrp);
 	retval = 0;
 out_put_css_set_refs:
 	if (retval) {
@@ -4281,26 +4275,13 @@ static int cgroup_rmdir(struct inode *unused_dir, struct dentry *dentry)
 	struct cgroup_event *event, *tmp;
 	struct cgroup_subsys *ss;
 
-	/*
-	 * In general, subsystem has no css->refcnt after pre_destroy(). But
-	 * in racy cases, subsystem may have to get css->refcnt after
-	 * pre_destroy() and it makes rmdir return with -EBUSY. This sometimes
-	 * make rmdir return -EBUSY too often. To avoid that, we use waitqueue
-	 * for cgroup's rmdir. CGRP_WAIT_ON_RMDIR is for synchronizing rmdir
-	 * and subsystem's reference count handling. Please see css_get/put
-	 * and css_tryget() and cgroup_wakeup_rmdir_waiter() implementation.
-	 */
-	set_bit(CGRP_WAIT_ON_RMDIR, &cgrp->flags);
-
 	/* the vfs holds both inode->i_mutex already */
 	mutex_lock(&cgroup_mutex);
 	parent = cgrp->parent;
 	if (!cgroup_css_sets_empty(cgrp) || !list_empty(&cgrp->children)) {
-		clear_bit(CGRP_WAIT_ON_RMDIR, &cgrp->flags);
 		mutex_unlock(&cgroup_mutex);
 		return -EBUSY;
 	}
-	prepare_to_wait(&cgroup_rmdir_waitq, &wait, TASK_INTERRUPTIBLE);
 
 	/*
 	 * Block new css_tryget() by deactivating refcnt and mark @cgrp
@@ -4336,9 +4317,6 @@ static int cgroup_rmdir(struct inode *unused_dir, struct dentry *dentry)
 	 */
 	for_each_subsys(cgrp->root, ss)
 		css_put(cgrp->subsys[ss->subsys_id]);
-
-	finish_wait(&cgroup_rmdir_waitq, &wait);
-	clear_bit(CGRP_WAIT_ON_RMDIR, &cgrp->flags);
 
 	raw_spin_lock(&release_list_lock);
 	if (!list_empty(&cgrp->release_list))
@@ -5051,7 +5029,6 @@ void __css_put(struct cgroup_subsys_state *css)
 	switch (v) {
 	case 1:
 		check_for_release(cgrp);
-		cgroup_wakeup_rmdir_waiter(cgrp);
 		break;
 	case 0:
 		schedule_work(&css->dput_work);
