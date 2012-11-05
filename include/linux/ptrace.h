@@ -478,7 +478,7 @@ static inline void user_single_step_siginfo(struct task_struct *tsk,
 #endif
 
 #ifndef ptrace_signal_deliver
-#define ptrace_signal_deliver(regs, cookie) do { } while (0)
+#define ptrace_signal_deliver() ((void)0)
 #endif
 
 extern int task_current_syscall(struct task_struct *target, long *callno,
