@@ -70,17 +70,8 @@ scsi_bus_resume_common(struct device *dev, int (*cb)(struct device *))
 {
 	int err = 0;
 
-	if (scsi_is_sdev_device(dev)) {
-		/*
-		 * Parent device may have runtime suspended as soon as
-		 * it is woken up during the system resume.
-		 *
-		 * Resume it on behalf of child.
-		 */
-		pm_runtime_get_sync(dev->parent);
+	if (scsi_is_sdev_device(dev))
 		err = scsi_dev_type_resume(dev, cb);
-		pm_runtime_put_sync(dev->parent);
-	}
 
 	if (err == 0) {
 		pm_runtime_disable(dev);
