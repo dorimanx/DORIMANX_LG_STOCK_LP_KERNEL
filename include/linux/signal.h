@@ -404,6 +404,8 @@ int unhandled_signal(struct task_struct *tsk, int sig);
 
 void signals_init(void);
 
+int restore_altstack(const stack_t __user *);
+
 #endif /* __KERNEL__ */
 
 #ifdef CONFIG_PROC_FS
