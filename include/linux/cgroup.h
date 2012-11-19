@@ -88,6 +88,7 @@ struct cgroup_subsys_state {
 /* bits in struct cgroup_subsys_state flags field */
 enum {
 	CSS_ROOT	= (1 << 0), /* this CSS is the root of the subsystem */
+	CSS_ONLINE	= (1 << 1), /* between ->post_create() and ->pre_destroy() */
 };
 
 /*
