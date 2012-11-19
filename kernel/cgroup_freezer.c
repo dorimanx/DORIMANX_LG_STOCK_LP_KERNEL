@@ -84,7 +84,7 @@ static const char *freezer_state_strs[] = {
 
 struct cgroup_subsys freezer_subsys;
 
-/* Locks taken and their ordering
+/*
  * ------------------------------
  * cgroup_mutex (AKA cgroup_lock)
  * freezer->lock
@@ -128,7 +128,7 @@ struct cgroup_subsys freezer_subsys;
  *    task->alloc_lock (inside __thaw_task(), prevents race with refrigerator())
  *     sighand->siglock
  */
-static struct cgroup_subsys_state *freezer_create(struct cgroup *cgroup)
+static struct cgroup_subsys_state *freezer_css_alloc(struct cgroup *cgroup)
 {
 	struct freezer *freezer;
 
@@ -141,7 +141,7 @@ static struct cgroup_subsys_state *freezer_create(struct cgroup *cgroup)
 	return &freezer->css;
 }
 
-static void freezer_destroy(struct cgroup *cgroup)
+static void freezer_css_free(struct cgroup *cgroup)
 {
 	struct freezer *freezer = cgroup_freezer(cgroup);
 
@@ -362,8 +362,8 @@ static struct cftype files[] = {
 
 struct cgroup_subsys freezer_subsys = {
 	.name		= "freezer",
-	.create		= freezer_create,
-	.destroy	= freezer_destroy,
+	.css_alloc	= freezer_css_alloc,
+	.css_free	= freezer_css_free,
 	.subsys_id	= freezer_subsys_id,
 	.can_attach	= freezer_can_attach,
 	.fork		= freezer_fork,

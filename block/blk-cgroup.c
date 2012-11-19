@@ -1518,7 +1518,18 @@ struct cftype blkio_files[] = {
 	{ }	/* terminate */
 };
 
-static void blkiocg_destroy(struct cgroup *cgroup)
+/**
+ * blkcg_css_offline - cgroup css_offline callback
+ * @cgroup: cgroup of interest
+ *
+ * This function is called when @cgroup is about to go away and responsible
+ * for shooting down all blkgs associated with @cgroup.  blkgs should be
+ * removed while holding both q and blkcg locks.  As blkcg lock is nested
+ * inside q lock, this function performs reverse double lock dancing.
+ *
+ * This is the blkcg counterpart of ioc_release_fn().
+ */
+static void blkcg_css_offline(struct cgroup *cgroup)
 {
 	struct blkio_cgroup *blkcg = cgroup_to_blkio_cgroup(cgroup);
 	unsigned long flags;
@@ -1568,7 +1579,7 @@ static void blkiocg_destroy(struct cgroup *cgroup)
 		kfree(blkcg);
 }
 
-static struct cgroup_subsys_state *blkiocg_create(struct cgroup *cgroup)
+static struct cgroup_subsys_state *blkcg_css_alloc(struct cgroup *cgroup)
 {
 	struct blkio_cgroup *blkcg;
 	struct cgroup *parent = cgroup->parent;
@@ -1633,10 +1644,10 @@ static void blkiocg_attach(struct cgroup *cgrp, struct cgroup_taskset *tset)
 
 struct cgroup_subsys blkio_subsys = {
 	.name = "blkio",
-	.create = blkiocg_create,
+	.css_alloc = blkcg_css_alloc,
+	.css_offline = blkcg_css_offline,
 	.can_attach = blkiocg_can_attach,
 	.attach = blkiocg_attach,
-	.destroy = blkiocg_destroy,
 #ifdef CONFIG_BLK_CGROUP
 	/* note: blkio_subsys_id is otherwise defined in blk-cgroup.h */
 	.subsys_id = blkio_subsys_id,
