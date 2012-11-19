@@ -4453,7 +4453,7 @@ static void __init cgroup_init_subsys(struct cgroup_subsys *ss)
 	 * pointer to this state - since the subsystem is
 	 * newly registered, all tasks and hence the
 	 * init_css_set is in the subsystem's top cgroup. */
-	init_css_set.subsys[ss->subsys_id] = dummytop->subsys[ss->subsys_id];
+	init_css_set.subsys[ss->subsys_id] = css;
 
 	need_forkexit_callback |= ss->fork || ss->exit;
 
@@ -4465,7 +4465,7 @@ static void __init cgroup_init_subsys(struct cgroup_subsys *ss)
 	ss->active = 1;
 
 	if (ss->post_create)
-		ss->post_create(&ss->root->top_cgroup);
+		ss->post_create(dummytop);
 
 	/* this function shouldn't be used with modular subsystems, since they
 	 * need to register a subsys_id, among other things */
@@ -4577,7 +4577,7 @@ int __init_or_module cgroup_load_subsys(struct cgroup_subsys *ss)
 	ss->active = 1;
 
 	if (ss->post_create)
-		ss->post_create(&ss->root->top_cgroup);
+		ss->post_create(dummytop);
 
 	/* success! */
 	mutex_unlock(&cgroup_mutex);
