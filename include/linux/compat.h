@@ -666,6 +666,7 @@ asmlinkage long compat_sys_sigaltstack(const compat_stack_t __user *uss_ptr,
 				       compat_stack_t __user *uoss_ptr);
 
 int compat_restore_altstack(const compat_stack_t __user *uss);
+int __compat_save_altstack(compat_stack_t __user *, unsigned long);
 #endif
 
 asmlinkage long compat_sys_fanotify_mark(int, unsigned int, __u32, __u32,

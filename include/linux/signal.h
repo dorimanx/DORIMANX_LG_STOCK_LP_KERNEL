@@ -405,6 +405,7 @@ int unhandled_signal(struct task_struct *tsk, int sig);
 void signals_init(void);
 
 int restore_altstack(const stack_t __user *);
+int __save_altstack(stack_t __user *, unsigned long);
 
 #endif /* __KERNEL__ */
 
