@@ -64,8 +64,10 @@ SCHED_FEAT(RT_RUNTIME_SHARE, false)
 SCHED_FEAT(LB_MIN, false)
 
 /*
- * Apply the automatic NUMA scheduling policy
+ * Apply the automatic NUMA scheduling policy. Enabled automatically
+ * at runtime if running on a NUMA machine. Can be controlled via
+ * numa_balancing=
  */
 #ifdef CONFIG_NUMA_BALANCING
-SCHED_FEAT(NUMA,	true)
+SCHED_FEAT(NUMA,	false)
 #endif
