@@ -3469,6 +3469,7 @@ static void __sched_fork(struct task_struct *p)
 }
 
 #ifdef CONFIG_NUMA_BALANCING
+#ifdef CONFIG_SCHED_DEBUG
 void set_numabalancing_state(bool enabled)
 {
 	if (enabled)
@@ -3476,6 +3477,14 @@ void set_numabalancing_state(bool enabled)
 	else
 		sched_feat_set("NO_NUMA");
 }
+#else
+__read_mostly bool numabalancing_enabled;
+
+void set_numabalancing_state(bool enabled)
+{
+	numabalancing_enabled = enabled;
+}
+#endif /* CONFIG_SCHED_DEBUG */
 #endif /* CONFIG_NUMA_BALANCING */
 
 /*
