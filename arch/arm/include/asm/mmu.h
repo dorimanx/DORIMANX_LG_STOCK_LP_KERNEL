@@ -9,7 +9,7 @@ typedef struct {
 #else
 	int		switch_pending;
 #endif
-	unsigned int kvm_seq;
+	unsigned int vmalloc_seq;
 	unsigned long	sigpage;
 } mm_context_t;
 
