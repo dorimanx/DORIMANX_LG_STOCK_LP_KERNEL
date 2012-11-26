@@ -282,6 +282,13 @@ struct ksignal {
 	int sig;
 };
 
+struct k_sigaction {
+	struct sigaction sa;
+#ifdef __ARCH_HAS_KA_RESTORER
+	__sigrestore_t ka_restorer;
+#endif
+};
+
 extern int get_signal_to_deliver(siginfo_t *info, struct k_sigaction *return_ka, struct pt_regs *regs, void *cookie);
 extern void signal_setup_done(int failed, struct ksignal *ksig, int stepping);
 extern void signal_delivered(int sig, siginfo_t *info, struct k_sigaction *ka, struct pt_regs *regs, int stepping);

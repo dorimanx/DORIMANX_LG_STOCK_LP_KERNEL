@@ -115,11 +115,6 @@ typedef unsigned long sigset_t;
 
 #ifdef __KERNEL__
 #define __ARCH_HAS_SA_RESTORER
-
-struct k_sigaction {
-	struct sigaction sa;
-};
-
 #else
 /* Here we must cater to libcs that poke about in kernel headers.  */
 

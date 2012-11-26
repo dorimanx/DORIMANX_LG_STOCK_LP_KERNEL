@@ -142,10 +142,6 @@ struct sigaction {
 };
 #endif
 
-struct k_sigaction {
-	struct sigaction sa;
-};
-
 #include <asm/sigcontext.h>
 
 #endif /* __KERNEL__ */
