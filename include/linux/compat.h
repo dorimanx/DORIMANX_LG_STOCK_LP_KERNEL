@@ -134,7 +134,6 @@ typedef struct {
 	compat_sigset_word	sig[_COMPAT_NSIG_WORDS];
 } compat_sigset_t;
 
-#ifdef CONFIG_GENERIC_COMPAT_RT_SIGACTION
 struct compat_sigaction {
 #ifndef __ARCH_HAS_IRIX_SIGACTION
 	compat_uptr_t			sa_handler;
@@ -148,7 +147,6 @@ struct compat_sigaction {
 #endif
 	compat_sigset_t			sa_mask __packed;
 };
-#endif
 
 /*
  * These functions operate strictly on struct compat_time*
@@ -622,27 +620,19 @@ asmlinkage long compat_sys_rt_sigtimedwait(compat_sigset_t __user *uthese,
 		struct compat_timespec __user *uts, compat_size_t sigsetsize);
 asmlinkage long compat_sys_rt_sigsuspend(compat_sigset_t __user *unewset,
 					 compat_size_t sigsetsize);
-#ifdef CONFIG_GENERIC_COMPAT_RT_SIGPROCMASK
 asmlinkage long compat_sys_rt_sigprocmask(int how, compat_sigset_t __user *set,
 					  compat_sigset_t __user *oset,
 					  compat_size_t sigsetsize);
-#endif
-#ifdef CONFIG_GENERIC_COMPAT_RT_SIGPENDING
 asmlinkage long compat_sys_rt_sigpending(compat_sigset_t __user *uset,
 					 compat_size_t sigsetsize);
-#endif
 #ifndef CONFIG_ODD_RT_SIGACTION
-#ifdef CONFIG_GENERIC_COMPAT_RT_SIGACTION
 asmlinkage long compat_sys_rt_sigaction(int,
 				 const struct compat_sigaction __user *,
 				 struct compat_sigaction __user *,
 				 compat_size_t);
 #endif
-#endif
-#ifdef CONFIG_GENERIC_COMPAT_RT_SIGQUEUEINFO
 asmlinkage long compat_sys_rt_sigqueueinfo(compat_pid_t pid, int sig,
 				struct compat_siginfo __user *uinfo);
-#endif
 asmlinkage long compat_sys_sysinfo(struct compat_sysinfo __user *info);
 asmlinkage long compat_sys_ioctl(unsigned int fd, unsigned int cmd,
 				 unsigned long arg);

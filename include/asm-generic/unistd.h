@@ -915,9 +915,6 @@ __SYSCALL(__NR_fork, sys_ni_syscall)
 #define __ARCH_WANT_STAT64
 #define __ARCH_WANT_SYS_LLSEEK
 #endif
-#define __ARCH_WANT_SYS_RT_SIGACTION
-#define __ARCH_WANT_SYS_RT_SIGSUSPEND
-#define __ARCH_WANT_COMPAT_SYS_RT_SIGSUSPEND
 
 /*
  * "Conditional" syscalls

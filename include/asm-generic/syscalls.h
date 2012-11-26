@@ -21,17 +21,8 @@ asmlinkage long sys_mmap(unsigned long addr, unsigned long len,
 			unsigned long fd, off_t pgoff);
 #endif
 
-#ifndef sys_sigaltstack
-asmlinkage long sys_sigaltstack(const stack_t __user *, stack_t __user *,
-			struct pt_regs *);
-#endif
-
 #ifndef sys_rt_sigreturn
 asmlinkage long sys_rt_sigreturn(struct pt_regs *regs);
-#endif
-
-#ifndef sys_rt_sigsuspend
-asmlinkage long sys_rt_sigsuspend(sigset_t __user *unewset, size_t sigsetsize);
 #endif
 
 #endif /* __ASM_GENERIC_SYSCALLS_H */
