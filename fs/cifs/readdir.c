@@ -84,14 +84,17 @@ cifs_readdir_lookup(struct dentry *parent, struct qstr *name,
 		return;
 
 	if (dentry) {
+		int err;
 		inode = dentry->d_inode;
 		/* update inode in place if i_ino didn't change */
 		if (inode && CIFS_I(inode)->uniqueid == fattr->cf_uniqueid) {
 			cifs_fattr_to_inode(inode, fattr);
 			return dentry;
 		}
-		d_drop(dentry);
+		err = d_invalidate(dentry);
 		dput(dentry);
+		if (err)
+			return NULL;
 	}
 
 	/*
