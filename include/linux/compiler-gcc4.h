@@ -78,6 +78,16 @@
 #define __compiletime_error(message) __attribute__((error(message)))
 #endif
 
+#ifdef CONFIG_ARCH_USE_BUILTIN_BSWAP
+#if __GNUC_MINOR__ >= 4
+#define __HAVE_BUILTIN_BSWAP32__
+#define __HAVE_BUILTIN_BSWAP64__
+#endif
+#if __GNUC_MINOR__ >= 8 || (defined(__powerpc__) && __GNUC_MINOR__ >= 6)
+#define __HAVE_BUILTIN_BSWAP16__
+#endif
+#endif
+
 #if GCC_VERSION >= 40902
 #define KASAN_ABI_VERSION 3
 #endif
