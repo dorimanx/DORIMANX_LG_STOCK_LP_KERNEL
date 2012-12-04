@@ -811,7 +811,7 @@ err_init_queue:
 
 /*-------------------------------------------------------------------------*/
 
-#if defined(CONFIG_OF) && !defined(CONFIG_SPARC)
+#if defined(CONFIG_OF)
 /**
  * of_register_spi_devices() - Register child devices onto the SPI bus
  * @master:	Pointer to spi_master device
