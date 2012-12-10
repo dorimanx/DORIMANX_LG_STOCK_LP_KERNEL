@@ -250,6 +250,7 @@
  * Beware, it also clobers LR.
  */
 .macro safe_svcmode_maskall reg:req
+#if __LINUX_ARM_ARCH__ >= 6
 	mrs	\reg , cpsr
 	mov	lr , \reg
 	and	lr , lr , #MODE_MASK
@@ -265,6 +266,13 @@ THUMB(	orr	\reg , \reg , #PSR_T_BIT	)
 	__ERET
 1:	movs	pc, lr
 2:
+#else
+/*
+ * workaround for possibly broken pre-v6 hardware
+ * (akita, Sharp Zaurus C-1000, PXA270-based)
+ */
+	setmode	PSR_F_BIT | PSR_I_BIT | SVC_MODE, \reg
+#endif
 .endm
 
 /*
