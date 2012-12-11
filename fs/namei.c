@@ -1875,6 +1875,7 @@ static int path_init(int dfd, const char *name, unsigned int flags,
 			get_fs_pwd(current->fs, &nd->path);
 		}
 	} else {
+		/* Caller must check execute permissions on the starting path component */
 		struct fd f = fdget_raw(dfd);
 		struct dentry *dentry;
 
@@ -1887,12 +1888,6 @@ static int path_init(int dfd, const char *name, unsigned int flags,
 			if (!S_ISDIR(dentry->d_inode->i_mode)) {
 				fdput(f);
 				return -ENOTDIR;
-			}
-
-			retval = inode_permission(dentry->d_inode, MAY_EXEC);
-			if (retval) {
-				fdput(f);
-				return retval;
 			}
 		}
 
