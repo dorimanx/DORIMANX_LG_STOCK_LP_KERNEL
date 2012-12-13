@@ -1118,6 +1118,7 @@ struct snd_soc_pcm_runtime {
 	int fe_compr;
 
 	long pmdown_time;
+	unsigned char pop_wait:1;
 
 	/* err in case of ops failed */
 	int err_ops;
