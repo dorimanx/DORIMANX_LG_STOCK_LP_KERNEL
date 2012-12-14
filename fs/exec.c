@@ -1530,7 +1530,6 @@ static int do_execve_common(const char *filename,
 	bool clear_in_exec;
 	int retval;
 	const struct cred *cred = current_cred();
-	struct pt_regs *regs = current_pt_regs();
 
 	/*
 	 * We move the actual failure in case of RLIMIT_NPROC excess from
@@ -1772,24 +1771,5 @@ asmlinkage long compat_sys_execve(const char __user * filename,
 		putname(path);
 	}
 	return error;
-}
-#endif
-
-#ifdef __ARCH_WANT_KERNEL_EXECVE
-int kernel_execve(const char *filename,
-		  const char *const argv[],
-		  const char *const envp[])
-{
-	int ret = do_execve(filename,
-			(const char __user *const __user *)argv,
-			(const char __user *const __user *)envp);
-	if (ret < 0)
-		return ret;
-
-	/*
-	 * We were successful.  We won't be returning to our caller, but
-	 * instead to user space by manipulating the kernel stack.
-	 */
-	ret_from_kernel_execve(current_pt_regs());
 }
 #endif
