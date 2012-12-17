@@ -290,7 +290,7 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
  * by calling generic_file_llseek_size() with the appropriate maxbytes
  * value for each.
  */
-loff_t ext4_llseek(struct file *file, loff_t offset, int origin)
+loff_t ext4_llseek(struct file *file, loff_t offset, int whence)
 {
 	struct inode *inode = file->f_mapping->host;
 	loff_t maxbytes;
@@ -300,7 +300,7 @@ loff_t ext4_llseek(struct file *file, loff_t offset, int origin)
 	else
 		maxbytes = inode->i_sb->s_maxbytes;
 
-	return generic_file_llseek_size(file, offset, origin,
+	return generic_file_llseek_size(file, offset, whence,
 					maxbytes, i_size_read(inode));
 }
 

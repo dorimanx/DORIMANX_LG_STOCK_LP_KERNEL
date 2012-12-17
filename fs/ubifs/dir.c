@@ -487,9 +487,9 @@ out:
 	return 0;
 }
 
-static loff_t ubifs_dir_llseek(struct file *file, loff_t offset, int origin)
+static loff_t ubifs_dir_llseek(struct file *file, loff_t offset, int whence)
 {
-	return generic_file_llseek(file, offset, origin);
+	return generic_file_llseek(file, offset, whence);
 }
 
 /* Free saved readdir() state when the directory is closed */
