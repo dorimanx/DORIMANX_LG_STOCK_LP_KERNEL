@@ -447,8 +447,9 @@ SYSCALL_DEFINE1(chroot, const char __user *, filename)
 {
 	struct path path;
 	int error;
-
-	error = user_path_dir(filename, &path);
+	unsigned int lookup_flags = LOOKUP_FOLLOW | LOOKUP_DIRECTORY;
+retry:
+	error = user_path_at(AT_FDCWD, filename, lookup_flags, &path);
 	if (error)
 		goto out;
 
@@ -467,6 +468,10 @@ SYSCALL_DEFINE1(chroot, const char __user *, filename)
 	error = 0;
 dput_and_out:
 	path_put(&path);
+	if (retry_estale(error, lookup_flags)) {
+		lookup_flags |= LOOKUP_REVAL;
+		goto retry;
+	}
 out:
 	return error;
 }
