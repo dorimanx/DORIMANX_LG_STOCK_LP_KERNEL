@@ -1831,7 +1831,7 @@ static int path_init(int dfd, const char *name, unsigned int flags,
 	if (flags & LOOKUP_ROOT) {
 		struct inode *inode = nd->root.dentry->d_inode;
 		if (*name) {
-			if (!inode->i_op->lookup)
+			if (!can_lookup(inode))
 				return -ENOTDIR;
 			retval = inode_permission(inode, MAY_EXEC);
 			if (retval)
@@ -1885,7 +1885,7 @@ static int path_init(int dfd, const char *name, unsigned int flags,
 		dentry = f.file->f_path.dentry;
 
 		if (*name) {
-			if (!S_ISDIR(dentry->d_inode->i_mode)) {
+			if (!can_lookup(dentry->d_inode)) {
 				fdput(f);
 				return -ENOTDIR;
 			}
