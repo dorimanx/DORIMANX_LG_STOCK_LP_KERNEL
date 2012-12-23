@@ -303,7 +303,7 @@ asmlinkage int sys_rt_sigreturn(struct pt_regs *regs)
 	if (restore_sigframe(regs, &frame->sig))
 		goto badframe;
 
-	if (do_sigaltstack(&frame->sig.uc.uc_stack, NULL, regs->ARM_sp) == -EFAULT)
+	if (restore_altstack(&frame->sig.uc.uc_stack))
 		goto badframe;
 
 	return regs->ARM_r0;
@@ -505,7 +505,6 @@ static int
 setup_rt_frame(struct ksignal *ksig, sigset_t *set, struct pt_regs *regs)
 {
 	struct rt_sigframe __user *frame = get_sigframe(ksig, regs, sizeof(*frame));
-	stack_t stack;
 	int err = 0;
 
 	if (!frame)
@@ -516,12 +515,7 @@ setup_rt_frame(struct ksignal *ksig, sigset_t *set, struct pt_regs *regs)
 	__put_user_error(0, &frame->sig.uc.uc_flags, err);
 	__put_user_error(NULL, &frame->sig.uc.uc_link, err);
 
-	memset(&stack, 0, sizeof(stack));
-	stack.ss_sp = (void __user *)current->sas_ss_sp;
-	stack.ss_flags = sas_ss_flags(regs->ARM_sp);
-	stack.ss_size = current->sas_ss_size;
-	err |= __copy_to_user(&frame->sig.uc.uc_stack, &stack, sizeof(stack));
-
+	err |= __save_altstack(&frame->sig.uc.uc_stack, regs->ARM_sp);
 	err |= setup_sigframe(&frame->sig, regs, set);
 	if (err == 0)
 		err = setup_return(regs, ksig, frame->sig.retcode, frame);
