@@ -347,6 +347,9 @@ config CC_STACKPROTECTOR_STRONG
 
 endchoice
 
+config GENERIC_COMPAT_RT_SIGPROCMASK
+	bool
+
 config HAVE_CONTEXT_TRACKING
 	bool
 	help
