@@ -257,6 +257,15 @@ struct ksignal {
 	siginfo_t info;
 	int sig;
 };
+ 
+#ifdef CONFIG_OLD_SIGACTION
+struct old_sigaction {
+	__sighandler_t sa_handler;
+	old_sigset_t sa_mask;
+	unsigned long sa_flags;
+	__sigrestore_t sa_restorer;
+};
+#endif
 
 extern int get_signal_to_deliver(siginfo_t *info, struct k_sigaction *return_ka, struct pt_regs *regs, void *cookie);
 extern void signal_setup_done(int failed, struct ksignal *ksig, int stepping);
