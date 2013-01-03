@@ -2535,6 +2535,13 @@ static int copy_module_from_fd(int fd, struct load_info *info)
 		err = -EFBIG;
 		goto out;
 	}
+
+	/* Don't hand 0 to vmalloc, it whines. */
+	if (stat.size == 0) {
+		err = -EINVAL;
+		goto out;
+	}
+
 	info->hdr = vmalloc(stat.size);
 	if (!info->hdr) {
 		err = -ENOMEM;
