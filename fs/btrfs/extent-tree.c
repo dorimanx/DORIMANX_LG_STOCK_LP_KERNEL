@@ -3582,6 +3582,46 @@ out:
 	return ret;
 }
 
+static int can_overcommit(struct btrfs_root *root,
+			  struct btrfs_space_info *space_info, u64 bytes,
+			  enum btrfs_reserve_flush_enum flush)
+{
+	u64 profile = btrfs_get_alloc_profile(root, 0);
+	u64 avail;
+	u64 used;
+
+	used = space_info->bytes_used + space_info->bytes_reserved +
+		space_info->bytes_pinned + space_info->bytes_readonly +
+		space_info->bytes_may_use;
+
+	spin_lock(&root->fs_info->free_chunk_lock);
+	avail = root->fs_info->free_chunk_space;
+	spin_unlock(&root->fs_info->free_chunk_lock);
+
+	/*
+	 * If we have dup, raid1 or raid10 then only half of the free
+	 * space is actually useable.
+	 */
+	if (profile & (BTRFS_BLOCK_GROUP_DUP |
+		       BTRFS_BLOCK_GROUP_RAID1 |
+		       BTRFS_BLOCK_GROUP_RAID10))
+		avail >>= 1;
+
+	/*
+	 * If we aren't flushing all things, let us overcommit up to
+	 * 1/2th of the space. If we can flush, don't let us overcommit
+	 * too much, let it overcommit up to 1/8 of the space.
+	 */
+	if (flush == BTRFS_RESERVE_FLUSH_ALL)
+		avail >>= 3;
+	else
+		avail >>= 1;
+
+	if (used + bytes < space_info->total_bytes + avail)
+		return 1;
+	return 0;
+}
+
 /*
  * shrink metadata reservation for delalloc
  */
@@ -3618,16 +3658,19 @@ static int shrink_delalloc(struct btrfs_root *root, u64 to_reclaim,
 		return 0;
 	}
 
-	max_reclaim = min(reserved, to_reclaim);
-	nr_pages = max_t(unsigned long, nr_pages,
-			 max_reclaim >> PAGE_CACHE_SHIFT);
-	while (loops < 1024) {
-		/* have the flusher threads jump in and do some IO */
-		smp_mb();
-		nr_pages = min_t(unsigned long, nr_pages,
-		       root->fs_info->delalloc_bytes >> PAGE_CACHE_SHIFT);
-		writeback_inodes_sb_nr_if_idle(root->fs_info->sb, nr_pages,
-						WB_REASON_FS_FREE_SPACE);
+	while (delalloc_bytes && loops < 3) {
+		max_reclaim = min(delalloc_bytes, to_reclaim);
+		nr_pages = max_reclaim >> PAGE_CACHE_SHIFT;
+		try_to_writeback_inodes_sb_nr(root->fs_info->sb,
+					      nr_pages,
+					      WB_REASON_FS_FREE_SPACE);
+
+		/*
+		 * We need to wait for the async pages to actually start before
+		 * we do anything.
+		 */
+		wait_event(root->fs_info->async_submit_wait,
+			   !atomic_read(&root->fs_info->async_delalloc_pages));
 
 		spin_lock(&space_info->lock);
 		if (reserved > space_info->bytes_may_use)
