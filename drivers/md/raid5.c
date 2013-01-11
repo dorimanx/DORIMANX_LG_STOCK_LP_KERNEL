@@ -4461,9 +4461,7 @@ static int  retry_aligned_read(struct r5conf *conf, struct bio *raid_bio)
 		release_stripe(sh);
 		handled++;
 	}
-	spin_lock_irq(&conf->device_lock);
-	remaining = raid5_dec_bi_phys_segments(raid_bio);
-	spin_unlock_irq(&conf->device_lock);
+	remaining = raid5_dec_bi_active_stripes(raid_bio);
 	if (remaining == 0)
 		bio_endio(raid_bio, 0);
 	if (atomic_dec_and_test(&conf->active_aligned_reads))
