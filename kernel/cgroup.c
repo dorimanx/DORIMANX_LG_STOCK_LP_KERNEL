@@ -1052,7 +1052,6 @@ static int rebind_subsystems(struct cgroupfs_root *root,
 		}
 	}
 	root->subsys_mask = root->actual_subsys_mask = final_subsys_mask;
-	synchronize_rcu();
 
 	return 0;
 }
