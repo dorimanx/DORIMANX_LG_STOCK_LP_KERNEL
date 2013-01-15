@@ -115,6 +115,8 @@ struct fuse_inode {
 enum {
 	/** An operation changing file size is in progress  */
 	FUSE_I_SIZE_UNSTABLE,
+	/** Advise readdirplus  */
+	FUSE_I_ADVISE_RDPLUS,
 };
 
 struct fuse_conn;
