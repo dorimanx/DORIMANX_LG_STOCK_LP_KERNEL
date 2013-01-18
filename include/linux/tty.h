@@ -374,11 +374,43 @@ struct tty_file_private {
 
 #define TTY_WRITE_FLUSH(tty) tty_write_flush((tty))
 
+#ifdef CONFIG_TTY
+extern void console_init(void);
+extern void tty_kref_put(struct tty_struct *tty);
+extern struct pid *tty_get_pgrp(struct tty_struct *tty);
+extern void tty_vhangup_self(void);
+extern void disassociate_ctty(int priv);
+extern dev_t tty_devnum(struct tty_struct *tty);
+extern void proc_clear_tty(struct task_struct *p);
+extern struct tty_struct *get_current_tty(void);
+/* tty_io.c */
+extern int __init tty_init(void);
+#else
+static inline void console_init(void)
+{ }
+static inline void tty_kref_put(struct tty_struct *tty)
+{ }
+static inline struct pid *tty_get_pgrp(struct tty_struct *tty)
+{ return NULL; }
+static inline void tty_vhangup_self(void)
+{ }
+static inline void disassociate_ctty(int priv)
+{ }
+static inline dev_t tty_devnum(struct tty_struct *tty)
+{ return 0; }
+static inline void proc_clear_tty(struct task_struct *p)
+{ }
+static inline struct tty_struct *get_current_tty(void)
+{ return NULL; }
+/* tty_io.c */
+static inline int __init tty_init(void)
+{ return 0; }
+#endif
+
 extern void tty_write_flush(struct tty_struct *);
 
 extern struct ktermios tty_std_termios;
 
-extern void console_init(void);
 extern int vcs_init(void);
 
 extern struct class *tty_class;
@@ -398,7 +430,6 @@ static inline struct tty_struct *tty_kref_get(struct tty_struct *tty)
 		kref_get(&tty->kref);
 	return tty;
 }
-extern void tty_kref_put(struct tty_struct *tty);
 
 extern int tty_paranoia_check(struct tty_struct *tty, struct inode *inode,
 			      const char *routine);
@@ -427,18 +458,15 @@ extern void tty_driver_remove_tty(struct tty_driver *driver,
 extern void tty_shutdown(struct tty_struct *tty);
 extern void tty_free_termios(struct tty_struct *tty);
 extern int is_current_pgrp_orphaned(void);
-extern struct pid *tty_get_pgrp(struct tty_struct *tty);
 extern int is_ignored(int sig);
 extern int tty_signal(int sig, struct tty_struct *tty);
 extern void tty_hangup(struct tty_struct *tty);
 extern void tty_vhangup(struct tty_struct *tty);
 extern void tty_vhangup_locked(struct tty_struct *tty);
-extern void tty_vhangup_self(void);
 extern void tty_unhangup(struct file *filp);
 extern int tty_hung_up_p(struct file *filp);
 extern void do_SAK(struct tty_struct *tty);
 extern void __do_SAK(struct tty_struct *tty);
-extern void disassociate_ctty(int priv);
 extern void no_tty(void);
 extern void tty_flip_buffer_push(struct tty_struct *tty);
 extern void tty_flush_to_ldisc(struct tty_struct *tty);
@@ -469,9 +497,6 @@ extern long tty_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
 extern int tty_mode_ioctl(struct tty_struct *tty, struct file *file,
 			unsigned int cmd, unsigned long arg);
 extern int tty_perform_flush(struct tty_struct *tty, unsigned long arg);
-extern dev_t tty_devnum(struct tty_struct *tty);
-extern void proc_clear_tty(struct task_struct *p);
-extern struct tty_struct *get_current_tty(void);
 extern void tty_default_fops(struct file_operations *fops);
 extern struct tty_struct *alloc_tty_struct(void);
 extern int tty_alloc_file(struct file *file);
@@ -578,9 +603,6 @@ static inline int tty_audit_push_task(struct task_struct *tsk,
 	return 0;
 }
 #endif
-
-/* tty_io.c */
-extern int __init tty_init(void);
 
 /* tty_ioctl.c */
 extern int n_tty_ioctl_helper(struct tty_struct *tty, struct file *file,

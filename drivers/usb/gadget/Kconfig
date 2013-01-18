@@ -820,6 +820,7 @@ config USB_GADGET_TARGET
 
 config USB_G_SERIAL
 	tristate "Serial Gadget (with CDC ACM and CDC OBEX support)"
+	depends on TTY
 	help
 	  The Serial Gadget talks to the Linux-USB generic serial driver.
 	  This driver supports a CDC-ACM module option, which can be used
@@ -874,6 +875,8 @@ config USB_G_ANDROID
 	  and rndis.
 	  Each function can be configured and enabled/disabled
 	  dynamically from userspace through a sysfs interface.
+
+if TTY
 
 config USB_CDC_COMPOSITE
 	tristate "CDC Composite Device (Ethernet and ACM)"
@@ -951,6 +954,8 @@ config USB_G_MULTI_CDC
 
 	  If unsure, say "y".
 
+endif # TTY
+
 config USB_G_HID
 	tristate "HID Gadget"
 	help
@@ -965,6 +970,7 @@ config USB_G_HID
 
 config USB_G_DBGP
 	tristate "EHCI Debug Device Gadget"
+	depends on TTY
 	help
 	  This gadget emulates an EHCI Debug device. This is useful when you want
 	  to interact with an EHCI Debug Port.

@@ -2,6 +2,8 @@
 # Serial device configuration
 #
 
+if TTY
+
 menu "Serial drivers"
 	depends on HAS_IOMEM
 
@@ -1391,3 +1393,5 @@ config SERIAL_EFM32_UART_CONSOLE
 	select SERIAL_CORE_CONSOLE
 
 endmenu
+
+endif # TTY

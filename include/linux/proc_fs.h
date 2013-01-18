@@ -98,7 +98,12 @@ extern int remove_proc_subtree(const char *name, struct proc_dir_entry *parent);
  * proc_tty.c
  */
 struct tty_driver;
+#ifdef CONFIG_TTY
 extern void proc_tty_init(void);
+#else
+static inline void proc_tty_init(void)
+{ }
+#endif
 extern void proc_tty_register_driver(struct tty_driver *driver);
 extern void proc_tty_unregister_driver(struct tty_driver *driver);
 
