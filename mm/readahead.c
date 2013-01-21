@@ -581,7 +581,7 @@ do_readahead(struct address_space *mapping, struct file *filp,
 	return 0;
 }
 
-SYSCALL_DEFINE(readahead)(int fd, loff_t offset, size_t count)
+SYSCALL_DEFINE3(readahead, int, fd, loff_t, offset, size_t, count)
 {
 	ssize_t ret;
 	struct fd f;
@@ -600,10 +600,3 @@ SYSCALL_DEFINE(readahead)(int fd, loff_t offset, size_t count)
 	}
 	return ret;
 }
-#ifdef CONFIG_HAVE_SYSCALL_WRAPPERS
-asmlinkage long SyS_readahead(long fd, loff_t offset, long count)
-{
-	return SYSC_readahead((int) fd, offset, (size_t) count);
-}
-SYSCALL_ALIAS(sys_readahead, SyS_readahead);
-#endif
