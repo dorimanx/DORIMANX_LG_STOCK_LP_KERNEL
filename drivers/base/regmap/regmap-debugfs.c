@@ -280,7 +280,7 @@ static ssize_t regmap_map_write_file(struct file *file,
 		return -EINVAL;
 
 	/* Userspace has been fiddling around behind the kernel's back */
-	add_taint(TAINT_USER);
+	add_taint(TAINT_USER, LOCKDEP_NOW_UNRELIABLE);
 
 	ret = regmap_write(map, reg, value);
 	if (ret < 0)
