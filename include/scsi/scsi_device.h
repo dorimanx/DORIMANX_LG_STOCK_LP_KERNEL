@@ -161,6 +161,8 @@ struct scsi_device {
 
 #define SCSI_DEFAULT_AUTOSUSPEND_DELAY  -1
 	int autosuspend_delay;
+	atomic_t disk_events_disable_depth; /* disable depth for disk events */
+
 	DECLARE_BITMAP(supported_events, SDEV_EVT_MAXBITS); /* supported events */
 	struct list_head event_list;	/* asserted events */
 	struct work_struct event_work;
@@ -404,6 +406,8 @@ static inline int scsi_execute_req(struct scsi_device *sdev,
 	return scsi_execute_req_flags(sdev, cmd, data_direction, buffer,
 		bufflen, sshdr, timeout, retries, resid, 0);
 }
+extern void sdev_disable_disk_events(struct scsi_device *sdev);
+extern void sdev_enable_disk_events(struct scsi_device *sdev);
 
 #ifdef CONFIG_PM_RUNTIME
 extern int scsi_autopm_get_device(struct scsi_device *);
