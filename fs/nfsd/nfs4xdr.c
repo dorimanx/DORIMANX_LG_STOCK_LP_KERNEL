@@ -1993,6 +1993,21 @@ static __be32 fattr_handle_absent_fs(u32 *bmval0, u32 *bmval1, u32 *rdattr_err)
 	return 0;
 }
 
+static int get_parent_attributes(struct svc_export *exp, struct kstat *stat)
+{
+	struct path path = exp->ex_path;
+	int err;
+
+	path_get(&path);
+	while (follow_up(&path)) {
+		if (path.dentry != path.mnt->mnt_root)
+			break;
+	}
+	err = vfs_getattr(&path, stat);
+	path_put(&path);
+	return err;
+}
+
 /*
  * Note: @fhp can be NULL; in this case, we might have to compose the filehandle
  * ourselves.
@@ -2040,7 +2055,7 @@ nfsd4_encode_fattr(struct svc_fh *fhp, struct svc_export *exp,
 			goto out;
 	}
 
-	err = vfs_getattr(exp->ex_path.mnt, dentry, &stat);
+	err = vfs_getattr(&path, &stat);
 	if (err)
 		goto out_nfserr;
 	if ((bmval0 & (FATTR4_WORD0_FILES_AVAIL | FATTR4_WORD0_FILES_FREE |
