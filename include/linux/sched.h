@@ -3084,6 +3084,10 @@ extern long sched_getaffinity(pid_t pid, struct cpumask *mask);
 extern struct task_group root_task_group;
 #endif /* CONFIG_CGROUP_SCHED */
 
+extern void sched_online_group(struct task_group *tg,
+			       struct task_group *parent);
+extern void sched_offline_group(struct task_group *tg);
+
 extern int task_can_switch_user(struct user_struct *up,
 					struct task_struct *tsk);
 
