@@ -1740,7 +1740,7 @@ int cgroup_path(const struct cgroup *cgrp, char *buf, int buflen)
 	rcu_lockdep_assert(rcu_read_lock_held() || cgroup_lock_is_held(),
 			   "cgroup_path() called without proper locking");
 
-	if (!dentry || cgrp == dummytop) {
+	if (cgrp == dummytop) {
 		/*
 		 * Inactive subsystems have no dentry for their root
 		 * cgroup
@@ -4194,6 +4194,9 @@ static long cgroup_create(struct cgroup *parent, struct dentry *dentry,
 
 	init_cgroup_housekeeping(cgrp);
 
+	dentry->d_fsdata = cgrp;
+	cgrp->dentry = dentry;
+
 	cgrp->parent = parent;
 	cgrp->root = parent->root;
 	cgrp->top_cgroup = parent->top_cgroup;
@@ -4233,8 +4236,6 @@ static long cgroup_create(struct cgroup *parent, struct dentry *dentry,
 	set_bit(CGRP_RELEASABLE, &parent->flags);
 
 	/* allocation complete, commit to creation */
-	dentry->d_fsdata = cgrp;
-	cgrp->dentry = dentry;
 	list_add_tail(&cgrp->allcg_node, &root->allcg_list);
 	list_add_tail_rcu(&cgrp->sibling, &cgrp->parent->children);
 	root->number_of_cgroups++;
