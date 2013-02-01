@@ -315,7 +315,7 @@ struct power_supply_info {
 int power_supply_set_floated_charger(struct power_supply *psy, int is_float);
 int power_supply_set_usb_driver_uninstall(struct power_supply *psy, int is_float);
 #endif
-extern struct power_supply *power_supply_get_by_name(char *name);
+extern struct power_supply *power_supply_get_by_name(const char *name);
 extern void power_supply_changed(struct power_supply *psy);
 extern int power_supply_am_i_supplied(struct power_supply *psy);
 extern int power_supply_set_battery_charged(struct power_supply *psy);

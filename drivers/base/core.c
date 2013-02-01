@@ -1689,9 +1689,9 @@ struct device *device_create_with_groups(struct class *class,
 }
 EXPORT_SYMBOL_GPL(device_create_with_groups);
 
-static int __match_devt(struct device *dev, void *data)
+static int __match_devt(struct device *dev, const void *data)
 {
-	dev_t *devt = data;
+	const dev_t *devt = data;
 
 	return dev->devt == *devt;
 }
