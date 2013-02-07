@@ -35,6 +35,8 @@
 #include <linux/buffer_head.h> /* __set_page_dirty_buffers */
 #include <linux/pagevec.h>
 #include <linux/mm_inline.h>
+#include <linux/timer.h>
+#include <linux/sched/rt.h>
 #include <trace/events/writeback.h>
 
 #include "internal.h"
