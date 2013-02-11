@@ -319,6 +319,16 @@ extern struct cpu_tlb_fns cpu_tlb;
 #define tlb_op(f, regs, arg)	__tlb_op(f, "p15, 0, %0, " regs, arg)
 #define tlb_l2_op(f, regs, arg)	__tlb_op(f, "p15, 1, %0, " regs, arg)
 
+static inline void __local_flush_tlb_all(void)
+{
+	const int zero = 0;
+	const unsigned int __tlb_flag = __cpu_tlb_flags;
+
+	tlb_op(TLB_V4_U_FULL | TLB_V6_U_FULL, "c8, c7, 0", zero);
+	tlb_op(TLB_V4_D_FULL | TLB_V6_D_FULL, "c8, c6, 0", zero);
+	tlb_op(TLB_V4_I_FULL | TLB_V6_I_FULL, "c8, c5, 0", zero);
+}
+
 static inline void local_flush_tlb_all(void)
 {
 	const int zero = 0;
@@ -327,10 +337,8 @@ static inline void local_flush_tlb_all(void)
 	if (tlb_flag(TLB_WB))
 		dsb();
 
-	tlb_op(TLB_V4_U_FULL | TLB_V6_U_FULL, "c8, c7, 0", zero);
-	tlb_op(TLB_V4_D_FULL | TLB_V6_D_FULL, "c8, c6, 0", zero);
-	tlb_op(TLB_V4_I_FULL | TLB_V6_I_FULL, "c8, c5, 0", zero);
-	tlb_op(TLB_V7_UIS_FULL, "c8, c3, 0", zero);
+	__local_flush_tlb_all();
+	tlb_op(TLB_V7_UIS_FULL, "c8, c7, 0", zero);
 
 	if (tlb_flag(TLB_BARRIER)) {
 		dsb();
@@ -346,31 +354,69 @@ static inline void local_flush_tlb_all_non_is(void)
 	isb();
 }
 
-static inline void local_flush_tlb_mm(struct mm_struct *mm)
+static inline void __flush_tlb_all(void)
 {
 	const int zero = 0;
+	const unsigned int __tlb_flag = __cpu_tlb_flags;
+
+	if (tlb_flag(TLB_WB))
+		dsb();
+
+	__local_flush_tlb_all();
+	tlb_op(TLB_V7_UIS_FULL, "c8, c3, 0", zero);
+
+	if (tlb_flag(TLB_BARRIER)) {
+		dsb();
+		isb();
+	}
+}
+
+static inline void __local_flush_tlb_mm(struct mm_struct *mm)
+{
+	const int zero = 0;
+	const int asid = ASID(mm);
+	const unsigned int __tlb_flag = __cpu_tlb_flags;
+
+	if (possible_tlb_flags & (TLB_V4_U_FULL|TLB_V4_D_FULL|TLB_V4_I_FULL)) {
+		if (cpumask_test_cpu(smp_processor_id(), mm_cpumask(mm))) {
+			tlb_op(TLB_V4_U_FULL, "c8, c7, 0", zero);
+			tlb_op(TLB_V4_D_FULL, "c8, c6, 0", zero);
+			tlb_op(TLB_V4_I_FULL, "c8, c5, 0", zero);
+		}
+	}
+
+	tlb_op(TLB_V6_U_ASID, "c8, c7, 2", asid);
+	tlb_op(TLB_V6_D_ASID, "c8, c6, 2", asid);
+	tlb_op(TLB_V6_I_ASID, "c8, c5, 2", asid);
+}
+
+static inline void local_flush_tlb_mm(struct mm_struct *mm)
+{
 	const int asid = ASID(mm);
 	const unsigned int __tlb_flag = __cpu_tlb_flags;
 
 	if (tlb_flag(TLB_WB))
 		dsb();
 
-	if (possible_tlb_flags & (TLB_V4_U_FULL|TLB_V4_D_FULL|TLB_V4_I_FULL)) {
-		if (cpumask_test_cpu(get_cpu(), mm_cpumask(mm))) {
-			tlb_op(TLB_V4_U_FULL, "c8, c7, 0", zero);
-			tlb_op(TLB_V4_D_FULL, "c8, c6, 0", zero);
-			tlb_op(TLB_V4_I_FULL, "c8, c5, 0", zero);
-		}
-		put_cpu();
-	}
+	__local_flush_tlb_mm(mm);
+	tlb_op(TLB_V7_UIS_ASID, "c8, c7, 2", asid);
 
-	tlb_op(TLB_V6_U_ASID, "c8, c7, 2", asid);
-	tlb_op(TLB_V6_D_ASID, "c8, c6, 2", asid);
-	tlb_op(TLB_V6_I_ASID, "c8, c5, 2", asid);
+	if (tlb_flag(TLB_BARRIER))
+		dsb();
+}
+
+static inline void __flush_tlb_mm(struct mm_struct *mm)
+{
+	const unsigned int __tlb_flag = __cpu_tlb_flags;
+
+	if (tlb_flag(TLB_WB))
+		dsb();
+
+	__local_flush_tlb_mm(mm);
 #ifdef CONFIG_ARM_ERRATA_720789
-	tlb_op(TLB_V7_UIS_ASID, "c8, c3, 0", zero);
+	tlb_op(TLB_V7_UIS_ASID, "c8, c3, 0", 0);
 #else
-	tlb_op(TLB_V7_UIS_ASID, "c8, c3, 2", asid);
+	tlb_op(TLB_V7_UIS_ASID, "c8, c3, 2", ASID(mm));
 #endif
 
 	if (tlb_flag(TLB_BARRIER))
@@ -378,15 +424,12 @@ static inline void local_flush_tlb_mm(struct mm_struct *mm)
 }
 
 static inline void
-local_flush_tlb_page(struct vm_area_struct *vma, unsigned long uaddr)
+__local_flush_tlb_page(struct vm_area_struct *vma, unsigned long uaddr)
 {
 	const int zero = 0;
 	const unsigned int __tlb_flag = __cpu_tlb_flags;
 
 	uaddr = (uaddr & PAGE_MASK) | ASID(vma->vm_mm);
-
-	if (tlb_flag(TLB_WB))
-		dsb();
 
 	if (possible_tlb_flags & (TLB_V4_U_PAGE|TLB_V4_D_PAGE|TLB_V4_I_PAGE|TLB_V4_I_FULL) &&
 	    cpumask_test_cpu(smp_processor_id(), mm_cpumask(vma->vm_mm))) {
@@ -400,6 +443,36 @@ local_flush_tlb_page(struct vm_area_struct *vma, unsigned long uaddr)
 	tlb_op(TLB_V6_U_PAGE, "c8, c7, 1", uaddr);
 	tlb_op(TLB_V6_D_PAGE, "c8, c6, 1", uaddr);
 	tlb_op(TLB_V6_I_PAGE, "c8, c5, 1", uaddr);
+}
+
+static inline void
+local_flush_tlb_page(struct vm_area_struct *vma, unsigned long uaddr)
+{
+	const unsigned int __tlb_flag = __cpu_tlb_flags;
+
+	uaddr = (uaddr & PAGE_MASK) | ASID(vma->vm_mm);
+
+	if (tlb_flag(TLB_WB))
+		dsb();
+
+	__local_flush_tlb_page(vma, uaddr);
+	tlb_op(TLB_V7_UIS_PAGE, "c8, c7, 1", uaddr);
+
+	if (tlb_flag(TLB_BARRIER))
+		dsb();
+}
+
+static inline void
+__flush_tlb_page(struct vm_area_struct *vma, unsigned long uaddr)
+{
+	const unsigned int __tlb_flag = __cpu_tlb_flags;
+
+	uaddr = (uaddr & PAGE_MASK) | ASID(vma->vm_mm);
+
+	if (tlb_flag(TLB_WB))
+		dsb();
+
+	__local_flush_tlb_page(vma, uaddr);
 #if defined(CONFIG_ARM_ERRATA_720789) || defined(CONFIG_ARCH_MSM8X60)
 	tlb_op(TLB_V7_UIS_PAGE, "c8, c3, 3", uaddr & PAGE_MASK);
 #else
@@ -410,15 +483,10 @@ local_flush_tlb_page(struct vm_area_struct *vma, unsigned long uaddr)
 		dsb();
 }
 
-static inline void local_flush_tlb_kernel_page(unsigned long kaddr)
+static inline void __local_flush_tlb_kernel_page(unsigned long kaddr)
 {
 	const int zero = 0;
 	const unsigned int __tlb_flag = __cpu_tlb_flags;
-
-	kaddr &= PAGE_MASK;
-
-	if (tlb_flag(TLB_WB))
-		dsb();
 
 	tlb_op(TLB_V4_U_PAGE, "c8, c7, 1", kaddr);
 	tlb_op(TLB_V4_D_PAGE, "c8, c6, 1", kaddr);
@@ -429,6 +497,36 @@ static inline void local_flush_tlb_kernel_page(unsigned long kaddr)
 	tlb_op(TLB_V6_U_PAGE, "c8, c7, 1", kaddr);
 	tlb_op(TLB_V6_D_PAGE, "c8, c6, 1", kaddr);
 	tlb_op(TLB_V6_I_PAGE, "c8, c5, 1", kaddr);
+}
+
+static inline void local_flush_tlb_kernel_page(unsigned long kaddr)
+{
+	const unsigned int __tlb_flag = __cpu_tlb_flags;
+
+	kaddr &= PAGE_MASK;
+
+	if (tlb_flag(TLB_WB))
+		dsb();
+
+	__local_flush_tlb_kernel_page(kaddr);
+	tlb_op(TLB_V7_UIS_PAGE, "c8, c7, 1", kaddr);
+
+	if (tlb_flag(TLB_BARRIER)) {
+		dsb();
+		isb();
+	}
+}
+
+static inline void __flush_tlb_kernel_page(unsigned long kaddr)
+{
+	const unsigned int __tlb_flag = __cpu_tlb_flags;
+
+	kaddr &= PAGE_MASK;
+
+	if (tlb_flag(TLB_WB))
+		dsb();
+
+	__local_flush_tlb_kernel_page(kaddr);
 #ifdef CONFIG_ARCH_MSM8X60
 	tlb_op(TLB_V7_UIS_PAGE, "c8, c3, 3", kaddr);
 #else
