@@ -377,7 +377,95 @@ err_free_cols:
 	return err;
 }
 
-static int __devinit matrix_keypad_probe(struct platform_device *pdev)
+static void matrix_keypad_free_gpio(struct matrix_keypad *keypad)
+{
+	const struct matrix_keypad_platform_data *pdata = keypad->pdata;
+	int i;
+
+	if (pdata->clustered_irq > 0) {
+		free_irq(pdata->clustered_irq, keypad);
+	} else {
+		for (i = 0; i < pdata->num_row_gpios; i++)
+			free_irq(gpio_to_irq(pdata->row_gpios[i]), keypad);
+	}
+
+	for (i = 0; i < pdata->num_row_gpios; i++)
+		gpio_free(pdata->row_gpios[i]);
+
+	for (i = 0; i < pdata->num_col_gpios; i++)
+		gpio_free(pdata->col_gpios[i]);
+}
+
+#ifdef CONFIG_OF
+static struct matrix_keypad_platform_data *
+matrix_keypad_parse_dt(struct device *dev)
+{
+	struct matrix_keypad_platform_data *pdata;
+	struct device_node *np = dev->of_node;
+	unsigned int *gpios;
+	int i, nrow, ncol;
+
+	if (!np) {
+		dev_err(dev, "device lacks DT data\n");
+		return ERR_PTR(-ENODEV);
+	}
+
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata) {
+		dev_err(dev, "could not allocate memory for platform data\n");
+		return ERR_PTR(-ENOMEM);
+	}
+
+	pdata->num_row_gpios = nrow = of_gpio_named_count(np, "row-gpios");
+	pdata->num_col_gpios = ncol = of_gpio_named_count(np, "col-gpios");
+	if (nrow <= 0 || ncol <= 0) {
+		dev_err(dev, "number of keypad rows/columns not specified\n");
+		return ERR_PTR(-EINVAL);
+	}
+
+	if (of_get_property(np, "linux,no-autorepeat", NULL))
+		pdata->no_autorepeat = true;
+	if (of_get_property(np, "linux,wakeup", NULL))
+		pdata->wakeup = true;
+	if (of_get_property(np, "gpio-activelow", NULL))
+		pdata->active_low = true;
+
+	of_property_read_u32(np, "debounce-delay-ms", &pdata->debounce_ms);
+	of_property_read_u32(np, "col-scan-delay-us",
+						&pdata->col_scan_delay_us);
+
+	gpios = devm_kzalloc(dev,
+			     sizeof(unsigned int) *
+				(pdata->num_row_gpios + pdata->num_col_gpios),
+			     GFP_KERNEL);
+	if (!gpios) {
+		dev_err(dev, "could not allocate memory for gpios\n");
+		return ERR_PTR(-ENOMEM);
+	}
+
+	for (i = 0; i < pdata->num_row_gpios; i++)
+		gpios[i] = of_get_named_gpio(np, "row-gpios", i);
+
+	for (i = 0; i < pdata->num_col_gpios; i++)
+		gpios[pdata->num_row_gpios + i] =
+			of_get_named_gpio(np, "col-gpios", i);
+
+	pdata->row_gpios = gpios;
+	pdata->col_gpios = &gpios[pdata->num_row_gpios];
+
+	return pdata;
+}
+#else
+static inline struct matrix_keypad_platform_data *
+matrix_keypad_parse_dt(struct device *dev)
+{
+	dev_err(dev, "no platform data defined\n");
+
+	return ERR_PTR(-EINVAL);
+}
+#endif
+
+static int matrix_keypad_probe(struct platform_device *pdev)
 {
 	const struct matrix_keypad_platform_data *pdata;
 	const struct matrix_keymap_data *keymap_data;
