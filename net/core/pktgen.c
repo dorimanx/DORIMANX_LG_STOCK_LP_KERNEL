@@ -3740,7 +3740,7 @@ static int __init pg_init(void)
 	unregister_netdevice_notifier(&pktgen_notifier_block);
 	remove_proc_entry(PGCTRL, pg_proc_dir);
  remove_dir:
-	proc_net_remove(&init_net, PG_PROC_DIR);
+	remove_proc_entry(PG_PROC_DIR, pn->net->proc_net);
 	return ret;
 }
 
@@ -3769,7 +3769,7 @@ static void __exit pg_cleanup(void)
 
 	/* Clean up proc file system */
 	remove_proc_entry(PGCTRL, pg_proc_dir);
-	proc_net_remove(&init_net, PG_PROC_DIR);
+	remove_proc_entry(PG_PROC_DIR, &init_net);
 }
 
 module_init(pg_init);
