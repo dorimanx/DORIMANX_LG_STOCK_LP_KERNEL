@@ -1297,7 +1297,7 @@ static cycle_t logarithmic_accumulation(struct timekeeper *tk, cycle_t offset,
 
 	/* Accumulate one shifted interval */
 	offset -= interval;
-	tk->clock->cycle_last += interval;
+	tk->cycle_last += interval;
 
 	tk->xtime_nsec += tk->xtime_interval << shift;
 	accumulate_nsecs_to_secs(tk);
@@ -1417,6 +1417,8 @@ static void update_wall_time(void)
 	 */
 	accumulate_nsecs_to_secs(tk);
 
+	/* Update clock->cycle_last with the new value */
+	clock->cycle_last = tk->cycle_last;
 	timekeeping_update(tk, false);
 
 out:
