@@ -23,6 +23,8 @@
 #include <linux/stop_machine.h>
 #include <linux/pvclock_gtod.h>
 
+#include "tick-internal.h"
+
 static struct timekeeper timekeeper;
 
 /* flag for if timekeeping is suspended */
