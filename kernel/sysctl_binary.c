@@ -977,7 +977,6 @@ out:
 static ssize_t bin_intvec(struct file *file,
 	void __user *oldval, size_t oldlen, void __user *newval, size_t newlen)
 {
-	mm_segment_t old_fs = get_fs();
 	ssize_t copied = 0;
 	char *buffer;
 	ssize_t result;
@@ -990,13 +989,10 @@ static ssize_t bin_intvec(struct file *file,
 	if (oldval && oldlen) {
 		unsigned __user *vec = oldval;
 		size_t length = oldlen / sizeof(*vec);
-		loff_t pos = 0;
 		char *str, *end;
 		int i;
 
-		set_fs(KERNEL_DS);
-		result = vfs_read(file, buffer, BUFSZ - 1, &pos);
-		set_fs(old_fs);
+		result = kernel_read(file, 0, buffer, BUFSZ - 1);
 		if (result < 0)
 			goto out_kfree;
 
@@ -1023,7 +1019,6 @@ static ssize_t bin_intvec(struct file *file,
 	if (newval && newlen) {
 		unsigned __user *vec = newval;
 		size_t length = newlen / sizeof(*vec);
-		loff_t pos = 0;
 		char *str, *end;
 		int i;
 
@@ -1039,9 +1034,7 @@ static ssize_t bin_intvec(struct file *file,
 			str += snprintf(str, end - str, "%lu\t", value);
 		}
 
-		set_fs(KERNEL_DS);
-		result = vfs_write(file, buffer, str - buffer, &pos);
-		set_fs(old_fs);
+		result = kernel_write(file, buffer, str - buffer, 0);
 		if (result < 0)
 			goto out_kfree;
 	}
@@ -1055,7 +1048,6 @@ out:
 static ssize_t bin_ulongvec(struct file *file,
 	void __user *oldval, size_t oldlen, void __user *newval, size_t newlen)
 {
-	mm_segment_t old_fs = get_fs();
 	ssize_t copied = 0;
 	char *buffer;
 	ssize_t result;
@@ -1068,13 +1060,10 @@ static ssize_t bin_ulongvec(struct file *file,
 	if (oldval && oldlen) {
 		unsigned long __user *vec = oldval;
 		size_t length = oldlen / sizeof(*vec);
-		loff_t pos = 0;
 		char *str, *end;
 		int i;
 
-		set_fs(KERNEL_DS);
-		result = vfs_read(file, buffer, BUFSZ - 1, &pos);
-		set_fs(old_fs);
+		result = kernel_read(file, 0, buffer, BUFSZ - 1);
 		if (result < 0)
 			goto out_kfree;
 
@@ -1101,7 +1090,6 @@ static ssize_t bin_ulongvec(struct file *file,
 	if (newval && newlen) {
 		unsigned long __user *vec = newval;
 		size_t length = newlen / sizeof(*vec);
-		loff_t pos = 0;
 		char *str, *end;
 		int i;
 
@@ -1117,9 +1105,7 @@ static ssize_t bin_ulongvec(struct file *file,
 			str += snprintf(str, end - str, "%lu\t", value);
 		}
 
-		set_fs(KERNEL_DS);
-		result = vfs_write(file, buffer, str - buffer, &pos);
-		set_fs(old_fs);
+		result = kernel_write(file, buffer, str - buffer, 0);
 		if (result < 0)
 			goto out_kfree;
 	}
@@ -1133,19 +1119,15 @@ out:
 static ssize_t bin_uuid(struct file *file,
 	void __user *oldval, size_t oldlen, void __user *newval, size_t newlen)
 {
-	mm_segment_t old_fs = get_fs();
 	ssize_t result, copied = 0;
 
 	/* Only supports reads */
 	if (oldval && oldlen) {
-		loff_t pos = 0;
 		char buf[40], *str = buf;
 		unsigned char uuid[16];
 		int i;
 
-		set_fs(KERNEL_DS);
-		result = vfs_read(file, buf, sizeof(buf) - 1, &pos);
-		set_fs(old_fs);
+		result = kernel_read(file, 0, buf, sizeof(buf) - 1);
 		if (result < 0)
 			goto out;
 
@@ -1181,18 +1163,14 @@ out:
 static ssize_t bin_dn_node_address(struct file *file,
 	void __user *oldval, size_t oldlen, void __user *newval, size_t newlen)
 {
-	mm_segment_t old_fs = get_fs();
 	ssize_t result, copied = 0;
 
 	if (oldval && oldlen) {
-		loff_t pos = 0;
 		char buf[15], *nodep;
 		unsigned long area, node;
 		__le16 dnaddr;
 
-		set_fs(KERNEL_DS);
-		result = vfs_read(file, buf, sizeof(buf) - 1, &pos);
-		set_fs(old_fs);
+		result = kernel_read(file, 0, buf, sizeof(buf) - 1);
 		if (result < 0)
 			goto out;
 
@@ -1222,7 +1200,6 @@ static ssize_t bin_dn_node_address(struct file *file,
 	}
 
 	if (newval && newlen) {
-		loff_t pos = 0;
 		__le16 dnaddr;
 		char buf[15];
 		int len;
@@ -1239,9 +1216,7 @@ static ssize_t bin_dn_node_address(struct file *file,
 				le16_to_cpu(dnaddr) >> 10,
 				le16_to_cpu(dnaddr) & 0x3ff);
 
-		set_fs(KERNEL_DS);
-		result = vfs_write(file, buf, len, &pos);
-		set_fs(old_fs);
+		result = kernel_write(file, buf, len, 0);
 		if (result < 0)
 			goto out;
 	}
