@@ -18,10 +18,10 @@
 
 	.globl sys_call_table32
 sys_call_table32:
-/*0*/	.word sys_restart_syscall, sys32_exit, sys_fork, sys_read, sys_write
-/*5*/	.word sys32_open, sys_close, sys32_wait4, sys32_creat, sys_link
-/*10*/  .word sys_unlink, sunos_execv, sys_chdir, sys_chown16, sys32_mknod
-/*15*/	.word sys_chmod, sys_lchown16, sys_brk, sys_nis_syscall, sys32_lseek
+/*0*/	.word sys_restart_syscall, sparc_exit, sys_fork, sys_read, sys_write
+/*5*/	.word compat_sys_open, sys_close, compat_sys_wait4, sys_creat, sys_link
+/*10*/  .word sys_unlink, sunos_execv, sys_chdir, sys_chown16, sys_mknod
+/*15*/	.word sys_chmod, sys_lchown16, sys_brk, sys_nis_syscall, compat_sys_lseek
 /*20*/	.word sys_getpid, sys_capget, sys_capset, sys_setuid16, sys_getuid16
 /*25*/	.word sys32_vmsplice, compat_sys_ptrace, sys_alarm, sys32_sigaltstack, sys_pause
 /*30*/	.word compat_sys_utime, sys_lchown, sys_fchown, sys32_access, sys32_nice

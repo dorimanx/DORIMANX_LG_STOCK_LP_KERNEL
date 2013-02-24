@@ -337,12 +337,6 @@ long compat_sys_nice(u32 increment)
 	return sys_nice((int)increment);
 }
 
-off_t ppc32_lseek(unsigned int fd, u32 offset, unsigned int origin)
-{
-	/* sign extend n */
-	return sys_lseek(fd, (int)offset, origin);
-}
-
 long compat_sys_truncate(const char __user * path, u32 length)
 {
 	/* sign extend length */

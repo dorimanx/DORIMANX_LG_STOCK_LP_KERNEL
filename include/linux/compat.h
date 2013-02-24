@@ -288,6 +288,7 @@ asmlinkage ssize_t compat_sys_preadv(unsigned long fd,
 asmlinkage ssize_t compat_sys_pwritev(unsigned long fd,
 		const struct compat_iovec __user *vec,
 		unsigned long vlen, u32 pos_low, u32 pos_high);
+asmlinkage long comat_sys_lseek(unsigned int, compat_off_t, unsigned int);
 
 int compat_do_execve(const char *filename, const compat_uptr_t __user *argv,
 		     const compat_uptr_t __user *envp, struct pt_regs *regs);

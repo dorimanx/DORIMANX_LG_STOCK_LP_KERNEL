@@ -438,11 +438,6 @@ asmlinkage long sys32_clone(unsigned int clone_flags, unsigned int newsp,
  * Some system calls that need sign extended arguments. This could be
  * done by a generic wrapper.
  */
-long sys32_lseek(unsigned int fd, int offset, unsigned int whence)
-{
-	return sys_lseek(fd, offset, whence);
-}
-
 long sys32_kill(int pid, int sig)
 {
 	return sys_kill(pid, sig);
