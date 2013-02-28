@@ -977,9 +977,8 @@ static struct worker *find_worker_executing_work(struct worker_pool *pool,
 						 struct work_struct *work)
 {
 	struct worker *worker;
-	struct hlist_node *tmp;
 
-	hash_for_each_possible(pool->busy_hash, worker, tmp, hentry,
+	hash_for_each_possible(pool->busy_hash, worker, hentry,
 			       (unsigned long)work)
 		if (worker->current_work == work &&
 		    worker->current_func == work->func)
@@ -3646,13 +3645,12 @@ static struct worker_pool *get_unbound_pool(const struct workqueue_attrs *attrs)
 {
 	u32 hash = wqattrs_hash(attrs);
 	struct worker_pool *pool;
-	struct hlist_node *tmp;
 	int node;
 
 	lockdep_assert_held(&wq_pool_mutex);
 
 	/* do we already have a matching pool? */
-	hash_for_each_possible(unbound_pool_hash, pool, tmp, hash_node, hash) {
+	hash_for_each_possible(unbound_pool_hash, pool, hash_node, hash) {
 		if (wqattrs_equal(pool->attrs, attrs)) {
 			pool->refcnt++;
 			goto out_unlock;

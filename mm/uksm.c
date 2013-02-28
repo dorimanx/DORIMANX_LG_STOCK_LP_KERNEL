@@ -804,13 +804,12 @@ static void remove_node_from_stable_tree(struct stable_node *stable_node,
 {
 	struct node_vma *node_vma;
 	struct rmap_item *rmap_item;
-	struct hlist_node *hlist, *rmap_hlist, *n;
+	struct hlist_node *n;
 
 	if (!hlist_empty(&stable_node->hlist)) {
-		hlist_for_each_entry_safe(node_vma, hlist, n,
+		hlist_for_each_entry_safe(node_vma, n,
 					  &stable_node->hlist, hlist) {
-			hlist_for_each_entry(rmap_item, rmap_hlist,
-					     &node_vma->rmap_hlist, hlist) {
+			hlist_for_each_entry(rmap_item, &node_vma->rmap_hlist, hlist) {
 				uksm_pages_sharing--;
 
 				uksm_drop_anon_vma(rmap_item);
@@ -2518,8 +2517,7 @@ static void hold_anon_vma(struct rmap_item *rmap_item,
 static void stable_tree_append(struct rmap_item *rmap_item,
 			       struct stable_node *stable_node, int logdedup)
 {
-	struct node_vma *node_vma = NULL, *new_node_vma;
-	struct hlist_node *hlist = NULL, *cont_p = NULL;
+	struct node_vma *node_vma = NULL, *new_node_vma, *node_vma_cont = NULL;
 	unsigned long key = (unsigned long)rmap_item->slot;
 	unsigned long factor = rmap_item->slot->rung->step;
 
@@ -2533,7 +2531,7 @@ static void stable_tree_append(struct rmap_item *rmap_item,
 		uksm_pages_sharing++;
 	}
 
-	hlist_for_each_entry(node_vma, hlist, &stable_node->hlist, hlist) {
+	hlist_for_each_entry(node_vma, &stable_node->hlist, hlist) {
 		if (node_vma->key >= key)
 			break;
 
@@ -2547,10 +2545,10 @@ static void stable_tree_append(struct rmap_item *rmap_item,
 
 	if (node_vma) {
 		if (node_vma->key == key) {
-			cont_p = hlist->next;
+			node_vma_cont = hlist_entry_safe(node_vma->hlist.next, struct node_vma, hlist);
 			goto node_vma_ok;
 		} else if (node_vma->key > key) {
-			cont_p = hlist;
+			node_vma_cont = node_vma;
 		}
 	}
 
@@ -2580,9 +2578,9 @@ node_vma_ok: /* ok, ready to add to the list */
 	hold_anon_vma(rmap_item, rmap_item->slot->vma->anon_vma);
 	if (logdedup) {
 		rmap_item->slot->pages_merged++;
-		if (cont_p) {
-			hlist_for_each_entry_continue(node_vma,
-						      cont_p, hlist) {
+		if (node_vma_cont) {
+			node_vma = node_vma_cont;
+			hlist_for_each_entry_continue(node_vma, hlist) {
 				node_vma->slot->pages_bemerged += factor;
 				if (list_empty(&node_vma->slot->dedup_list))
 					list_add(&node_vma->slot->dedup_list,
@@ -4633,7 +4631,6 @@ int page_referenced_ksm(struct page *page, struct mem_cgroup *memcg,
 	struct stable_node *stable_node;
 	struct node_vma *node_vma;
 	struct rmap_item *rmap_item;
-	struct hlist_node *hlist, *rmap_hlist;
 	unsigned int mapcount = page_mapcount(page);
 	int referenced = 0;
 	int search_new_forks = 0;
@@ -4648,9 +4645,8 @@ int page_referenced_ksm(struct page *page, struct mem_cgroup *memcg,
 
 
 again:
-	hlist_for_each_entry(node_vma, hlist, &stable_node->hlist, hlist) {
-		hlist_for_each_entry(rmap_item, rmap_hlist,
-				     &node_vma->rmap_hlist, hlist) {
+	hlist_for_each_entry(node_vma, &stable_node->hlist, hlist) {
+		hlist_for_each_entry(rmap_item, &node_vma->rmap_hlist, hlist) {
 			struct anon_vma *anon_vma = rmap_item->anon_vma;
 			struct anon_vma_chain *vmac;
 			struct vm_area_struct *vma;
@@ -4703,7 +4699,6 @@ int try_to_unmap_ksm(struct page *page, enum ttu_flags flags,
 {
 	struct stable_node *stable_node;
 	struct node_vma *node_vma;
-	struct hlist_node *hlist, *rmap_hlist;
 	struct rmap_item *rmap_item;
 	int ret = SWAP_AGAIN;
 	int search_new_forks = 0;
@@ -4716,9 +4711,8 @@ int try_to_unmap_ksm(struct page *page, enum ttu_flags flags,
 	if (!stable_node)
 		return SWAP_FAIL;
 again:
-	hlist_for_each_entry(node_vma, hlist, &stable_node->hlist, hlist) {
-		hlist_for_each_entry(rmap_item, rmap_hlist,
-				     &node_vma->rmap_hlist, hlist) {
+	hlist_for_each_entry(node_vma, &stable_node->hlist, hlist) {
+		hlist_for_each_entry(rmap_item, &node_vma->rmap_hlist, hlist) {
 			struct anon_vma *anon_vma = rmap_item->anon_vma;
 			struct anon_vma_chain *vmac;
 			struct vm_area_struct *vma;
@@ -4765,7 +4759,6 @@ int rmap_walk_ksm(struct page *page, int (*rmap_one)(struct page *,
 {
 	struct stable_node *stable_node;
 	struct node_vma *node_vma;
-	struct hlist_node *hlist, *rmap_hlist;
 	struct rmap_item *rmap_item;
 	int ret = SWAP_AGAIN;
 	int search_new_forks = 0;
@@ -4778,9 +4771,8 @@ int rmap_walk_ksm(struct page *page, int (*rmap_one)(struct page *,
 	if (!stable_node)
 		return ret;
 again:
-	hlist_for_each_entry(node_vma, hlist, &stable_node->hlist, hlist) {
-		hlist_for_each_entry(rmap_item, rmap_hlist,
-				     &node_vma->rmap_hlist, hlist) {
+	hlist_for_each_entry(node_vma, &stable_node->hlist, hlist) {
+		hlist_for_each_entry(rmap_item, &node_vma->rmap_hlist, hlist) {
 			struct anon_vma *anon_vma = rmap_item->anon_vma;
 			struct anon_vma_chain *vmac;
 			struct vm_area_struct *vma;

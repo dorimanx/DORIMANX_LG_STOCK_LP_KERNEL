@@ -478,9 +478,9 @@ EXPORT_SYMBOL(wait_on_sync_kiocb);
 void exit_aio(struct mm_struct *mm)
 {
 	struct kioctx *ctx;
-	struct hlist_node *pos, *n;
+	struct hlist_node *n;
 
-	hlist_for_each_entry_safe(ctx, pos, n, &mm->ioctx_list, list) {
+	hlist_for_each_entry_safe(ctx, n, &mm->ioctx_list, list) {
 		if (1 != atomic_read(&ctx->users))
 			printk(KERN_DEBUG
 				"exit_aio:ioctx still alive: %d %d %d\n",
@@ -558,11 +558,10 @@ static struct kioctx *lookup_ioctx(unsigned long ctx_id)
 {
 	struct mm_struct *mm = current->mm;
 	struct kioctx *ctx, *ret = NULL;
-	struct hlist_node *n;
 
 	rcu_read_lock();
 
-	hlist_for_each_entry_rcu(ctx, n, &mm->ioctx_list, list) {
+	hlist_for_each_entry_rcu(ctx, &mm->ioctx_list, list) {
 		if (ctx->user_id == ctx_id) {
 			atomic_inc(&ctx->users);
 			ret = ctx;

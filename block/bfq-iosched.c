@@ -629,10 +629,9 @@ static inline void bfq_reset_burst_list(struct bfq_data *bfqd,
 					struct bfq_queue *bfqq)
 {
 	struct bfq_queue *item;
-	struct hlist_node *pos, *n;
+	struct hlist_node *n;
 
-	hlist_for_each_entry_safe(item, pos, n,
-				  &bfqd->burst_list, burst_list_node)
+	hlist_for_each_entry_safe(item, n, &bfqd->burst_list, burst_list_node)
 		hlist_del_init(&item->burst_list_node);
 	hlist_add_head(&bfqq->burst_list_node, &bfqd->burst_list);
 	bfqd->burst_size = 1;
@@ -646,7 +645,7 @@ static void bfq_add_to_burst(struct bfq_data *bfqd, struct bfq_queue *bfqq)
 
 	if (bfqd->burst_size == bfqd->bfq_large_burst_thresh) {
 		struct bfq_queue *pos, *bfqq_item;
-		struct hlist_node *p, *n;
+		struct hlist_node *n;
 
 		/*
 		 * Enough queues have been activated shortly after each
@@ -658,7 +657,7 @@ static void bfq_add_to_burst(struct bfq_data *bfqd, struct bfq_queue *bfqq)
 		 * We can now mark all queues in the burst list as
 		 * belonging to a large burst.
 		 */
-		hlist_for_each_entry(bfqq_item, n, &bfqd->burst_list,
+		hlist_for_each_entry(bfqq_item, &bfqd->burst_list,
 				     burst_list_node)
 		        bfq_mark_bfqq_in_large_burst(bfqq_item);
 		bfq_mark_bfqq_in_large_burst(bfqq);
@@ -670,7 +669,7 @@ static void bfq_add_to_burst(struct bfq_data *bfqd, struct bfq_queue *bfqq)
 		 * belonging to a large burst. So the burst list is not
 		 * needed any more. Remove it.
 		 */
-		hlist_for_each_entry_safe(pos, p, n, &bfqd->burst_list,
+		hlist_for_each_entry_safe(pos, n, &bfqd->burst_list,
 					  burst_list_node)
 			hlist_del_init(&pos->burst_list_node);
 	} else /* burst not yet large: add bfqq to the burst list */

@@ -462,14 +462,13 @@ static void qfq_walk(struct Qdisc *sch, struct qdisc_walker *arg)
 {
 	struct qfq_sched *q = qdisc_priv(sch);
 	struct qfq_class *cl;
-	struct hlist_node *n;
 	unsigned int i;
 
 	if (arg->stop)
 		return;
 
 	for (i = 0; i < q->clhash.hashsize; i++) {
-		hlist_for_each_entry(cl, n, &q->clhash.hash[i], common.hnode) {
+		hlist_for_each_entry(cl, &q->clhash.hash[i], common.hnode) {
 			if (arg->count < arg->skip) {
 				arg->count++;
 				continue;
@@ -1009,9 +1008,8 @@ static unsigned int qfq_drop(struct Qdisc *sch)
 		grp = &q->groups[i];
 		for (j = 0; j < QFQ_MAX_SLOTS; j++) {
 			struct qfq_class *cl;
-			struct hlist_node *n;
 
-			hlist_for_each_entry(cl, n, &grp->slots[j], next) {
+			hlist_for_each_entry(cl, &grp->slots[j], next) {
 
 				if (!cl->qdisc->ops->drop)
 					continue;
@@ -1058,13 +1056,13 @@ static void qfq_reset_qdisc(struct Qdisc *sch)
 	struct qfq_sched *q = qdisc_priv(sch);
 	struct qfq_group *grp;
 	struct qfq_class *cl;
-	struct hlist_node *n, *tmp;
+	struct hlist_node *tmp;
 	unsigned int i, j;
 
 	for (i = 0; i <= QFQ_MAX_INDEX; i++) {
 		grp = &q->groups[i];
 		for (j = 0; j < QFQ_MAX_SLOTS; j++) {
-			hlist_for_each_entry_safe(cl, n, tmp,
+			hlist_for_each_entry_safe(cl, tmp,
 						  &grp->slots[j], next) {
 				qfq_deactivate_class(q, cl);
 			}
@@ -1072,7 +1070,7 @@ static void qfq_reset_qdisc(struct Qdisc *sch)
 	}
 
 	for (i = 0; i < q->clhash.hashsize; i++) {
-		hlist_for_each_entry(cl, n, &q->clhash.hash[i], common.hnode)
+		hlist_for_each_entry(cl, &q->clhash.hash[i], common.hnode)
 			qdisc_reset(cl->qdisc);
 	}
 	sch->q.qlen = 0;
@@ -1082,13 +1080,13 @@ static void qfq_destroy_qdisc(struct Qdisc *sch)
 {
 	struct qfq_sched *q = qdisc_priv(sch);
 	struct qfq_class *cl;
-	struct hlist_node *n, *next;
+	struct hlist_node *next;
 	unsigned int i;
 
 	tcf_destroy_chain(&q->filter_list);
 
 	for (i = 0; i < q->clhash.hashsize; i++) {
-		hlist_for_each_entry_safe(cl, n, next, &q->clhash.hash[i],
+		hlist_for_each_entry_safe(cl, next, &q->clhash.hash[i],
 					  common.hnode) {
 			qfq_destroy_class(sch, cl);
 		}

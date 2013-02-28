@@ -511,10 +511,9 @@ EXPORT_SYMBOL_GPL(blkiocg_del_blkio_group);
 struct blkio_group *blkiocg_lookup_group(struct blkio_cgroup *blkcg, void *key)
 {
 	struct blkio_group *blkg;
-	struct hlist_node *n;
 	void *__key;
 
-	hlist_for_each_entry_rcu(blkg, n, &blkcg->blkg_list, blkcg_node) {
+	hlist_for_each_entry_rcu(blkg, &blkcg->blkg_list, blkcg_node) {
 		__key = blkg->key;
 		if (__key == key)
 			return blkg;

@@ -453,7 +453,7 @@ static struct nfc_llcp_sock *nfc_llcp_sock_get(struct nfc_llcp_local *local,
 		return sock;
 	}
 
-	list_for_each_entry_safe(llcp_sock, n, &sock->list, list) {
+	list_for_each_entry_safe(llcp_sock, &sock->list, list) {
 		pr_debug("llcp_sock %p sk %p dsap %d\n", llcp_sock,
 			 &llcp_sock->sk, llcp_sock->dsap);
 		if (llcp_sock->dsap == dsap) {

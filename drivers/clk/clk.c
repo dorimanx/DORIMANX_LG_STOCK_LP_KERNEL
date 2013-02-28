@@ -33,6 +33,136 @@ static struct dentry *rootdir;
 static struct dentry *orphandir;
 static int inited = 0;
 
+<<<<<<< HEAD
+=======
+static void clk_summary_show_one(struct seq_file *s, struct clk *c, int level)
+{
+	if (!c)
+		return;
+
+	seq_printf(s, "%*s%-*s %-11d %-12d %-10lu",
+		   level * 3 + 1, "",
+		   30 - level * 3, c->name,
+		   c->enable_count, c->prepare_count, c->rate);
+	seq_printf(s, "\n");
+}
+
+static void clk_summary_show_subtree(struct seq_file *s, struct clk *c,
+				     int level)
+{
+	struct clk *child;
+
+	if (!c)
+		return;
+
+	clk_summary_show_one(s, c, level);
+
+	hlist_for_each_entry(child, &c->children, child_node)
+		clk_summary_show_subtree(s, child, level + 1);
+}
+
+static int clk_summary_show(struct seq_file *s, void *data)
+{
+	struct clk *c;
+
+	seq_printf(s, "   clock                        enable_cnt  prepare_cnt  rate\n");
+	seq_printf(s, "---------------------------------------------------------------------\n");
+
+	mutex_lock(&prepare_lock);
+
+	hlist_for_each_entry(c, &clk_root_list, child_node)
+		clk_summary_show_subtree(s, c, 0);
+
+	hlist_for_each_entry(c, &clk_orphan_list, child_node)
+		clk_summary_show_subtree(s, c, 0);
+
+	mutex_unlock(&prepare_lock);
+
+	return 0;
+}
+
+
+static int clk_summary_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, clk_summary_show, inode->i_private);
+}
+
+static const struct file_operations clk_summary_fops = {
+	.open		= clk_summary_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+
+static void clk_dump_one(struct seq_file *s, struct clk *c, int level)
+{
+	if (!c)
+		return;
+
+	seq_printf(s, "\"%s\": { ", c->name);
+	seq_printf(s, "\"enable_count\": %d,", c->enable_count);
+	seq_printf(s, "\"prepare_count\": %d,", c->prepare_count);
+	seq_printf(s, "\"rate\": %lu", c->rate);
+}
+
+static void clk_dump_subtree(struct seq_file *s, struct clk *c, int level)
+{
+	struct clk *child;
+
+	if (!c)
+		return;
+
+	clk_dump_one(s, c, level);
+
+	hlist_for_each_entry(child, &c->children, child_node) {
+		seq_printf(s, ",");
+		clk_dump_subtree(s, child, level + 1);
+	}
+
+	seq_printf(s, "}");
+}
+
+static int clk_dump(struct seq_file *s, void *data)
+{
+	struct clk *c;
+	bool first_node = true;
+
+	seq_printf(s, "{");
+
+	mutex_lock(&prepare_lock);
+
+	hlist_for_each_entry(c, &clk_root_list, child_node) {
+		if (!first_node)
+			seq_printf(s, ",");
+		first_node = false;
+		clk_dump_subtree(s, c, 0);
+	}
+
+	hlist_for_each_entry(c, &clk_orphan_list, child_node) {
+		seq_printf(s, ",");
+		clk_dump_subtree(s, c, 0);
+	}
+
+	mutex_unlock(&prepare_lock);
+
+	seq_printf(s, "}");
+	return 0;
+}
+
+
+static int clk_dump_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, clk_dump, inode->i_private);
+}
+
+static const struct file_operations clk_dump_fops = {
+	.open		= clk_dump_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+
+>>>>>>> b67bfe0... hlist: drop the node parameter from iterators
 /* caller must hold prepare_lock */
 static int clk_debug_create_one(struct clk *clk, struct dentry *pdentry)
 {
@@ -88,7 +218,6 @@ out:
 static int clk_debug_create_subtree(struct clk *clk, struct dentry *pdentry)
 {
 	struct clk *child;
-	struct hlist_node *tmp;
 	int ret = -EINVAL;;
 
 	if (!clk || !pdentry)
@@ -99,7 +228,7 @@ static int clk_debug_create_subtree(struct clk *clk, struct dentry *pdentry)
 	if (ret)
 		goto out;
 
-	hlist_for_each_entry(child, tmp, &clk->children, child_node)
+	hlist_for_each_entry(child, &clk->children, child_node)
 		clk_debug_create_subtree(child, clk->dentry);
 
 	ret = 0;
@@ -165,7 +294,11 @@ out:
 static int __init clk_debug_init(void)
 {
 	struct clk *clk;
+<<<<<<< HEAD
 	struct hlist_node *tmp;
+=======
+	struct dentry *d;
+>>>>>>> b67bfe0... hlist: drop the node parameter from iterators
 
 	rootdir = debugfs_create_dir("clk", NULL);
 
@@ -179,10 +312,10 @@ static int __init clk_debug_init(void)
 
 	mutex_lock(&prepare_lock);
 
-	hlist_for_each_entry(clk, tmp, &clk_root_list, child_node)
+	hlist_for_each_entry(clk, &clk_root_list, child_node)
 		clk_debug_create_subtree(clk, rootdir);
 
-	hlist_for_each_entry(clk, tmp, &clk_orphan_list, child_node)
+	hlist_for_each_entry(clk, &clk_orphan_list, child_node)
 		clk_debug_create_subtree(clk, orphandir);
 
 	inited = 1;
@@ -201,13 +334,12 @@ static inline int clk_debug_register(struct clk *clk) { return 0; }
 static void clk_disable_unused_subtree(struct clk *clk)
 {
 	struct clk *child;
-	struct hlist_node *tmp;
 	unsigned long flags;
 
 	if (!clk)
 		goto out;
 
-	hlist_for_each_entry(child, tmp, &clk->children, child_node)
+	hlist_for_each_entry(child, &clk->children, child_node)
 		clk_disable_unused_subtree(child);
 
 	spin_lock_irqsave(&enable_lock, flags);
@@ -231,14 +363,13 @@ out:
 static int clk_disable_unused(void)
 {
 	struct clk *clk;
-	struct hlist_node *tmp;
 
 	mutex_lock(&prepare_lock);
 
-	hlist_for_each_entry(clk, tmp, &clk_root_list, child_node)
+	hlist_for_each_entry(clk, &clk_root_list, child_node)
 		clk_disable_unused_subtree(clk);
 
-	hlist_for_each_entry(clk, tmp, &clk_orphan_list, child_node)
+	hlist_for_each_entry(clk, &clk_orphan_list, child_node)
 		clk_disable_unused_subtree(clk);
 
 	mutex_unlock(&prepare_lock);
@@ -333,12 +464,11 @@ static struct clk *__clk_lookup_subtree(const char *name, struct clk *clk)
 {
 	struct clk *child;
 	struct clk *ret;
-	struct hlist_node *tmp;
 
 	if (!strcmp(clk->name, name))
 		return clk;
 
-	hlist_for_each_entry(child, tmp, &clk->children, child_node) {
+	hlist_for_each_entry(child, &clk->children, child_node) {
 		ret = __clk_lookup_subtree(name, child);
 		if (ret)
 			return ret;
@@ -351,20 +481,19 @@ struct clk *__clk_lookup(const char *name)
 {
 	struct clk *root_clk;
 	struct clk *ret;
-	struct hlist_node *tmp;
 
 	if (!name)
 		return NULL;
 
 	/* search the 'proper' clk tree first */
-	hlist_for_each_entry(root_clk, tmp, &clk_root_list, child_node) {
+	hlist_for_each_entry(root_clk, &clk_root_list, child_node) {
 		ret = __clk_lookup_subtree(name, root_clk);
 		if (ret)
 			return ret;
 	}
 
 	/* if not found, then search the orphan tree */
-	hlist_for_each_entry(root_clk, tmp, &clk_orphan_list, child_node) {
+	hlist_for_each_entry(root_clk, &clk_orphan_list, child_node) {
 		ret = __clk_lookup_subtree(name, root_clk);
 		if (ret)
 			return ret;
@@ -673,7 +802,6 @@ static void __clk_recalc_rates(struct clk *clk, unsigned long msg)
 {
 	unsigned long old_rate;
 	unsigned long parent_rate = 0;
-	struct hlist_node *tmp;
 	struct clk *child;
 
 	old_rate = clk->rate;
@@ -693,7 +821,7 @@ static void __clk_recalc_rates(struct clk *clk, unsigned long msg)
 	if (clk->notifier_count && msg)
 		__clk_notify(clk, msg, old_rate, clk->rate);
 
-	hlist_for_each_entry(child, tmp, &clk->children, child_node)
+	hlist_for_each_entry(child, &clk->children, child_node)
 		__clk_recalc_rates(child, msg);
 }
 
@@ -715,7 +843,6 @@ static void __clk_recalc_rates(struct clk *clk, unsigned long msg)
  */
 static int __clk_speculate_rates(struct clk *clk, unsigned long parent_rate)
 {
-	struct hlist_node *tmp;
 	struct clk *child;
 	unsigned long new_rate;
 	int ret = NOTIFY_DONE;
@@ -732,7 +859,7 @@ static int __clk_speculate_rates(struct clk *clk, unsigned long parent_rate)
 	if (ret == NOTIFY_BAD)
 		goto out;
 
-	hlist_for_each_entry(child, tmp, &clk->children, child_node) {
+	hlist_for_each_entry(child, &clk->children, child_node) {
 		ret = __clk_speculate_rates(child, new_rate);
 		if (ret == NOTIFY_BAD)
 			break;
@@ -745,11 +872,10 @@ out:
 static void clk_calc_subtree(struct clk *clk, unsigned long new_rate)
 {
 	struct clk *child;
-	struct hlist_node *tmp;
 
 	clk->new_rate = new_rate;
 
-	hlist_for_each_entry(child, tmp, &clk->children, child_node) {
+	hlist_for_each_entry(child, &clk->children, child_node) {
 		if (child->ops->recalc_rate)
 			child->new_rate = child->ops->recalc_rate(child->hw, new_rate);
 		else
@@ -804,7 +930,6 @@ out:
  */
 static struct clk *clk_propagate_rate_change(struct clk *clk, unsigned long event)
 {
-	struct hlist_node *tmp;
 	struct clk *child, *fail_clk = NULL;
 	int ret = NOTIFY_DONE;
 
@@ -817,7 +942,7 @@ static struct clk *clk_propagate_rate_change(struct clk *clk, unsigned long even
 			fail_clk = clk;
 	}
 
-	hlist_for_each_entry(child, tmp, &clk->children, child_node) {
+	hlist_for_each_entry(child, &clk->children, child_node) {
 		clk = clk_propagate_rate_change(child, event);
 		if (clk)
 			fail_clk = clk;
@@ -835,7 +960,6 @@ static void clk_change_rate(struct clk *clk)
 	struct clk *child;
 	unsigned long old_rate;
 	unsigned long best_parent_rate = 0;
-	struct hlist_node *tmp;
 
 	old_rate = clk->rate;
 
@@ -853,7 +977,7 @@ static void clk_change_rate(struct clk *clk)
 	if (clk->notifier_count && old_rate != clk->rate)
 		__clk_notify(clk, POST_RATE_CHANGE, old_rate, clk->rate);
 
-	hlist_for_each_entry(child, tmp, &clk->children, child_node)
+	hlist_for_each_entry(child, &clk->children, child_node)
 		clk_change_rate(child);
 }
 
@@ -1205,7 +1329,7 @@ void __clk_init(struct device *dev, struct clk *clk)
 {
 	int i;
 	struct clk *orphan;
-	struct hlist_node *tmp, *tmp2;
+	struct hlist_node *tmp2;
 
 	if (!clk)
 		return;
@@ -1285,7 +1409,18 @@ void __clk_init(struct device *dev, struct clk *clk)
 	 * walk the list of orphan clocks and reparent any that are children of
 	 * this clock
 	 */
+<<<<<<< HEAD
 	hlist_for_each_entry_safe(orphan, tmp, tmp2, &clk_orphan_list, child_node)
+=======
+	hlist_for_each_entry_safe(orphan, tmp2, &clk_orphan_list, child_node) {
+		if (orphan->ops->get_parent) {
+			i = orphan->ops->get_parent(orphan->hw);
+			if (!strcmp(clk->name, orphan->parent_names[i]))
+				__clk_reparent(orphan, clk);
+			continue;
+		}
+
+>>>>>>> b67bfe0... hlist: drop the node parameter from iterators
 		for (i = 0; i < orphan->num_parents; i++)
 			if (!strcmp(clk->name, orphan->parent_names[i])) {
 				__clk_reparent(orphan, clk);

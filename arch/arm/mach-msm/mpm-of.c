@@ -214,10 +214,9 @@ static inline unsigned int msm_mpm_get_irq_m2a(unsigned int pin)
 
 static inline uint16_t msm_mpm_get_irq_a2m(struct irq_data *d)
 {
-	struct hlist_node *elem;
 	struct mpm_irqs_a2m *node = NULL;
 
-	hlist_for_each_entry(node, elem, &irq_hash[hashfn(d->hwirq)], node) {
+	hlist_for_each_entry(node, &irq_hash[hashfn(d->hwirq)], node) {
 		if ((node->hwirq == d->hwirq)
 				&& (d->domain == node->domain)) {
 			/*
@@ -229,7 +228,7 @@ static inline uint16_t msm_mpm_get_irq_a2m(struct irq_data *d)
 			break;
 		}
 	}
-	return elem ? node->pin : 0;
+	return node ? node->pin : 0;
 }
 
 static int msm_mpm_enable_irq_exclusive(

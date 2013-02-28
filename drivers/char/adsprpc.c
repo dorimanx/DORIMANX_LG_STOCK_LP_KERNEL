@@ -290,10 +290,10 @@ static int context_restore_interrupted(struct fastrpc_apps *me,
 {
 	int err = 0;
 	struct smq_invoke_ctx *ctx = 0, *ictx = 0;
-	struct hlist_node *pos, *n;
+	struct hlist_node *n;
 	struct fastrpc_ioctl_invoke *invoke = &invokefd->inv;
 	spin_lock(&me->clst.hlock);
-	hlist_for_each_entry_safe(ictx, pos, n, &me->clst.interrupted, hn) {
+	hlist_for_each_entry_safe(ictx, n, &me->clst.interrupted, hn) {
 		if (ictx->pid == current->pid) {
 			if (invoke->sc != ictx->sc)
 				err = -1;
@@ -433,12 +433,12 @@ static void context_notify_user(struct smq_invoke_ctx *ctx, int retval)
 static void context_notify_all_users(struct smq_context_list *me)
 {
 	struct smq_invoke_ctx *ictx = 0;
-	struct hlist_node *pos, *n;
+	struct hlist_node *n;
 	spin_lock(&me->hlock);
-	hlist_for_each_entry_safe(ictx, pos, n, &me->pending, hn) {
+	hlist_for_each_entry_safe(ictx, n, &me->pending, hn) {
 		complete(&ictx->work);
 	}
-	hlist_for_each_entry_safe(ictx, pos, n, &me->interrupted, hn) {
+	hlist_for_each_entry_safe(ictx, n, &me->interrupted, hn) {
 		complete(&ictx->work);
 	}
 	spin_unlock(&me->hlock);
@@ -456,12 +456,12 @@ static void context_list_dtor(struct fastrpc_apps *me,
 				struct smq_context_list *clst)
 {
 	struct smq_invoke_ctx *ictx = 0;
-	struct hlist_node *pos, *n;
+	struct hlist_node *n;
 	spin_lock(&clst->hlock);
-	hlist_for_each_entry_safe(ictx, pos, n, &clst->interrupted, hn) {
+	hlist_for_each_entry_safe(ictx, n, &clst->interrupted, hn) {
 		context_free(ictx, 0);
 	}
-	hlist_for_each_entry_safe(ictx, pos, n, &clst->pending, hn) {
+	hlist_for_each_entry_safe(ictx, n, &clst->pending, hn) {
 		context_free(ictx, 0);
 	}
 	spin_unlock(&clst->hlock);
@@ -905,13 +905,13 @@ static int get_dev(struct fastrpc_apps *me, struct fastrpc_device **rdev)
 {
 	struct hlist_head *head;
 	struct fastrpc_device *dev = 0, *devfree = 0;
-	struct hlist_node *pos, *n;
+	struct hlist_node *n;
 	uint32_t h = hash_32(current->tgid, RPC_HASH_BITS);
 	int err = 0;
 
 	spin_lock(&me->hlock);
 	head = &me->htbl[h];
-	hlist_for_each_entry_safe(dev, pos, n, head, hn) {
+	hlist_for_each_entry_safe(dev, n, head, hn) {
 		if (dev->tgid == current->tgid) {
 			hlist_del(&dev->hn);
 			devfree = dev;
@@ -1137,12 +1137,12 @@ static int fastrpc_internal_munmap(struct fastrpc_apps *me,
 {
 	int err = 0;
 	struct fastrpc_mmap *map = 0, *mapfree = 0;
-	struct hlist_node *pos, *n;
+	struct hlist_node *n;
 	VERIFY(err, 0 == (err = fastrpc_munmap_on_dsp(me, munmap)));
 	if (err)
 		goto bail;
 	spin_lock(&fdata->hlock);
-	hlist_for_each_entry_safe(map, pos, n, &fdata->hlst, hn) {
+	hlist_for_each_entry_safe(map, n, &fdata->hlst, hn) {
 		if (map->vaddrout == munmap->vaddrout &&
 		    map->size == munmap->size) {
 			hlist_del(&map->hn);
@@ -1231,14 +1231,14 @@ static void cleanup_current_dev(void)
 	struct fastrpc_apps *me = &gfa;
 	uint32_t h = hash_32(current->tgid, RPC_HASH_BITS);
 	struct hlist_head *head;
-	struct hlist_node *pos, *n;
+	struct hlist_node *n;
 	struct fastrpc_device *dev, *devfree;
 
  rnext:
 	devfree = dev = 0;
 	spin_lock(&me->hlock);
 	head = &me->htbl[h];
-	hlist_for_each_entry_safe(dev, pos, n, head, hn) {
+	hlist_for_each_entry_safe(dev, n, head, hn) {
 		if (dev->tgid == current->tgid) {
 			hlist_del(&dev->hn);
 			devfree = dev;
@@ -1273,9 +1273,9 @@ static int fastrpc_device_release(struct inode *inode, struct file *file)
 	cleanup_current_dev();
 	if (fdata) {
 		struct fastrpc_mmap *map = 0;
-		struct hlist_node *n, *pos;
+		struct hlist_node *n; 
 		file->private_data = 0;
-		hlist_for_each_entry_safe(map, pos, n, &fdata->hlst, hn) {
+		hlist_for_each_entry_safe(map, n, &fdata->hlst, hn) {
 			hlist_del(&map->hn);
 			free_map(map);
 			kfree(map);

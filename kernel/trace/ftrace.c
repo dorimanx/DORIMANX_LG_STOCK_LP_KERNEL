@@ -711,7 +711,6 @@ ftrace_find_profiled_func(struct ftrace_profile_stat *stat, unsigned long ip)
 {
 	struct ftrace_profile *rec;
 	struct hlist_head *hhd;
-	struct hlist_node *n;
 	unsigned long key;
 
 	key = hash_long(ip, ftrace_profile_bits);
@@ -720,7 +719,7 @@ ftrace_find_profiled_func(struct ftrace_profile_stat *stat, unsigned long ip)
 	if (hlist_empty(hhd))
 		return NULL;
 
-	hlist_for_each_entry_rcu(rec, n, hhd, node) {
+	hlist_for_each_entry_rcu(rec, hhd, node) {
 		if (rec->ip == ip)
 			return rec;
 	}
@@ -1098,7 +1097,6 @@ ftrace_lookup_ip(struct ftrace_hash *hash, unsigned long ip)
 	unsigned long key;
 	struct ftrace_func_entry *entry;
 	struct hlist_head *hhd;
-	struct hlist_node *n;
 
 	if (ftrace_hash_empty(hash))
 		return NULL;
@@ -1110,7 +1108,7 @@ ftrace_lookup_ip(struct ftrace_hash *hash, unsigned long ip)
 
 	hhd = &hash->buckets[key];
 
-	hlist_for_each_entry_rcu(entry, n, hhd, hlist) {
+	hlist_for_each_entry_rcu(entry, hhd, hlist) {
 		if (entry->ip == ip)
 			return entry;
 	}
@@ -1167,7 +1165,7 @@ remove_hash_entry(struct ftrace_hash *hash,
 static void ftrace_hash_clear(struct ftrace_hash *hash)
 {
 	struct hlist_head *hhd;
-	struct hlist_node *tp, *tn;
+	struct hlist_node *tn;
 	struct ftrace_func_entry *entry;
 	int size = 1 << hash->size_bits;
 	int i;
@@ -1177,7 +1175,7 @@ static void ftrace_hash_clear(struct ftrace_hash *hash)
 
 	for (i = 0; i < size; i++) {
 		hhd = &hash->buckets[i];
-		hlist_for_each_entry_safe(entry, tp, tn, hhd, hlist)
+		hlist_for_each_entry_safe(entry, tn, hhd, hlist)
 			free_hash_entry(hash, entry);
 	}
 	FTRACE_WARN_ON(hash->count);
@@ -1240,7 +1238,6 @@ alloc_and_copy_ftrace_hash(int size_bits, struct ftrace_hash *hash)
 {
 	struct ftrace_func_entry *entry;
 	struct ftrace_hash *new_hash;
-	struct hlist_node *tp;
 	int size;
 	int ret;
 	int i;
@@ -1255,7 +1252,7 @@ alloc_and_copy_ftrace_hash(int size_bits, struct ftrace_hash *hash)
 
 	size = 1 << hash->size_bits;
 	for (i = 0; i < size; i++) {
-		hlist_for_each_entry(entry, tp, &hash->buckets[i], hlist) {
+		hlist_for_each_entry(entry, &hash->buckets[i], hlist) {
 			ret = add_hash_entry(new_hash, entry->ip);
 			if (ret < 0)
 				goto free_hash;
@@ -1281,7 +1278,7 @@ ftrace_hash_move(struct ftrace_ops *ops, int enable,
 		 struct ftrace_hash **dst, struct ftrace_hash *src)
 {
 	struct ftrace_func_entry *entry;
-	struct hlist_node *tp, *tn;
+	struct hlist_node *tn;
 	struct hlist_head *hhd;
 	struct ftrace_hash *old_hash;
 	struct ftrace_hash *new_hash;
@@ -1327,7 +1324,7 @@ ftrace_hash_move(struct ftrace_ops *ops, int enable,
 	size = 1 << src->size_bits;
 	for (i = 0; i < size; i++) {
 		hhd = &src->buckets[i];
-		hlist_for_each_entry_safe(entry, tp, tn, hhd, hlist) {
+		hlist_for_each_entry_safe(entry, tn, hhd, hlist) {
 			if (bits > 0)
 				key = hash_long(entry->ip, bits);
 			else
@@ -2941,7 +2938,6 @@ function_trace_probe_call(unsigned long ip, unsigned long parent_ip)
 {
 	struct ftrace_func_probe *entry;
 	struct hlist_head *hhd;
-	struct hlist_node *n;
 	unsigned long key;
 
 	key = hash_long(ip, FTRACE_HASH_BITS);
@@ -2957,7 +2953,7 @@ function_trace_probe_call(unsigned long ip, unsigned long parent_ip)
 	 * on the hash. rcu_read_lock is too dangerous here.
 	 */
 	preempt_disable_notrace();
-	hlist_for_each_entry_rcu(entry, n, hhd, node) {
+	hlist_for_each_entry_rcu(entry, hhd, node) {
 		if (entry->ip == ip)
 			entry->ops->func(ip, parent_ip, &entry->data);
 	}
@@ -3103,7 +3099,7 @@ __unregister_ftrace_function_probe(char *glob, struct ftrace_probe_ops *ops,
 				  void *data, int flags)
 {
 	struct ftrace_func_probe *entry;
-	struct hlist_node *n, *tmp;
+	struct hlist_node *tmp;
 	char str[KSYM_SYMBOL_LEN];
 	int type = MATCH_FULL;
 	int i, len = 0;
@@ -3126,7 +3122,7 @@ __unregister_ftrace_function_probe(char *glob, struct ftrace_probe_ops *ops,
 	for (i = 0; i < FTRACE_FUNC_HASHSIZE; i++) {
 		struct hlist_head *hhd = &ftrace_func_hash[i];
 
-		hlist_for_each_entry_safe(entry, n, tmp, hhd, node) {
+		hlist_for_each_entry_safe(entry, tmp, hhd, node) {
 
 			/* break up if statements for readability */
 			if ((flags & PROBE_TEST_FUNC) && entry->ops != ops)
