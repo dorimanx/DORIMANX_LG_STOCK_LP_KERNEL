@@ -526,7 +526,7 @@ void do_coredump(siginfo_t *siginfo, struct pt_regs *regs)
 	 * so we dump it as root in mode 2, and only into a controlled
 	 * environment (pipe handler or fully qualified path).
 	 */
-	if (__get_dumpable(cprm.mm_flags) == SUID_DUMPABLE_SAFE) {
+	if (__get_dumpable(cprm.mm_flags) == SUID_DUMP_ROOT) {
 		/* Setuid core dump mode */
 		cred->fsuid = 0;	/* Dump root private */
 		need_suid_safe = true;
