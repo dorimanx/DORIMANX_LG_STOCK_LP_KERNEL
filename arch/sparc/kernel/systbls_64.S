@@ -23,9 +23,9 @@ sys_call_table32:
 /*10*/  .word sys_unlink, sunos_execv, sys_chdir, sys_chown16, sys_mknod
 /*15*/	.word sys_chmod, sys_lchown16, sys_brk, sys_nis_syscall, compat_sys_lseek
 /*20*/	.word sys_getpid, sys_capget, sys_capset, sys_setuid16, sys_getuid16
-/*25*/	.word sys32_vmsplice, compat_sys_ptrace, sys_alarm, sys32_sigaltstack, sys_pause
-/*30*/	.word compat_sys_utime, sys_lchown, sys_fchown, sys32_access, sys32_nice
-	.word sys_chown, sys_sync, sys32_kill, compat_sys_newstat, sys32_sendfile
+/*25*/	.word compat_sys_vmsplice, compat_sys_ptrace, sys_alarm, compat_sys_sigaltstack, sys_pause
+/*30*/	.word compat_sys_utime, sys_lchown, sys_fchown, sys_access, sys_nice
+	.word sys_chown, sys_sync, sys_kill, compat_sys_newstat, compat_sys_sendfile
 /*40*/	.word compat_sys_newlstat, sys_dup, sys_sparc_pipe, compat_sys_times, sys_getuid
 	.word sys32_umount, sys_setgid16, sys_getgid16, sys32_signal, sys_geteuid16
 /*50*/	.word sys_getegid16, sys_acct, sys_nis_syscall, sys_getgid, compat_sys_ioctl
