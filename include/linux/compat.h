@@ -635,6 +635,8 @@ asmlinkage ssize_t compat_sys_process_vm_writev(compat_pid_t pid,
 asmlinkage long compat_sys_sendfile(int out_fd, int in_fd,
 				    compat_off_t __user *offset, compat_size_t count);
 
+asmlinkage long compat_sys_fanotify_mark(int, unsigned int, __u32, __u32,
+					    int, const char __user *);
 #else
 
 #define is_compat_task() (0)
