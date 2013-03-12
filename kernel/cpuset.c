@@ -2573,6 +2573,7 @@ void cpuset_print_task_mems_allowed(struct task_struct *tsk)
 
 	struct cgroup *cgrp = task_cs(tsk)->css.cgroup;
 
+	rcu_read_lock();
 	spin_lock(&cpuset_buffer_lock);
 
 	nodelist_scnprintf(cpuset_nodelist, CPUSET_NODELIST_LEN,
@@ -2581,6 +2582,7 @@ void cpuset_print_task_mems_allowed(struct task_struct *tsk)
 	       tsk->comm, cgroup_name(cgrp), cpuset_nodelist);
 
 	spin_unlock(&cpuset_buffer_lock);
+	rcu_read_unlock();
 }
 
 /*
