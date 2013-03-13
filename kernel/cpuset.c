@@ -1929,7 +1929,9 @@ static void cpuset_do_move_task(struct task_struct *tsk,
 {
 	struct cgroup *new_cgroup = scan->data;
 
-	cgroup_attach_task(new_cgroup, tsk);
+	cgroup_lock();
+	cgroup_attach_task(new_cgroup, tsk, false);
+	cgroup_unlock();
 }
 
 /**
