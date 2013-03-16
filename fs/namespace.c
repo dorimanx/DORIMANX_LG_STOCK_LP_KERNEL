@@ -1434,13 +1434,11 @@ struct vfsmount *collect_mounts(struct path *path)
 
 void drop_collected_mounts(struct vfsmount *mnt)
 {
-	LIST_HEAD(umount_list);
 	down_write(&namespace_sem);
 	br_write_lock(&vfsmount_lock);
-	umount_tree(real_mount(mnt), 0, &umount_list);
+	umount_tree(real_mount(mnt), 0, &unmounted);
 	br_write_unlock(&vfsmount_lock);
-	up_write(&namespace_sem);
-	release_mounts(&umount_list);
+	namespace_unlock();
 }
 
 int iterate_mounts(int (*f)(struct vfsmount *, void *), void *arg,
@@ -2078,7 +2076,6 @@ void mark_mounts_for_expiry(struct list_head *mounts)
 {
 	struct mount *mnt, *next;
 	LIST_HEAD(graveyard);
-	LIST_HEAD(umounts);
 
 	if (list_empty(mounts))
 		return;
@@ -2101,12 +2098,10 @@ void mark_mounts_for_expiry(struct list_head *mounts)
 	while (!list_empty(&graveyard)) {
 		mnt = list_first_entry(&graveyard, struct mount, mnt_expire);
 		touch_mnt_namespace(mnt->mnt_ns);
-		umount_tree(mnt, 1, &umounts);
+		umount_tree(mnt, 1, &unmounted);
 	}
 	br_write_unlock(&vfsmount_lock);
-	up_write(&namespace_sem);
-
-	release_mounts(&umounts);
+	namespace_unlock();
 }
 
 EXPORT_SYMBOL_GPL(mark_mounts_for_expiry);
@@ -2792,16 +2787,13 @@ void __init mnt_init(void)
 
 void put_mnt_ns(struct mnt_namespace *ns)
 {
-	LIST_HEAD(umount_list);
-
 	if (!atomic_dec_and_test(&ns->count))
 		return;
 	down_write(&namespace_sem);
 	br_write_lock(&vfsmount_lock);
-	umount_tree(ns->root, 0, &umount_list);
+	umount_tree(ns->root, 0, &unmounted);
 	br_write_unlock(&vfsmount_lock);
-	up_write(&namespace_sem);
-	release_mounts(&umount_list);
+	namespace_unlock();
 	free_mnt_ns(ns);
 }
 
