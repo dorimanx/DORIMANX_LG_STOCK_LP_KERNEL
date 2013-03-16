@@ -1123,6 +1123,8 @@ int may_umount(struct vfsmount *mnt)
 
 EXPORT_SYMBOL(may_umount);
 
+static LIST_HEAD(unmounted);	/* protected by namespace_sem */
+
 void release_mounts(struct list_head *head)
 {
 	struct mount *mnt;
@@ -1145,6 +1147,14 @@ void release_mounts(struct list_head *head)
 		}
 		mntput(&mnt->mnt);
 	}
+}
+
+static void namespace_unlock(void)
+{
+	LIST_HEAD(head);
+	list_splice_init(&unmounted, &head);
+	up_write(&namespace_sem);
+	release_mounts(&head);
 }
 
 /*
@@ -1260,17 +1270,16 @@ static int do_umount(struct mount *mnt, int flags)
 	event++;
 
 	if (!(flags & MNT_DETACH))
-		shrink_submounts(mnt, &umount_list);
+		shrink_submounts(mnt, &unmounted);
 
 	retval = -EBUSY;
 	if (flags & MNT_DETACH || !propagate_mount_busy(mnt, 2)) {
 		if (!list_empty(&mnt->mnt_list))
-			umount_tree(mnt, 1, &umount_list);
+			umount_tree(mnt, 1, &unmounted);
 		retval = 0;
 	}
 	br_write_unlock(&vfsmount_lock);
-	up_write(&namespace_sem);
-	release_mounts(&umount_list);
+	namespace_unlock();
 	return retval;
 }
 
