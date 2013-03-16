@@ -1190,7 +1190,7 @@ void umount_tree(struct mount *mnt, int propagate, struct list_head *kill)
 	list_splice(&tmp_list, kill);
 }
 
-static void shrink_submounts(struct mount *mnt, struct list_head *umounts);
+static void shrink_submounts(struct mount *mnt);
 
 static int do_umount(struct mount *mnt, int flags)
 {
@@ -1270,7 +1270,7 @@ static int do_umount(struct mount *mnt, int flags)
 	event++;
 
 	if (!(flags & MNT_DETACH))
-		shrink_submounts(mnt, &unmounted);
+		shrink_submounts(mnt);
 
 	retval = -EBUSY;
 	if (flags & MNT_DETACH || !propagate_mount_busy(mnt, 2)) {
@@ -2163,7 +2163,7 @@ resume:
  *
  * vfsmount_lock must be held for write
  */
-static void shrink_submounts(struct mount *mnt, struct list_head *umounts)
+static void shrink_submounts(struct mount *mnt)
 {
 	LIST_HEAD(graveyard);
 	struct mount *m;
@@ -2174,7 +2174,7 @@ static void shrink_submounts(struct mount *mnt, struct list_head *umounts)
 			m = list_first_entry(&graveyard, struct mount,
 						mnt_expire);
 			touch_mnt_namespace(m->mnt_ns);
-			umount_tree(m, 1, umounts);
+			umount_tree(m, 1, &unmounted);
 		}
 	}
 }
