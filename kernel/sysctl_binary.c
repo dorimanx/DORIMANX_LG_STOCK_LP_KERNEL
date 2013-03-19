@@ -15,6 +15,7 @@
 #include <linux/netdevice.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
+#include <linux/compat.h>
 
 #ifdef CONFIG_SYSCTL_SYSCALL
 
@@ -1454,7 +1455,6 @@ SYSCALL_DEFINE1(sysctl, struct __sysctl_args __user *, args)
 
 
 #ifdef CONFIG_COMPAT
-#include <asm/compat.h>
 
 struct compat_sysctl_args {
 	compat_uptr_t	name;
@@ -1466,7 +1466,7 @@ struct compat_sysctl_args {
 	compat_ulong_t	__unused[4];
 };
 
-asmlinkage long compat_sys_sysctl(struct compat_sysctl_args __user *args)
+COMPAT_SYSCALL_DEFINE1(sysctl, struct compat_sysctl_args __user *, args)
 {
 	struct compat_sysctl_args tmp;
 	compat_size_t __user *compat_oldlenp;
