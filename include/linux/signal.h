@@ -252,11 +252,11 @@ extern void __set_current_blocked(const sigset_t *);
 extern int show_unhandled_signals;
 
 struct sigaction {
-#ifndef __ARCH_HAS_ODD_SIGACTION
+#ifndef __ARCH_HAS_IRIX_SIGACTION
 	__sighandler_t	sa_handler;
 	unsigned long	sa_flags;
 #else
-	unsigned long	sa_flags;
+	unsigned int	sa_flags;
 	__sighandler_t	sa_handler;
 #endif
 #ifdef __ARCH_HAS_SA_RESTORER
@@ -265,6 +265,11 @@ struct sigaction {
 	sigset_t	sa_mask;	/* mask last for extensibility */
 };
 
+struct k_sigaction {
+	struct sigaction sa;
+#ifdef __ARCH_HAS_KA_RESTORER
+	__sigrestore_t ka_restorer;
+#endif
 };
  
 #ifdef CONFIG_OLD_SIGACTION
@@ -280,13 +285,6 @@ struct ksignal {
 	struct k_sigaction ka;
 	siginfo_t info;
 	int sig;
-};
-
-struct k_sigaction {
-	struct sigaction sa;
-#ifdef __ARCH_HAS_KA_RESTORER
-	__sigrestore_t ka_restorer;
-#endif
 };
 
 extern int get_signal_to_deliver(siginfo_t *info, struct k_sigaction *return_ka, struct pt_regs *regs, void *cookie);
