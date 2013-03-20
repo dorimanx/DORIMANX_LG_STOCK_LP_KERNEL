@@ -1022,8 +1022,6 @@ generic_file_splice_write(struct pipe_inode_info *pipe, struct file *out,
 	sd.total_len = len;
 	sd.pos = *ppos;
 
-	sb_start_write(inode->i_sb);
-
 	pipe_lock(pipe);
 
 	splice_from_pipe_begin(&sd);
@@ -1059,7 +1057,6 @@ generic_file_splice_write(struct pipe_inode_info *pipe, struct file *out,
 			*ppos += ret;
 		balance_dirty_pages_ratelimited(mapping);
 	}
-	sb_end_write(inode->i_sb);
 
 	return ret;
 }
@@ -1141,7 +1138,10 @@ static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
 	else
 		splice_write = default_file_splice_write;
 
-	return splice_write(pipe, out, ppos, len, flags);
+	file_start_write(out);
+	ret = splice_write(pipe, out, ppos, len, flags);
+	file_end_write(out);
+	return ret;
 }
 
 /*
