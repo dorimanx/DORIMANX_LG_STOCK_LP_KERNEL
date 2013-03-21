@@ -368,7 +368,7 @@ pipe_read(struct kiocb *iocb, const struct iovec *_iov,
 	   unsigned long nr_segs, loff_t pos)
 {
 	struct file *filp = iocb->ki_filp;
-	struct pipe_inode_info *pipe = file_inode(filp)->i_pipe;
+	struct pipe_inode_info *pipe = filp->private_data;
 	int do_wakeup;
 	ssize_t ret;
 	struct iovec *iov = (struct iovec *)_iov;
@@ -492,7 +492,7 @@ pipe_write(struct kiocb *iocb, const struct iovec *_iov,
 	    unsigned long nr_segs, loff_t ppos)
 {
 	struct file *filp = iocb->ki_filp;
-	struct pipe_inode_info *pipe = file_inode(filp)->i_pipe;
+	struct pipe_inode_info *pipe = filp->private_data;
 	ssize_t ret;
 	int do_wakeup;
 	struct iovec *iov = (struct iovec *)_iov;
@@ -672,7 +672,7 @@ out:
 
 static long pipe_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-	struct pipe_inode_info *pipe = file_inode(filp)->i_pipe;
+	struct pipe_inode_info *pipe = filp->private_data;
 	int count, buf, nrbufs;
 
 	switch (cmd) {
@@ -698,7 +698,7 @@ static unsigned int
 pipe_poll(struct file *filp, poll_table *wait)
 {
 	unsigned int mask;
-	struct pipe_inode_info *pipe = file_inode(filp)->i_pipe;
+	struct pipe_inode_info *pipe = filp->private_data;
 	int nrbufs;
 
 	poll_wait(filp, &pipe->wait, wait);
@@ -759,7 +759,7 @@ pipe_release(struct inode *inode, struct file *file)
 static int
 pipe_fasync(int fd, struct file *filp, int on)
 {
-	struct pipe_inode_info *pipe = file_inode(filp)->i_pipe;
+	struct pipe_inode_info *pipe = filp->private_data;
 	int retval = 0;
 
 	pipe_lock(pipe);
@@ -897,12 +897,14 @@ int create_pipe_files(struct file **res, int flags)
 		goto err_dentry;
 
 	f->f_flags = O_WRONLY | (flags & (O_NONBLOCK | O_DIRECT));
+	f->private_data = inode->i_pipe;
 
 	res[0] = alloc_file(&path, FMODE_READ, &pipefifo_fops);
 	if (IS_ERR(res[0]))
 		goto err_file;
 
 	path_get(&path);
+	res[0]->private_data = inode->i_pipe;
 	res[0]->f_flags = O_RDONLY | (flags & O_NONBLOCK);
 	res[1] = f;
 	return 0;
@@ -1045,6 +1047,7 @@ static int fifo_open(struct inode *inode, struct file *filp)
 			spin_unlock(&inode->i_lock);
 		}
 	}
+	filp->private_data = pipe;
 	/* OK, we have a pipe and it's pinned down */
 
 	pipe_lock(pipe);
@@ -1243,9 +1246,7 @@ int pipe_proc_fn(struct ctl_table *table, int write, void __user *buf,
  */
 struct pipe_inode_info *get_pipe_info(struct file *file)
 {
-	struct inode *i = file_inode(file);
-
-	return S_ISFIFO(i->i_mode) ? i->i_pipe : NULL;
+	return file->f_op == &pipefifo_fops ? file->private_data : NULL;
 }
 
 long pipe_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
