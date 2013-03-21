@@ -761,7 +761,7 @@ pipe_release(struct inode *inode, struct file *file)
 	__pipe_unlock(pipe);
 
 	if (kill)
-		__free_pipe_info(pipe);
+		free_pipe_info(pipe);
 
 	return 0;
 }
@@ -805,7 +805,7 @@ struct pipe_inode_info *alloc_pipe_info(void)
 	return NULL;
 }
 
-void __free_pipe_info(struct pipe_inode_info *pipe)
+void free_pipe_info(struct pipe_inode_info *pipe)
 {
 	int i;
 
@@ -818,12 +818,6 @@ void __free_pipe_info(struct pipe_inode_info *pipe)
 		__free_page(pipe->tmp_page);
 	kfree(pipe->bufs);
 	kfree(pipe);
-}
-
-void free_pipe_info(struct inode *inode)
-{
-	__free_pipe_info(inode->i_pipe);
-	inode->i_pipe = NULL;
 }
 
 static struct vfsmount *pipe_mnt __read_mostly;
@@ -921,12 +915,12 @@ int create_pipe_files(struct file **res, int flags)
 err_file:
 	put_filp(f);
 err_dentry:
-	free_pipe_info(inode);
+	free_pipe_info(inode->i_pipe);
 	path_put(&path);
 	return err;
 
 err_inode:
-	free_pipe_info(inode);
+	free_pipe_info(inode->i_pipe);
 	iput(inode);
 	return err;
 }
@@ -1049,7 +1043,7 @@ static int fifo_open(struct inode *inode, struct file *filp)
 		if (unlikely(inode->i_pipe)) {
 			inode->i_pipe->files++;
 			spin_unlock(&inode->i_lock);
-			__free_pipe_info(pipe);
+			free_pipe_info(pipe);
 			pipe = inode->i_pipe;
 		} else {
 			inode->i_pipe = pipe;
@@ -1153,7 +1147,7 @@ err:
 	spin_unlock(&inode->i_lock);
 	__pipe_unlock(pipe);
 	if (kill)
-		__free_pipe_info(pipe);
+		free_pipe_info(pipe);
 	return ret;
 }
 

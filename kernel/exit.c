@@ -970,7 +970,7 @@ void do_exit(long code)
 		exit_io_context(tsk);
 
 	if (tsk->splice_pipe)
-		__free_pipe_info(tsk->splice_pipe);
+		free_pipe_info(tsk->splice_pipe);
 
 	validate_creds_for_do_exit(tsk);
 
