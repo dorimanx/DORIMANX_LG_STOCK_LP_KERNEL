@@ -669,17 +669,6 @@ int __do_adjtimex(struct timex *txc, struct timespec *ts, s32 *time_tai)
 {
 	int result;
 
-	if (txc->modes & ADJ_SETOFFSET) {
-		struct timespec delta;
-		delta.tv_sec  = txc->time.tv_sec;
-		delta.tv_nsec = txc->time.tv_usec;
-		if (!(txc->modes & ADJ_NANO))
-			delta.tv_nsec *= 1000;
-		result = timekeeping_inject_offset(&delta);
-		if (result)
-			return result;
-	}
-
 	/*
 	 * Check for potential multiplication overflows that can
 	 * only happen on 64-bit systems:
