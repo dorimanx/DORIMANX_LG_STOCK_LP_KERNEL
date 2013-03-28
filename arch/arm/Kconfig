@@ -58,16 +58,12 @@ config ARM
 	select PERF_USE_VMALLOC
 	select RTC_LIB
 	select SYS_SUPPORTS_APM_EMULATION
-<<<<<<< HEAD
-	select OLD_SIGSUSPEND3
-	select OLD_SIGACTION
-	select GENERIC_KERNEL_THREAD
-	select GENERIC_KERNEL_EXECVE
-=======
 	select HAVE_MOD_ARCH_SPECIFIC if ARM_UNWIND
 	select MODULES_USE_ELF_REL
 	select CLONE_BACKWARDS
->>>>>>> 38a61b6... arm: switch to generic fork/vfork/clone
+	select OLD_SIGSUSPEND3
+	select OLD_SIGACTION
+	select HAVE_CONTEXT_TRACKING
 	help
 	  The ARM series is a line of low-power-consumption RISC chip designs
 	  licensed by ARM Ltd and targeted at embedded applications and
