@@ -899,7 +899,6 @@ ep_open (struct inode *inode, struct file *fd)
 
 /* used before endpoint configuration */
 static const struct file_operations ep_config_operations = {
-	.owner =	THIS_MODULE,
 	.llseek =	no_llseek,
 
 	.open =		ep_open,
@@ -1950,7 +1949,6 @@ dev_open (struct inode *inode, struct file *fd)
 }
 
 static const struct file_operations dev_init_operations = {
-	.owner =	THIS_MODULE,
 	.llseek =	no_llseek,
 
 	.open =		dev_open,
