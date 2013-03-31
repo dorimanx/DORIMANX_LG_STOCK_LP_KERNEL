@@ -512,19 +512,18 @@ static int proc_register(struct proc_dir_entry * dir, struct proc_dir_entry * dp
 		return ret;
 
 	if (S_ISDIR(dp->mode)) {
-		if (dp->proc_iops == NULL) {
-			dp->proc_fops = &proc_dir_operations;
-			dp->proc_iops = &proc_dir_inode_operations;
-		}
+		dp->proc_fops = &proc_dir_operations;
+		dp->proc_iops = &proc_dir_inode_operations;
 		dir->nlink++;
 	} else if (S_ISLNK(dp->mode)) {
-		if (dp->proc_iops == NULL)
-			dp->proc_iops = &proc_link_inode_operations;
+		dp->proc_iops = &proc_link_inode_operations;
 	} else if (S_ISREG(dp->mode)) {
 		if (dp->proc_fops == NULL)
 			dp->proc_fops = &proc_file_operations;
-		if (dp->proc_iops == NULL)
-			dp->proc_iops = &proc_file_inode_operations;
+		dp->proc_iops = &proc_file_inode_operations;
+	} else {
+		WARN_ON(1);
+		return -EINVAL;
 	}
 
 	spin_lock(&proc_subdir_lock);
@@ -652,21 +651,19 @@ struct proc_dir_entry *create_proc_read_entry(
 	read_proc_t *read_proc, void *data)
 {
 	struct proc_dir_entry *ent;
-	nlink_t nlink;
 
-	if (S_ISDIR(mode)) {
-		if ((mode & S_IALLUGO) == 0)
-			mode |= S_IRUGO | S_IXUGO;
-		nlink = 2;
-	} else {
-		if ((mode & S_IFMT) == 0)
-			mode |= S_IFREG;
-		if ((mode & S_IALLUGO) == 0)
-			mode |= S_IRUGO;
-		nlink = 1;
+	if ((mode & S_IFMT) == 0)
+		mode |= S_IFREG;
+
+	if (!S_ISREG(mode)) {
+		WARN_ON(1);	/* use proc_mkdir(), damnit */
+		return NULL;
 	}
 
-	ent = __proc_create(&parent, name, mode, nlink);
+	if ((mode & S_IALLUGO) == 0)
+		mode |= S_IRUGO;
+
+	ent = __proc_create(&parent, name, mode, 1);
 	if (ent) {
 		ent->read_proc = read_proc;
 		ent->data = data;
@@ -685,21 +682,17 @@ struct proc_dir_entry *proc_create_data(const char *name, umode_t mode,
 					void *data)
 {
 	struct proc_dir_entry *pde;
-	nlink_t nlink;
+	if ((mode & S_IFMT) == 0)
+		mode |= S_IFREG;
 
-	if (S_ISDIR(mode)) {
-		if ((mode & S_IALLUGO) == 0)
-			mode |= S_IRUGO | S_IXUGO;
-		nlink = 2;
-	} else {
-		if ((mode & S_IFMT) == 0)
-			mode |= S_IFREG;
-		if ((mode & S_IALLUGO) == 0)
-			mode |= S_IRUGO;
-		nlink = 1;
+	if (!S_ISREG(mode)) {
+		WARN_ON(1);	/* use proc_mkdir() */
+		return NULL;
 	}
 
-	pde = __proc_create(&parent, name, mode, nlink);
+	if ((mode & S_IALLUGO) == 0)
+		mode |= S_IRUGO;
+	pde = __proc_create(&parent, name, mode, 1);
 	if (!pde)
 		goto out;
 	pde->proc_fops = proc_fops;
