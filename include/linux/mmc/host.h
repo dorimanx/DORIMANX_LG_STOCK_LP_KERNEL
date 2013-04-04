@@ -86,7 +86,6 @@ struct mmc_ios {
 /* states to represent load on the host */
 enum mmc_load {
 	MMC_LOAD_HIGH,
-	MMC_LOAD_INIT,
 	MMC_LOAD_LOW,
 };
 
@@ -322,26 +321,26 @@ struct mmc_host {
 #define MMC_CAP2_BROKEN_VOLTAGE	(1 << 7)	/* Use the broken voltage */
 #define MMC_CAP2_DETECT_ON_ERR	(1 << 8)	/* On I/O err check card removal */
 #define MMC_CAP2_HC_ERASE_SZ	(1 << 9)	/* High-capacity erase size */
-#define MMC_CAP2_CD_ACTIVE_HIGH (1 << 10) /* Card-detect signal active high */
-
+#define MMC_CAP2_CD_ACTIVE_HIGH	(1 << 10)	/* Card-detect signal active high */
+#define MMC_CAP2_RO_ACTIVE_HIGH	(1 << 11)	/* Write-protect signal active high */
 #define MMC_CAP2_PACKED_RD	(1 << 12)	/* Allow packed read */
 #define MMC_CAP2_PACKED_WR	(1 << 13)	/* Allow packed write */
 #define MMC_CAP2_PACKED_CMD	(MMC_CAP2_PACKED_RD | \
-				 MMC_CAP2_PACKED_WR) /* Allow packed commands */
-#define MMC_CAP2_PACKED_WR_CONTROL (1 << 14) /* Allow write packing control */
-
-#define MMC_CAP2_SANITIZE	(1 << 15)		/* Support Sanitize */
-#define MMC_CAP2_INIT_BKOPS	    (1 << 16)	/* Need to set BKOPS_EN */
+				 MMC_CAP2_PACKED_WR)
+#define MMC_CAP2_NO_PRESCAN_POWERUP (1 << 14)	/* Don't power up before scan */
+#define MMC_CAP2_INIT_BKOPS	    (1 << 15)	/* Need to set BKOPS_EN */
+#define MMC_CAP2_PACKED_WR_CONTROL (1 << 16) /* Allow write packing control */
 #define MMC_CAP2_CLK_SCALE	(1 << 17)	/* Allow dynamic clk scaling */
 #define MMC_CAP2_STOP_REQUEST	(1 << 18)	/* Allow stop ongoing request */
 /* Use runtime PM framework provided by MMC core */
 #define MMC_CAP2_CORE_RUNTIME_PM (1 << 19)
+#define MMC_CAP2_SANITIZE	(1 << 20)		/* Support Sanitize */
 /* Allows Asynchronous SDIO irq while card is in 4-bit mode */
-#define MMC_CAP2_ASYNC_SDIO_IRQ_4BIT_MODE (1 << 20)
+#define MMC_CAP2_ASYNC_SDIO_IRQ_4BIT_MODE (1 << 21)
 
-#define MMC_CAP2_HS400_1_8V	(1 << 21)        /* can support */
-#define MMC_CAP2_HS400_1_2V	(1 << 22)        /* can support */
-#define MMC_CAP2_CORE_PM	(1 << 23)       /* use PM framework */
+#define MMC_CAP2_HS400_1_8V	(1 << 22)        /* can support */
+#define MMC_CAP2_HS400_1_2V	(1 << 23)        /* can support */
+#define MMC_CAP2_CORE_PM       (1 << 24)       /* use PM framework */
 #define MMC_CAP2_HS400		(MMC_CAP2_HS400_1_8V | \
 				 MMC_CAP2_HS400_1_2V)
 	mmc_pm_flag_t		pm_caps;	/* supported pm features */
@@ -598,6 +597,11 @@ static inline int mmc_host_uhs(struct mmc_host *host)
 		(MMC_CAP_UHS_SDR12 | MMC_CAP_UHS_SDR25 |
 		 MMC_CAP_UHS_SDR50 | MMC_CAP_UHS_SDR104 |
 		 MMC_CAP_UHS_DDR50);
+}
+
+static inline int mmc_host_packed_wr(struct mmc_host *host)
+{
+	return host->caps2 & MMC_CAP2_PACKED_WR;
 }
 
 #ifdef CONFIG_MMC_CLKGATE
