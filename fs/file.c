@@ -622,6 +622,7 @@ static int alloc_fd(unsigned start, unsigned flags)
 {
 	return __alloc_fd(current->files, start, rlimit(RLIMIT_NOFILE), flags);
 }
+EXPORT_SYMBOL(alloc_fd);
 
 int get_unused_fd_flags(unsigned flags)
 {
