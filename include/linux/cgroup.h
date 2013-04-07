@@ -30,7 +30,6 @@ struct css_id;
 
 extern int cgroup_init_early(void);
 extern int cgroup_init(void);
-extern int cgroup_lock_is_held(void);
 extern void cgroup_fork(struct task_struct *p);
 extern void cgroup_post_fork(struct task_struct *p);
 extern void cgroup_exit(struct task_struct *p, int run_callbacks);
@@ -562,7 +561,7 @@ static inline struct cgroup_subsys_state *cgroup_subsys_state(
 #define task_css_set_check(task, __c)					\
 	rcu_dereference_check((task)->cgroups,				\
 		lockdep_is_held(&(task)->alloc_lock) ||			\
-		cgroup_lock_is_held() || (__c))
+		lockdep_is_held(&cgroup_mutex) || (__c))
 
 /**
  * task_subsys_state_check - obtain css for (task, subsys) w/ extra access conds
@@ -573,8 +572,14 @@ static inline struct cgroup_subsys_state *cgroup_subsys_state(
  * Return the cgroup_subsys_state for the (@task, @subsys_id) pair.  The
  * synchronization rules are the same as task_css_set_check().
  */
+#ifdef CONFIG_PROVE_RCU
+extern struct mutex cgroup_mutex;
 #define task_subsys_state_check(task, subsys_id, __c)			\
 	task_css_set_check((task), (__c))->subsys[(subsys_id)]
+#else
+#define task_subsys_state_check(task, subsys_id, __c)			\
+	rcu_dereference((task)->cgroups->subsys[(subsys_id)])
+#endif
 
 /**
  * task_css_set - obtain a task's css_set
