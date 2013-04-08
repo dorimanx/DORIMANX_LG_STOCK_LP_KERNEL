@@ -30,7 +30,7 @@ struct cgroup_netprio_state {
 	u32 prioidx;
 };
 
-extern void sock_update_netprioidx(struct sock *sk, struct task_struct *task);
+extern void sock_update_netprioidx(struct sock *sk);
 
 #if IS_BUILTIN(CONFIG_NETPRIO_CGROUP)
 
@@ -71,7 +71,7 @@ static inline u32 task_netprioidx(struct task_struct *p)
 	return 0;
 }
 
-#define sock_update_netprioidx(sk, task)
+#define sock_update_netprioidx(sk)
 
 #endif /* CONFIG_NETPRIO_CGROUP */
 
