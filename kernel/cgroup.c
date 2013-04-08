@@ -842,6 +842,13 @@ static void cgroup_free_fn(struct work_struct *work)
 	mutex_unlock(&cgroup_mutex);
 
 	/*
+	 * We get a ref to the parent's dentry, and put the ref when
+	 * this cgroup is being freed, so it's guaranteed that the
+	 * parent won't be destroyed before its children.
+	 */
+	dput(cgrp->parent->dentry);
+
+	/*
 	 * Drop the active superblock reference that we took when we
 	 * created the cgroup
 	 */
@@ -4180,6 +4187,9 @@ static long cgroup_create(struct cgroup *parent, struct dentry *dentry,
 	/* each css holds a ref to the cgroup's dentry */
 	for_each_subsys(root, ss)
 		dget(dentry);
+
+	/* hold a ref to the parent's dentry */
+	dget(parent->dentry);
 
 	/* creation succeeded, notify subsystems */
 	for_each_subsys(root, ss) {
