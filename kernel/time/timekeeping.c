@@ -586,6 +586,7 @@ void timekeeping_set_tai_offset(s32 tai_offset)
 	__timekeeping_set_tai_offset(tk, tai_offset);
 	write_seqcount_end(&timekeeper_seq);
 	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
+	clock_was_set();
 }
 
 /**
@@ -1673,7 +1674,7 @@ int do_adjtimex(struct timex *txc)
 	struct timekeeper *tk = &timekeeper;
 	unsigned long flags;
 	struct timespec ts;
-	s32 tai;
+	s32 orig_tai, tai;
 	int ret;
 
 	/* Validate the data before disabling interrupts */
@@ -1697,10 +1698,13 @@ int do_adjtimex(struct timex *txc)
 	raw_spin_lock_irqsave(&timekeeper_lock, flags);
 	write_seqcount_begin(&timekeeper_seq);
 
-	tai = tk->tai_offset;
+	orig_tai = tai = tk->tai_offset;
 	ret = __do_adjtimex(txc, &ts, &tai);
 
-	__timekeeping_set_tai_offset(tk, tai);
+	if (tai != orig_tai) {
+		__timekeeping_set_tai_offset(tk, tai);
+		clock_was_set_delayed();
+	}
 	write_seqcount_end(&timekeeper_seq);
 	raw_spin_unlock_irqrestore(&timekeeper_lock, flags);
 
