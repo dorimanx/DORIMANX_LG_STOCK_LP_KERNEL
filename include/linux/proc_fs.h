@@ -177,6 +177,9 @@ extern void proc_net_remove(struct net *net, const char *name);
 extern struct proc_dir_entry *proc_net_mkdir(struct net *net, const char *name,
 	struct proc_dir_entry *parent);
 
+extern void proc_set_size(struct proc_dir_entry *, loff_t);
+extern void proc_set_user(struct proc_dir_entry *, uid_t, gid_t);
+
 extern struct file *proc_ns_fget(int fd);
 extern bool proc_ns_inode(struct inode *inode);
 
@@ -213,6 +216,8 @@ static inline struct proc_dir_entry *proc_mkdir(const char *name,
 	struct proc_dir_entry *parent) {return NULL;}
 static inline struct proc_dir_entry *proc_mkdir_mode(const char *name,
 	umode_t mode, struct proc_dir_entry *parent) { return NULL; }
+static inline void proc_set_size(struct proc_dir_entry *de, loff_t size) {}
+static inline void proc_set_user(struct proc_dir_entry *de, uid_t uid, gid_t gid) {}
 
 static inline struct proc_dir_entry *create_proc_read_entry(const char *name,
 	umode_t mode, struct proc_dir_entry *base, 

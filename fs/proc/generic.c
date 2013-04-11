@@ -763,6 +763,19 @@ out:
 	return NULL;
 }
 EXPORT_SYMBOL(proc_create_data);
+ 
+void proc_set_size(struct proc_dir_entry *de, loff_t size)
+{
+	de->size = size;
+}
+EXPORT_SYMBOL(proc_set_size);
+
+void proc_set_user(struct proc_dir_entry *de, uid_t uid, gid_t gid)
+{
+	de->uid = uid;
+	de->gid = gid;
+}
+EXPORT_SYMBOL(proc_set_user);
 
 static void free_proc_entry(struct proc_dir_entry *de)
 {

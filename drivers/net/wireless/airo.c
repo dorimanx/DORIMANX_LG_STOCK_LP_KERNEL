@@ -4505,73 +4505,63 @@ static int setup_proc_entry( struct net_device *dev,
 					    airo_entry);
 	if (!apriv->proc_entry)
 		goto fail;
-	apriv->proc_entry->uid = proc_uid;
-	apriv->proc_entry->gid = proc_gid;
+	proc_set_user(apriv->proc_entry, proc_uid, proc_gid);
 
 	/* Setup the StatsDelta */
 	entry = proc_create_data("StatsDelta", S_IRUGO & proc_perm,
 				 apriv->proc_entry, &proc_statsdelta_ops, dev);
 	if (!entry)
 		goto fail_stats_delta;
-	entry->uid = proc_uid;
-	entry->gid = proc_gid;
+	proc_set_user(entry, proc_uid, proc_gid);
 
 	/* Setup the Stats */
 	entry = proc_create_data("Stats", S_IRUGO & proc_perm,
 				 apriv->proc_entry, &proc_stats_ops, dev);
 	if (!entry)
 		goto fail_stats;
-	entry->uid = proc_uid;
-	entry->gid = proc_gid;
+	proc_set_user(entry, proc_uid, proc_gid);
 
 	/* Setup the Status */
 	entry = proc_create_data("Status", S_IRUGO & proc_perm,
 				 apriv->proc_entry, &proc_status_ops, dev);
 	if (!entry)
 		goto fail_status;
-	entry->uid = proc_uid;
-	entry->gid = proc_gid;
+	proc_set_user(entry, proc_uid, proc_gid);
 
 	/* Setup the Config */
 	entry = proc_create_data("Config", proc_perm,
 				 apriv->proc_entry, &proc_config_ops, dev);
 	if (!entry)
 		goto fail_config;
-	entry->uid = proc_uid;
-	entry->gid = proc_gid;
+	proc_set_user(entry, proc_uid, proc_gid);
 
 	/* Setup the SSID */
 	entry = proc_create_data("SSID", proc_perm,
 				 apriv->proc_entry, &proc_SSID_ops, dev);
 	if (!entry)
 		goto fail_ssid;
-	entry->uid = proc_uid;
-	entry->gid = proc_gid;
+	proc_set_user(entry, proc_uid, proc_gid);
 
 	/* Setup the APList */
 	entry = proc_create_data("APList", proc_perm,
 				 apriv->proc_entry, &proc_APList_ops, dev);
 	if (!entry)
 		goto fail_aplist;
-	entry->uid = proc_uid;
-	entry->gid = proc_gid;
+	proc_set_user(entry, proc_uid, proc_gid);
 
 	/* Setup the BSSList */
 	entry = proc_create_data("BSSList", proc_perm,
 				 apriv->proc_entry, &proc_BSSList_ops, dev);
 	if (!entry)
 		goto fail_bsslist;
-	entry->uid = proc_uid;
-	entry->gid = proc_gid;
+	proc_set_user(entry, proc_uid, proc_gid);
 
 	/* Setup the WepKey */
 	entry = proc_create_data("WepKey", proc_perm,
 				 apriv->proc_entry, &proc_wepkey_ops, dev);
 	if (!entry)
 		goto fail_wepkey;
-	entry->uid = proc_uid;
-	entry->gid = proc_gid;
-
+	proc_set_user(entry, proc_uid, proc_gid);
 	return 0;
 
 fail_wepkey:
@@ -5699,10 +5689,8 @@ static int __init airo_init_module( void )
 
 	airo_entry = proc_mkdir_mode("driver/aironet", airo_perm, NULL);
 
-	if (airo_entry) {
-		airo_entry->uid = proc_uid;
-		airo_entry->gid = proc_gid;
-	}
+	if (airo_entry)
+		proc_set_user(airo_entry, proc_uid, proc_gid);
 
 	for (i = 0; i < 4 && io[i] && irq[i]; i++) {
 		airo_print_info("", "Trying to configure ISA adapter at irq=%d "

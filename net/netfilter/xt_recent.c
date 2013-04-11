@@ -373,8 +373,7 @@ static int recent_mt_check(const struct xt_mtchk_param *par)
 		ret = -ENOMEM;
 		goto out;
 	}
-	pde->uid = ip_list_uid;
-	pde->gid = ip_list_gid;
+	proc_set_user(pde, ip_list_uid, ip_list_gid);
 #endif
 	spin_lock_bh(&recent_lock);
 	list_add_tail(&t->list, &recent_net->tables);
