@@ -152,6 +152,7 @@ extern struct proc_dir_entry *proc_net_fops_create(struct net *net,
 extern void proc_net_remove(struct net *net, const char *name);
 extern void proc_set_size(struct proc_dir_entry *, loff_t);
 extern void proc_set_user(struct proc_dir_entry *, uid_t, gid_t);
+extern void *PDE_DATA(const struct inode *);
 extern void *proc_get_parent_data(const struct inode *);
 
 extern struct file *proc_ns_fget(int fd);
@@ -190,10 +191,7 @@ static inline struct proc_dir_entry *proc_mkdir_mode(const char *name,
 	umode_t mode, struct proc_dir_entry *parent) { return NULL; }
 static inline void proc_set_size(struct proc_dir_entry *de, loff_t size) {}
 static inline void proc_set_user(struct proc_dir_entry *de, uid_t uid, gid_t gid) {}
-
-struct tty_driver;
-static inline void proc_tty_register_driver(struct tty_driver *driver) {};
-static inline void proc_tty_unregister_driver(struct tty_driver *driver) {};
+static inline void *PDE_DATA(const struct inode *inode) {BUG(); return NULL;}
 
 static inline int pid_ns_prepare_proc(struct pid_namespace *ns)
 {
@@ -269,21 +267,6 @@ struct proc_inode {
 	const struct proc_ns_operations *ns_ops;
 	struct inode vfs_inode;
 };
-
-static inline struct proc_inode *PROC_I(const struct inode *inode)
-{
-	return container_of(inode, struct proc_inode, vfs_inode);
-}
-
-static inline struct proc_dir_entry *PDE(const struct inode *inode)
-{
-	return PROC_I(inode)->pde;
-}
-
-static inline void *PDE_DATA(const struct inode *inode)
-{
-	return PROC_I(inode)->pde->data;
-}
 
 #include <linux/signal.h>
 
