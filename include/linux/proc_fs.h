@@ -6,6 +6,7 @@
 #include <linux/spinlock.h>
 #include <linux/magic.h>
 #include <linux/atomic.h>
+#include <linux/proc_ns.h>
 
 struct net;
 struct completion;
@@ -22,18 +23,6 @@ struct mm_struct;
 
 /* Worst case buffer size needed for holding an integer. */
 #define PROC_NUMBUF 13
-
-/*
- * We always define these enumerators
- */
-
-enum {
-	PROC_ROOT_INO		= 1,
-	PROC_IPC_INIT_INO	= 0xEFFFFFFFU,
-	PROC_UTS_INIT_INO	= 0xEFFFFFFEU,
-	PROC_USER_INIT_INO	= 0xEFFFFFFDU,
-	PROC_PID_INIT_INO	= 0xEFFFFFFCU,
-};
 
 /*
  * This is not completely implemented yet. The idea is to
@@ -104,10 +93,6 @@ extern void proc_remove(struct proc_dir_entry *);
 extern void remove_proc_entry(const char *name, struct proc_dir_entry *parent);
 extern int remove_proc_subtree(const char *name, struct proc_dir_entry *parent);
 
-struct pid_namespace;
-
-extern int pid_ns_prepare_proc(struct pid_namespace *ns);
-extern void pid_ns_release_proc(struct pid_namespace *ns);
 
 /*
  * proc_tty.c
@@ -155,11 +140,6 @@ extern void proc_set_user(struct proc_dir_entry *, uid_t, gid_t);
 extern void *PDE_DATA(const struct inode *);
 extern void *proc_get_parent_data(const struct inode *);
 
-extern struct file *proc_ns_fget(int fd);
-extern bool proc_ns_inode(struct inode *inode);
-
-extern int proc_alloc_inum(unsigned int *pino);
-extern void proc_free_inum(unsigned int inum);
 #else
 
 #define proc_net_fops_create(net, name, mode, fops)  ({ (void)(mode), NULL; })
@@ -193,33 +173,6 @@ static inline void proc_set_size(struct proc_dir_entry *de, loff_t size) {}
 static inline void proc_set_user(struct proc_dir_entry *de, uid_t uid, gid_t gid) {}
 static inline void *PDE_DATA(const struct inode *inode) {BUG(); return NULL;}
 
-static inline int pid_ns_prepare_proc(struct pid_namespace *ns)
-{
-	return 0;
-}
-
-static inline void pid_ns_release_proc(struct pid_namespace *ns)
-{
-}
-
-static inline struct file *proc_ns_fget(int fd)
-{
-	return ERR_PTR(-EINVAL);
-}
-
-static inline bool proc_ns_inode(struct inode *inode)
-{
-	return false;
-}
-
-static inline int proc_alloc_inum(unsigned int *inum)
-{
-	*inum = 1;
-	return 0;
-}
-static inline void proc_free_inum(unsigned int inum)
-{
-}
 #endif /* CONFIG_PROC_FS */
 
 #if !defined(CONFIG_PROC_KCORE)
@@ -230,20 +183,6 @@ kclist_add(struct kcore_list *new, void *addr, size_t size, int type)
 #else
 extern void kclist_add(struct kcore_list *, void *, size_t, int type);
 #endif
-
-struct nsproxy;
-struct proc_ns_operations {
-	const char *name;
-	int type;
-	void *(*get)(struct task_struct *task);
-	void (*put)(void *ns);
-	int (*install)(struct nsproxy *nsproxy, void *ns);
-	unsigned int (*inum)(void *ns);
-};
-extern const struct proc_ns_operations netns_operations;
-extern const struct proc_ns_operations utsns_operations;
-extern const struct proc_ns_operations ipcns_operations;
-extern const struct proc_ns_operations mntns_operations;
 
 union proc_op {
 	int (*proc_get_link)(struct dentry *, struct path *);
@@ -263,8 +202,7 @@ struct proc_inode {
 	struct proc_dir_entry *pde;
 	struct ctl_table_header *sysctl;
 	struct ctl_table *sysctl_entry;
-	void *ns;
-	const struct proc_ns_operations *ns_ops;
+	struct proc_ns ns;
 	struct inode vfs_inode;
 };
 
