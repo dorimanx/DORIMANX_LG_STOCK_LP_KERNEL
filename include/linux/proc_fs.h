@@ -151,6 +151,7 @@ extern struct proc_dir_entry *proc_net_fops_create(struct net *net,
 extern void proc_net_remove(struct net *net, const char *name);
 extern void proc_set_size(struct proc_dir_entry *, loff_t);
 extern void proc_set_user(struct proc_dir_entry *, uid_t, gid_t);
+extern void *proc_get_parent_data(const struct inode *);
 
 extern struct file *proc_ns_fget(int fd);
 extern bool proc_ns_inode(struct inode *inode);
