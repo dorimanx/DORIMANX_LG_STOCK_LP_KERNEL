@@ -93,36 +93,6 @@ extern void proc_remove(struct proc_dir_entry *);
 extern void remove_proc_entry(const char *name, struct proc_dir_entry *parent);
 extern int remove_proc_subtree(const char *name, struct proc_dir_entry *parent);
 
-
-/*
- * proc_tty.c
- */
-struct tty_driver;
-#ifdef CONFIG_TTY
-extern void proc_tty_init(void);
-#else
-static inline void proc_tty_init(void)
-{ }
-#endif
-extern void proc_tty_register_driver(struct tty_driver *driver);
-extern void proc_tty_unregister_driver(struct tty_driver *driver);
-
-/*
- * proc_devtree.c
- */
-#ifdef CONFIG_PROC_DEVICETREE
-struct device_node;
-struct property;
-extern void proc_device_tree_init(void);
-extern void proc_device_tree_add_node(struct device_node *, struct proc_dir_entry *);
-extern void proc_device_tree_add_prop(struct proc_dir_entry *pde, struct property *prop);
-extern void proc_device_tree_remove_prop(struct proc_dir_entry *pde,
-					 struct property *prop);
-extern void proc_device_tree_update_prop(struct proc_dir_entry *pde,
-					 struct property *newprop,
-					 struct property *oldprop);
-#endif /* CONFIG_PROC_DEVICETREE */
-
 extern struct proc_dir_entry *proc_symlink(const char *,
 		struct proc_dir_entry *, const char *);
 extern struct proc_dir_entry *proc_mkdir(const char *,struct proc_dir_entry *);

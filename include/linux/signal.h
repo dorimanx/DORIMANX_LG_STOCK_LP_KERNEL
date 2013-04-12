@@ -389,4 +389,9 @@ void signals_init(void);
 
 #endif /* __KERNEL__ */
 
+#ifdef CONFIG_PROC_FS
+struct seq_file;
+extern void render_sigset_t(struct seq_file *, const char *, sigset_t *);
+#endif
+
 #endif /* _LINUX_SIGNAL_H */

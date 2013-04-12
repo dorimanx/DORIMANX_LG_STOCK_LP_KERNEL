@@ -690,6 +690,13 @@ do {									\
 	finish_wait(&wq, &__wait);					\
 } while (0)
 
+#ifdef CONFIG_PROC_FS
+extern void proc_tty_register_driver(struct tty_driver *);
+extern void proc_tty_unregister_driver(struct tty_driver *);
+#else
+static inline void proc_tty_register_driver(struct tty_driver *d) {}
+static inline void proc_tty_unregister_driver(struct tty_driver *d) {}
+#endif
 
 #endif /* __KERNEL__ */
 #endif
