@@ -704,7 +704,7 @@ void vmcore_cleanup(void)
 	struct list_head *pos, *next;
 
 	if (proc_vmcore) {
-		remove_proc_entry(proc_vmcore->name, proc_vmcore->parent);
+		proc_remove(proc_vmcore);
 		proc_vmcore = NULL;
 	}
 
