@@ -3111,7 +3111,20 @@ proc_rdrv(adapter_t *adapter, char *page, int start, int end )
 	pci_free_consistent(pdev, array_sz, disk_array,
 			disk_array_dma_handle);
 
-	free_local_pdev(pdev);
+	dir = adapter->controller_proc_dir_entry =
+		proc_mkdir_data(string, 0, parent, adapter);
+	if(!dir) {
+		printk(KERN_WARNING "\nmegaraid: proc_mkdir failed\n");
+		return;
+	}
+
+	for (f = mega_proc_files; f->name; f++) {
+		de = proc_create_data(f->name, S_IRUSR, dir, &mega_proc_fops,
+				      f->show);
+		if (!de) {
+			printk(KERN_WARNING "\nmegaraid: proc_create failed\n");
+			return;
+		}
 
 	return len;
 }
