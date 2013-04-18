@@ -151,7 +151,6 @@ struct blk_user_trace_setup {
 
 struct blk_trace {
 	int trace_state;
-	bool rq_based;
 	struct rchan *rchan;
 	unsigned long __percpu *sequence;
 	unsigned char __percpu *msg_data;
