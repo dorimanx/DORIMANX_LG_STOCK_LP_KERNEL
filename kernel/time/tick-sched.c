@@ -196,7 +196,7 @@ static void tick_nohz_restart_sched_tick(struct tick_sched *ts, ktime_t now);
  * Re-evaluate the need for the tick on the current CPU
  * and restart it if necessary.
  */
-static void tick_nohz_full_check(void)
+void tick_nohz_full_check(void)
 {
 	struct tick_sched *ts = &__get_cpu_var(tick_cpu_sched);
 
