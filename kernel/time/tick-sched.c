@@ -20,15 +20,16 @@
 #include <linux/profile.h>
 #include <linux/sched.h>
 #include <linux/module.h>
-#include <linux/rq_stats.h>
 #include <linux/irq_work.h>
 #include <linux/posix-timers.h>
 #include <linux/perf_event.h>
+#include <linux/rq_stats.h>
 
 #include <asm/irq_regs.h>
 
 #include "tick-internal.h"
 
+#include <trace/events/timer.h>
 
 struct rq_data rq_info;
 struct workqueue_struct *rq_wq;
@@ -159,14 +160,20 @@ static bool can_stop_full_tick(void)
 {
 	WARN_ON_ONCE(!irqs_disabled());
 
-	if (!sched_can_stop_tick())
+	if (!sched_can_stop_tick()) {
+		trace_tick_stop(0, "more than 1 task in runqueue\n");
 		return false;
+	}
 
-	if (!posix_cpu_timers_can_stop_tick(current))
+	if (!posix_cpu_timers_can_stop_tick(current)) {
+		trace_tick_stop(0, "posix timers running\n");
 		return false;
+	}
 
-	if (!perf_event_can_stop_tick())
+	if (!perf_event_can_stop_tick()) {
+		trace_tick_stop(0, "perf events running\n");
 		return false;
+	}
 
 	/* sched_clock_tick() needs us? */
 #ifdef CONFIG_HAVE_UNSTABLE_SCHED_CLOCK
@@ -174,8 +181,10 @@ static bool can_stop_full_tick(void)
 	 * TODO: kick full dynticks CPUs when
 	 * sched_clock_stable is set.
 	 */
-	if (!sched_clock_stable)
+	if (!sched_clock_stable) {
+		trace_tick_stop(0, "unstable sched clock\n");
 		return false;
+	}
 #endif
 
 	return true;
@@ -588,6 +597,7 @@ static ktime_t tick_nohz_stop_sched_tick(struct tick_sched *ts,
 
 			ts->last_tick = hrtimer_get_expires(&ts->sched_timer);
 			ts->tick_stopped = 1;
+			trace_tick_stop(1, " ");
 		}
 
 		/*
