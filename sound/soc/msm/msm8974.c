@@ -3676,6 +3676,7 @@ static __devinit int msm8974_asoc_machine_probe(struct platform_device *pdev)
 	struct snd_soc_card *card = &snd_soc_card_msm8974;
 	struct msm8974_asoc_mach_data *pdata;
 	int ret;
+	int tmp;
 	const char *auxpcm_pri_gpio_set = NULL;
 	const char *prop_name_ult_lo_gpio = "qcom,ext-ult-lo-amp-gpio";
 	const char *mbhc_audio_jack_type = NULL;
@@ -3941,6 +3942,12 @@ static __devinit int msm8974_asoc_machine_probe(struct platform_device *pdev)
 		tpa_enabled = true;
 	}
 #endif
+
+	ret = of_property_read_u32(pdev->dev.of_node,
+			"qcom,mbhc-gpio-level-insert", &tmp);
+	if (!ret)
+		mbhc_cfg.gpio_level_insert = (int)tmp;
+
 	ret = of_property_read_string(pdev->dev.of_node,
 			"qcom,prim-auxpcm-gpio-set", &auxpcm_pri_gpio_set);
 	if (ret) {
