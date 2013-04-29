@@ -28,7 +28,6 @@ struct fdtable {
 	unsigned long *open_fds;
 	unsigned long *full_fds_bits;
 	struct rcu_head rcu;
-	struct fdtable *next;
 };
 
 static inline bool close_on_exec(int fd, const struct fdtable *fdt)
