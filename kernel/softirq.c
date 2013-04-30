@@ -621,8 +621,7 @@ static void remote_softirq_receive(void *data)
 	unsigned long flags;
 	int softirq;
 
-	softirq = cp->priv;
-
+	softirq = *(int *)cp->info;
 	local_irq_save(flags);
 	__local_trigger(cp, softirq);
 	local_irq_restore(flags);
@@ -632,9 +631,8 @@ static int __try_remote_softirq(struct call_single_data *cp, int cpu, int softir
 {
 	if (cpu_online(cpu)) {
 		cp->func = remote_softirq_receive;
-		cp->info = cp;
+		cp->info = &softirq;
 		cp->flags = 0;
-		cp->priv = softirq;
 
 		__smp_call_function_single(cpu, cp, 0);
 		return 0;
