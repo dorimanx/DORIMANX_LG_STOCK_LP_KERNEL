@@ -2364,13 +2364,8 @@ struct request *blk_fetch_request(struct request_queue *q)
 	struct request *rq;
 
 	rq = blk_peek_request(q);
-	if (rq) {
-		if (rq->cmd_flags & REQ_URGENT) {
-			WARN_ON(q->dispatched_urgent);
-			q->dispatched_urgent = true;
-		}
+	if (rq)
 		blk_start_request(rq);
-	}
 	return rq;
 }
 EXPORT_SYMBOL(blk_fetch_request);
