@@ -66,6 +66,7 @@ struct msg_sender {
 #define SEARCH_EQUAL		2
 #define SEARCH_NOTEQUAL		3
 #define SEARCH_LESSEQUAL	4
+#define SEARCH_NUMBER		5
 
 #define msg_ids(ns)	((ns)->ids[IPC_MSG_IDS])
 
@@ -582,6 +583,7 @@ static int testmsg(struct msg_msg *msg, long type, int mode)
 	switch(mode)
 	{
 		case SEARCH_ANY:
+		case SEARCH_NUMBER:
 			return 1;
 		case SEARCH_LESSEQUAL:
 			if (msg->m_type <=type)
@@ -742,6 +744,8 @@ SYSCALL_DEFINE4(msgsnd, int, msqid, struct msgbuf __user *, msgp, size_t, msgsz,
 
 static inline int convert_mode(long *msgtyp, int msgflg)
 {
+	if (msgflg & MSG_COPY)
+		return SEARCH_NUMBER;
 	/*
 	 *  find message of correct type.
 	 *  msgtyp = 0 => get first.
@@ -778,14 +782,10 @@ static long do_msg_fill(void __user *dest, struct msg_msg *msg, size_t bufsz)
  * This function creates new kernel message structure, large enough to store
  * bufsz message bytes.
  */
-static inline struct msg_msg *prepare_copy(void __user *buf, size_t bufsz,
-					   int msgflg, long *msgtyp,
-					   unsigned long *copy_number)
+static inline struct msg_msg *prepare_copy(void __user *buf, size_t bufsz)
 {
 	struct msg_msg *copy;
 
-	*copy_number = *msgtyp;
-	*msgtyp = 0;
 	/*
 	 * Create dummy message to copy real message to.
 	 */
@@ -801,9 +801,7 @@ static inline void free_copy(struct msg_msg *copy)
 		free_msg(copy);
 }
 #else
-static inline struct msg_msg *prepare_copy(void __user *buf, size_t bufsz,
-					   int msgflg, long *msgtyp,
-					   unsigned long *copy_number)
+static inline struct msg_msg *prepare_copy(void __user *buf, size_t bufsz)
 {
 	return ERR_PTR(-ENOSYS);
 }
@@ -822,15 +820,13 @@ long do_msgrcv(int msqid, void __user *buf, size_t bufsz, long msgtyp,
 	int mode;
 	struct ipc_namespace *ns;
 	struct msg_msg *copy = NULL;
-	unsigned long copy_number = 0;
 
 	ns = current->nsproxy->ipc_ns;
 
 	if (msqid < 0 || (long) bufsz < 0)
 		return -EINVAL;
 	if (msgflg & MSG_COPY) {
-		copy = prepare_copy(buf, min_t(size_t, bufsz, ns->msg_ctlmax),
-				    msgflg, &msgtyp, &copy_number);
+		copy = prepare_copy(buf, min_t(size_t, bufsz, ns->msg_ctlmax));
 		if (IS_ERR(copy))
 			return PTR_ERR(copy);
 	}
@@ -865,8 +861,8 @@ long do_msgrcv(int msqid, void __user *buf, size_t bufsz, long msgtyp,
 				if (mode == SEARCH_LESSEQUAL &&
 						walk_msg->m_type != 1) {
 					msgtyp = walk_msg->m_type - 1;
-				} else if (msgflg & MSG_COPY) {
-					if (copy_number == msg_counter)
+				} else if (mode == SEARCH_NUMBER) {
+					if (msgtyp == msg_counter)
 						break;
 					msg = ERR_PTR(-EAGAIN);
 				} else
