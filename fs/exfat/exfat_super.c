@@ -60,9 +60,7 @@
 #include <linux/exportfs.h>
 #include <linux/mount.h>
 #include <linux/vfs.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
 #include <linux/aio.h>
-#endif
 #include <linux/parser.h>
 #include <linux/uio.h>
 #include <linux/writeback.h>

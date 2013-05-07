@@ -28,6 +28,7 @@
 #include <linux/slab.h>
 #include <linux/time.h>
 #include <linux/vmalloc.h>
+#include <linux/aio.h>
 #include "logger.h"
 #ifdef CONFIG_STATE_NOTIFIER
 #include <linux/state_notifier.h>

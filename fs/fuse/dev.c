@@ -20,6 +20,7 @@
 #include <linux/swap.h>
 #include <linux/splice.h>
 #include <linux/freezer.h>
+#include <linux/aio.h>
 
 MODULE_ALIAS_MISCDEV(FUSE_MINOR);
 MODULE_ALIAS("devname:fuse");
