@@ -135,6 +135,10 @@
 		status = "disable";
 	};
 
+	sound {
+		qcom,mbhc-disabled = <0>;
+	};
+
 	qcom,msm-cpufreq@0 {
 		lge,cpufreq-factory-table =
 			<  300000  300000  572 >,
