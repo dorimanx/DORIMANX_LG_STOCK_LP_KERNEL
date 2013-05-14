@@ -1321,7 +1321,10 @@ ssize_t fuse_direct_io(struct fuse_io_priv *io, const struct iovec *iov,
 
 	iov_iter_init(&ii, iov, nr_segs, count, 0);
 
-	req = fuse_get_req(fc, fuse_iter_npages(&ii));
+	if (io->async)
+		req = fuse_get_req_for_background(fc, fuse_iter_npages(&ii));
+	else
+		req = fuse_get_req(fc, fuse_iter_npages(&ii));
 	if (IS_ERR(req))
 		return PTR_ERR(req);
 
@@ -1357,7 +1360,11 @@ ssize_t fuse_direct_io(struct fuse_io_priv *io, const struct iovec *iov,
 			break;
 		if (count) {
 			fuse_put_request(fc, req);
-			req = fuse_get_req(fc, fuse_iter_npages(&ii));
+			if (io->async)
+				req = fuse_get_req_for_background(fc,
+					fuse_iter_npages(&ii));
+			else
+				req = fuse_get_req(fc, fuse_iter_npages(&ii));
 			if (IS_ERR(req))
 				break;
 		}
