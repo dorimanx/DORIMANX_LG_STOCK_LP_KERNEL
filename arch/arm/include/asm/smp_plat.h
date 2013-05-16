@@ -49,4 +49,16 @@ static inline int cache_ops_need_broadcast(void)
 extern u32 __cpu_logical_map[];
 #define cpu_logical_map(cpu)	__cpu_logical_map[cpu]
 
+struct mpidr_hash {
+	u32	mask;
+	u32	shift_aff[3];
+	u32	bits;
+};
+
+extern struct mpidr_hash mpidr_hash;
+
+static inline u32 mpidr_hash_size(void)
+{
+	return 1 << mpidr_hash.bits;
+}
 #endif
