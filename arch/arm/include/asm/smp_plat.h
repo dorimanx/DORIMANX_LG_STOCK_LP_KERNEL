@@ -49,9 +49,15 @@ static inline int cache_ops_need_broadcast(void)
 extern u32 __cpu_logical_map[];
 #define cpu_logical_map(cpu)	__cpu_logical_map[cpu]
 
+/*
+ * NOTE ! Assembly code relies on the following
+ * structure memory layout in order to carry out load
+ * multiple from its base address. For more
+ * information check arch/arm/kernel/sleep.S
+ */
 struct mpidr_hash {
-	u32	mask;
-	u32	shift_aff[3];
+	u32	mask; /* used by sleep.S */
+	u32	shift_aff[3]; /* used by sleep.S */
 	u32	bits;
 };
 
