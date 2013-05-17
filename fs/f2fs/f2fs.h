@@ -2008,8 +2008,7 @@ void set_de_type(struct f2fs_dir_entry *, umode_t);
 unsigned char get_de_type(struct f2fs_dir_entry *);
 struct f2fs_dir_entry *find_target_dentry(struct fscrypt_name *,
 			f2fs_hash_t, int *, struct f2fs_dentry_ptr *);
-bool f2fs_fill_dentries(struct file *, void *, filldir_t,
-			struct f2fs_dentry_ptr *, unsigned int,
+bool f2fs_fill_dentries(struct dir_context *, struct f2fs_dentry_ptr *,
 			unsigned int, struct fscrypt_str *);
 void do_make_empty_dir(struct inode *, struct inode *,
 			struct f2fs_dentry_ptr *);
@@ -2407,7 +2406,7 @@ int f2fs_add_inline_entry(struct inode *, const struct qstr *,
 void f2fs_delete_inline_entry(struct f2fs_dir_entry *, struct page *,
 						struct inode *, struct inode *);
 bool f2fs_empty_inline_dir(struct inode *);
-int f2fs_read_inline_dir(struct file *, void *, filldir_t,
+int f2fs_read_inline_dir(struct file *, struct dir_context *,
 						struct fscrypt_str *);
 int f2fs_inline_data_fiemap(struct inode *,
 		struct fiemap_extent_info *, __u64, __u64);
