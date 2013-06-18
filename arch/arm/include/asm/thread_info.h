@@ -69,7 +69,9 @@ struct thread_info {
 	__u32			syscall;	/* syscall number */
 	__u8			used_cp[16];	/* thread used copro */
 	unsigned long		tp_value[2];	/* TLS registers */
+#ifdef CONFIG_CRUNCH
 	struct crunch_state	crunchstate;
+#endif
 	union fp_state		fpstate __attribute__((aligned(8)));
 	union vfp_state		vfpstate;
 #ifdef CONFIG_ARM_THUMBEE
