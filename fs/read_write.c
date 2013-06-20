@@ -132,7 +132,7 @@ EXPORT_SYMBOL(generic_file_llseek_size);
  *
  * This is a generic implemenation of ->llseek useable for all normal local
  * filesystems.  It just updates the file offset to the value specified by
- * @offset and @whence under i_mutex.
+ * @offset and @whence.
  */
 loff_t generic_file_llseek(struct file *file, loff_t offset, int whence)
 {
@@ -1102,6 +1102,7 @@ static ssize_t do_sendfile(int out_fd, int in_fd, loff_t *ppos,
 	struct file * in_file, * out_file;
 	struct inode * in_inode, * out_inode;
 	loff_t pos;
+	loff_t out_pos;
 	ssize_t retval;
 	int fput_needed_in, fput_needed_out, fl;
 
@@ -1115,12 +1116,14 @@ static ssize_t do_sendfile(int out_fd, int in_fd, loff_t *ppos,
 	if (!(in_file->f_mode & FMODE_READ))
 		goto fput_in;
 	retval = -ESPIPE;
-	if (!ppos)
-		ppos = &in_file->f_pos;
-	else
+	if (!ppos) {
+		pos = in_file->f_pos;
+	} else {
+		pos = *ppos;
 		if (!(in_file->f_mode & FMODE_PREAD))
 			goto fput_in;
-	retval = rw_verify_area(READ, in_file, ppos, count);
+	}
+	retval = rw_verify_area(READ, in_file, &pos, count);
 	if (retval < 0)
 		goto fput_in;
 	count = retval;
@@ -1137,7 +1140,8 @@ static ssize_t do_sendfile(int out_fd, int in_fd, loff_t *ppos,
 	retval = -EINVAL;
 	in_inode = file_inode(in_file);
 	out_inode = file_inode(out_file);
-	retval = rw_verify_area(WRITE, out_file, &out_file->f_pos, count);
+	out_pos = out_file->f_pos;
+	retval = rw_verify_area(WRITE, out_file, &out_pos, count);
 	if (retval < 0)
 		goto fput_out;
 	count = retval;
@@ -1145,7 +1149,6 @@ static ssize_t do_sendfile(int out_fd, int in_fd, loff_t *ppos,
 	if (!max)
 		max = min(in_inode->i_sb->s_maxbytes, out_inode->i_sb->s_maxbytes);
 
-	pos = *ppos;
 	if (unlikely(pos + count > max)) {
 		retval = -EOVERFLOW;
 		if (pos >= max)
@@ -1164,18 +1167,23 @@ static ssize_t do_sendfile(int out_fd, int in_fd, loff_t *ppos,
 	if (in_file->f_flags & O_NONBLOCK)
 		fl = SPLICE_F_NONBLOCK;
 #endif
-	retval = do_splice_direct(in_file, ppos, out_file, count, fl);
+	retval = do_splice_direct(in_file, &pos, out_file, &out_pos, count, fl);
 
 	if (retval > 0) {
 		add_rchar(current, retval);
 		add_wchar(current, retval);
-		fsnotify_access(in.file);
-		fsnotify_modify(out.file);
+		fsnotify_access(in_file);
+		fsnotify_modify(out_file);
+		out_file->f_pos = out_pos;
+		if (ppos)
+			*ppos = pos;
+		else
+			in_file->f_pos = pos;
 	}
 
 	inc_syscr(current);
 	inc_syscw(current);
-	if (*ppos > max)
+	if (pos > max)
 		retval = -EOVERFLOW;
 
 fput_out:
