@@ -717,12 +717,14 @@ int ipcget(struct ipc_namespace *ns, struct ipc_ids *ids,
  * @in:  the permission given as input.
  * @out: the permission of the ipc to set.
  */
-void ipc_update_perm(struct ipc64_perm *in, struct kern_ipc_perm *out)
+int ipc_update_perm(struct ipc64_perm *in, struct kern_ipc_perm *out)
 {
 	out->uid = in->uid;
 	out->gid = in->gid;
 	out->mode = (out->mode & ~S_IRWXUGO)
 		| (in->mode & S_IRWXUGO);
+
+	return 0;
 }
 
 /**
@@ -739,8 +741,10 @@ void ipc_update_perm(struct ipc64_perm *in, struct kern_ipc_perm *out)
  * It must be called without any lock held and
  *  - retrieves the ipc with the given id in the given table.
  *  - performs some audit and permission check, depending on the given cmd
- *  - returns the ipc with both ipc and rw_mutex locks held in case of success
+ *  - returns the ipc with the ipc lock held in case of success
  *    or an err-code without any lock held otherwise.
+ *
+ * Call holding the both the rw_mutex and the rcu read lock.
  */
 struct kern_ipc_perm *ipcctl_pre_down(struct ipc_namespace *ns,
 				      struct ipc_ids *ids, int id, int cmd,
@@ -765,13 +769,10 @@ struct kern_ipc_perm *ipcctl_pre_down_nolock(struct ipc_namespace *ns,
 	int err = -EPERM;
 	struct kern_ipc_perm *ipcp;
 
-	down_write(&ids->rw_mutex);
-	rcu_read_lock();
-
 	ipcp = ipc_obtain_object_check(ids, id);
 	if (IS_ERR(ipcp)) {
 		err = PTR_ERR(ipcp);
-		goto out_up;
+		goto err;
 	}
 
 	audit_ipc_obj(ipcp);
@@ -782,16 +783,8 @@ struct kern_ipc_perm *ipcctl_pre_down_nolock(struct ipc_namespace *ns,
 	euid = current_euid();
 	if (euid == ipcp->cuid || euid == ipcp->uid  ||
 	    ns_capable(ns->user_ns, CAP_SYS_ADMIN))
-		return ipcp;
-
-out_up:
-	/*
-	 * Unsuccessful lookup, unlock and return
-	 * the corresponding error.
-	 */
-	rcu_read_unlock();
-	up_write(&ids->rw_mutex);
-
+		return ipcp; /* successful lookup */
+err:
 	return ERR_PTR(err);
 }
 
