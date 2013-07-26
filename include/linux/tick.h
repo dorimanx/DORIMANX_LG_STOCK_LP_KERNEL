@@ -174,10 +174,4 @@ extern int tick_nohz_full_cpu(int cpu);
 static inline int tick_nohz_full_cpu(int cpu) { return 0; }
 #endif
 
-# ifdef CONFIG_CPU_IDLE_GOV_MENU
-extern void menu_hrtimer_cancel(void);
-# else
-static inline void menu_hrtimer_cancel(void) {}
-# endif /* CONFIG_CPU_IDLE_GOV_MENU */
-
 #endif
