@@ -1089,14 +1089,6 @@ static unsigned long ext4_es_scan(struct shrinker *shrink,
 	return percpu_counter_read_positive(&sbi->s_es_stats.es_stats_lru_cnt);
 }
 
-static int ext4_es_shrink(struct shrinker *shrink, struct shrink_control *sc)
-{
-	if (sc->nr_to_scan)
-		return ext4_es_scan(shrink, sc);
-	else
-		return ext4_es_count(shrink, sc);
-}
-
 static void *ext4_es_seq_shrinker_info_start(struct seq_file *seq, loff_t *pos)
 {
 	return *pos ? NULL : SEQ_START_TOKEN;
@@ -1213,7 +1205,8 @@ int ext4_es_register_shrinker(struct ext4_sb_info *sbi)
 	if (err)
 		goto err1;
 
-	sbi->s_es_shrinker.shrink = ext4_es_shrink;
+	sbi->s_es_shrinker.scan_objects = ext4_es_scan;
+	sbi->s_es_shrinker.count_objects = ext4_es_count;
 	sbi->s_es_shrinker.seeks = DEFAULT_SEEKS;
 	register_shrinker(&sbi->s_es_shrinker);
 
