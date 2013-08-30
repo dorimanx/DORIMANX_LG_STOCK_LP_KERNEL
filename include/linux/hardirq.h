@@ -121,11 +121,7 @@
 # define preemptible()	0
 #endif
 
-#if defined(CONFIG_SMP) || defined(CONFIG_GENERIC_HARDIRQS)
 extern void synchronize_irq(unsigned int irq);
-#else
-# define synchronize_irq(irq)	barrier()
-#endif
 
 struct task_struct;
 

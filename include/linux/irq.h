@@ -393,8 +393,6 @@ extern int irq_set_affinity_locked(struct irq_data *data,
 				   const struct cpumask *cpumask, bool force);
 extern void irq_affinity_notify(struct work_struct *work);
 
-#ifdef CONFIG_GENERIC_HARDIRQS
-
 #if defined(CONFIG_SMP) && defined(CONFIG_GENERIC_PENDING_IRQ)
 void irq_move_irq(struct irq_data *data);
 void irq_move_masked_irq(struct irq_data *data);
@@ -765,8 +763,6 @@ static inline void irq_gc_unlock(struct irq_chip_generic *gc)
 static inline void irq_gc_lock(struct irq_chip_generic *gc) { }
 static inline void irq_gc_unlock(struct irq_chip_generic *gc) { }
 #endif
-
-#endif /* CONFIG_GENERIC_HARDIRQS */
 
 #endif /* !CONFIG_S390 */
 

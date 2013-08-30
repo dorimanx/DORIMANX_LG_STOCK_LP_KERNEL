@@ -868,7 +868,7 @@ endif # TTY
 
 config TOUCHSCREEN_TSC2005
         tristate "TSC2005 based touchscreens"
-        depends on SPI_MASTER && GENERIC_HARDIRQS
+        depends on SPI_MASTER
         help
           Say Y here if you have a TSC2005 based touchscreen.
 
