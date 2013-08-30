@@ -393,7 +393,6 @@ static int wcnss_powerup(const struct subsys_desc *subsys)
 			return ret;
 	}
 	drv->restart_inprogress = false;
-	enable_irq(drv->subsys_desc.wdog_bite_irq);
 	schedule_delayed_work(&drv->cancel_vote_work, msecs_to_jiffies(5000));
 
 	return 0;

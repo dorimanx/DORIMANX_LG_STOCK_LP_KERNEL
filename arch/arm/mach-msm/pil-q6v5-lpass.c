@@ -323,7 +323,6 @@ static int adsp_shutdown(const struct subsys_desc *subsys, bool force_stop)
 	struct lpass_data *drv = subsys_to_lpass(subsys);
 
 	pil_shutdown(&drv->q6->desc);
-	disable_irq_nosync(drv->subsys_desc.wdog_bite_irq);
 
 	pr_debug("ADSP is Down\n");
 	adsp_set_state("OFFLINE");
@@ -335,7 +334,6 @@ static int adsp_powerup(const struct subsys_desc *subsys)
 	struct lpass_data *drv = subsys_to_lpass(subsys);
 	int ret = 0;
 	ret = pil_boot(&drv->q6->desc);
-	enable_irq(drv->subsys_desc.wdog_bite_irq);
 
 	pr_debug("ADSP is back online\n");
 	adsp_set_state("ONLINE");
