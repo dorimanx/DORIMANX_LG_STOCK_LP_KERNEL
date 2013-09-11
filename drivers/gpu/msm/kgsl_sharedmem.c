@@ -419,6 +419,30 @@ done:
 	mutex_unlock(&kernel_map_global_lock);
 }
 
+/*
+ * kgsl_page_alloc_unmap_kernel() - Unmap the memory in memdesc
+ *
+ * @memdesc: The memory descriptor which contains information about the memory
+ *
+ * Unmaps the memory mapped into kernel address space
+ */
+static void kgsl_page_alloc_unmap_kernel(struct kgsl_memdesc *memdesc)
+{
+	mutex_lock(&kernel_map_global_lock);
+	if (!memdesc->hostptr) {
+		BUG_ON(memdesc->hostptr_count);
+		goto done;
+	}
+	memdesc->hostptr_count--;
+	if (memdesc->hostptr_count)
+		goto done;
+	vunmap(memdesc->hostptr);
+	kgsl_driver.stats.vmalloc -= memdesc->size;
+	memdesc->hostptr = NULL;
+done:
+	mutex_unlock(&kernel_map_global_lock);
+}
+
 static void kgsl_page_alloc_free(struct kgsl_memdesc *memdesc)
 {
 	int i = 0;
