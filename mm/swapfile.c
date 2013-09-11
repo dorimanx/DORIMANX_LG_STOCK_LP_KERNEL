@@ -1936,6 +1936,7 @@ static unsigned long read_swap_header(struct swap_info_struct *p,
 	int i;
 	unsigned long maxpages;
 	unsigned long swapfilepages;
+	unsigned long last_page;
 
 	if (memcmp("SWAPSPACE2", swap_header->magic.magic, 10)) {
 		printk(KERN_ERR "Unable to find swap-space signature\n");
@@ -1978,8 +1979,15 @@ static unsigned long read_swap_header(struct swap_info_struct *p,
 	 */
 	maxpages = swp_offset(pte_to_swp_entry(
 			swp_entry_to_pte(swp_entry(0, ~0UL)))) + 1;
-	if (maxpages > swap_header->info.last_page) {
-		maxpages = swap_header->info.last_page + 1;
+	last_page = swap_header->info.last_page;
+	if (last_page > maxpages) {
+		printk(KERN_WARNING
+			"Truncating oversized swap area, only using %luk out of %luk\n",
+			maxpages << (PAGE_SHIFT - 10),
+			last_page << (PAGE_SHIFT - 10));
+	}
+	if (maxpages > last_page) {
+		maxpages = last_page + 1;
 		/* p->max is an unsigned int: don't overflow it */
 		if ((unsigned int)maxpages == 0)
 			maxpages = UINT_MAX;
