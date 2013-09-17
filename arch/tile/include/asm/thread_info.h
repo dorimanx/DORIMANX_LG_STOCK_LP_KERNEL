@@ -114,8 +114,6 @@ extern void cpu_idle_on_new_stack(struct thread_info *old_ti,
 
 #endif /* !__ASSEMBLY__ */
 
-#define PREEMPT_ACTIVE		0x10000000
-
 /*
  * Thread information flags that various assembly files may need to access.
  * Keep flags accessed frequently in low bits, particular since it makes

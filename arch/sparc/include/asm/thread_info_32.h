@@ -116,8 +116,6 @@ BTFIXUPDEF_CALL(void, free_thread_info, struct thread_info *)
 #define TI_W_SAVED	0x250
 /* #define TI_RESTART_BLOCK 0x25n */ /* Nobody cares */
 
-#define PREEMPT_ACTIVE		0x4000000
-
 /*
  * thread information flag bit numbers
  */
