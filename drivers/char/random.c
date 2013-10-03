@@ -413,17 +413,6 @@ static DECLARE_WAIT_QUEUE_HEAD(random_read_wait);
 static DECLARE_WAIT_QUEUE_HEAD(random_write_wait);
 static struct fasync_struct *fasync;
 
-static bool debug;
-module_param(debug, bool, 0644);
-#define DEBUG_ENT(fmt, arg...) do { \
-	if (debug) \
-		printk(KERN_DEBUG "random %04d %04d %04d: " \
-		fmt,\
-		input_pool.entropy_count,\
-		blocking_pool.entropy_count,\
-		nonblocking_pool.entropy_count,\
-		## arg); } while (0)
-
 /**********************************************************************
  *
  * OS independent entropy store.   Here are the functions which handle
@@ -664,7 +653,9 @@ retry:
 	}
 
 	if (entropy_count < 0) {
-		DEBUG_ENT("negative entropy/overflow\n");
+		pr_warn("random: negative entropy/overflow: pool %s count %d\n",
+			r->name, entropy_count);
+		WARN_ON(1);
 		entropy_count = 0;
 	} else if (entropy_count > pool_size)
 		entropy_count = pool_size;
@@ -843,10 +834,10 @@ void add_input_randomness(unsigned int type, unsigned int code,
 	if (value == last_value)
 		return;
 
-	DEBUG_ENT("input event\n");
 	last_value = value;
 	add_timer_randomness(&input_timer_state,
 			     (type << 4) ^ code ^ (code >> 4) ^ value);
+	trace_add_input_randomness(ENTROPY_BITS(&input_pool));
 #endif
 	return;
 }
@@ -903,10 +894,8 @@ void add_disk_randomness(struct gendisk *disk)
 	if (!disk || !disk->random)
 		return;
 	/* first major is 1, so we get >= 0x200 here */
-	DEBUG_ENT("disk event %d:%d\n",
-		  MAJOR(disk_devt(disk)), MINOR(disk_devt(disk)));
-
 	add_timer_randomness(disk->random, 0x100 + disk_devt(disk));
+	trace_add_disk_randomness(disk_devt(disk), ENTROPY_BITS(&input_pool));
 }
 #endif
 
@@ -954,10 +943,8 @@ static void _xfer_secondary_pool(struct entropy_store *r, size_t nbytes)
 	/* but never more than the buffer size */
 	bytes = min_t(int, bytes, sizeof(tmp));
 
-	DEBUG_ENT("going to reseed %s with %d bits (%zu of %d requested)\n",
-		  r->name, bytes * 8, nbytes * 8,
-		  r->entropy_count >> ENTROPY_SHIFT);
-
+	trace_xfer_secondary_pool(r->name, bytes * 8, nbytes * 8,
+				  ENTROPY_BITS(r), ENTROPY_BITS(r->pull));
 	bytes = extract_entropy(r->pull, tmp, bytes,
 				random_read_wakeup_thresh / 8, rsvd);
 	mix_pool_bytes(r, tmp, bytes, NULL);
@@ -1005,8 +992,6 @@ static size_t account(struct entropy_store *r, size_t nbytes, int min,
 	spin_lock_irqsave(&r->lock, flags);
 
 	BUG_ON(r->entropy_count > r->poolinfo->poolfracbits);
-	DEBUG_ENT("trying to extract %zu bits from %s\n",
-		  nbytes * 8, r->name);
 
 	/* Can we pull enough? */
 retry:
@@ -1032,12 +1017,9 @@ retry:
 		    < random_write_wakeup_thresh)
 			wakeup_write = 1;
 	}
-
-	DEBUG_ENT("debiting %zu entropy credits from %s%s\n",
-		  ibytes * 8, r->name, r->limit ? "" : " (unlimited)");
-
 	spin_unlock_irqrestore(&r->lock, flags);
 
+	trace_debit_entropy(r->name, 8 * ibytes);
 	if (wakeup_write) {
 		wake_up_interruptible(&random_write_wait);
 		kill_fasync(&fasync, SIGIO, POLL_OUT);
@@ -1322,8 +1304,6 @@ http://lwn.net/Articles/489734/ - WIP
 		if (n > SEC_XFER_SIZE)
 			n = SEC_XFER_SIZE;
 
-		DEBUG_ENT("reading %zu bits\n", n*8);
-
 		n = extract_entropy_user(&blocking_pool, buf, n);
 
 		if (n < 0) {
@@ -1331,8 +1311,9 @@ http://lwn.net/Articles/489734/ - WIP
 			break;
 		}
 
-		DEBUG_ENT("read got %zd bits (%zd still needed)\n",
-			  n*8, (nbytes-n)*8);
+		trace_random_read(n*8, (nbytes-n)*8,
+				  ENTROPY_BITS(&blocking_pool),
+				  ENTROPY_BITS(&input_pool));
 
 		if (n == 0) {
 			if (file->f_flags & O_NONBLOCK) {
@@ -1340,13 +1321,9 @@ http://lwn.net/Articles/489734/ - WIP
 				break;
 			}
 
-			DEBUG_ENT("sleeping?\n");
-
 			wait_event_interruptible(random_read_wait,
 				ENTROPY_BITS(&input_pool) >=
 				random_read_wakeup_thresh);
-
-			DEBUG_ENT("awake\n");
 
 			if (signal_pending(current)) {
 				retval = -ERESTARTSYS;
@@ -1376,7 +1353,11 @@ urandom_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
 		return random_read(file, buf, nbytes, ppos);
 	else
 #endif
-	return extract_entropy_user(&nonblocking_pool, buf, nbytes);
+	int ret = extract_entropy_user(&nonblocking_pool, buf, nbytes);
+
+	trace_urandom_read(8 * nbytes, ENTROPY_BITS(&nonblocking_pool),
+			   ENTROPY_BITS(&input_pool));
+	return ret;
 }
 
 static unsigned int
