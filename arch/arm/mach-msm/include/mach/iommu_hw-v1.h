@@ -23,7 +23,7 @@
 
 #define GET_GLOBAL_REG(reg, base) (readl_relaxed(GLB_REG(reg, base)))
 #define GET_CTX_REG(reg, base, ctx) (readl_relaxed(CTX_REG(reg, base, ctx)))
-#define GET_CTX_REG_L(reg, base, ctx) (readll_relaxed(CTX_REG(reg, base, ctx)))
+#define GET_CTX_REG_Q(reg, base, ctx) (readq_relaxed(CTX_REG(reg, base, ctx)))
 
 #define SET_GLOBAL_REG(reg, base, val)	writel_relaxed((val), ((base) + (reg)))
 
@@ -205,7 +205,7 @@ do { \
 #define GET_CONTEXTIDR(b, c)     GET_CTX_REG(CB_CONTEXTIDR, (b), (c))
 #define GET_PRRR(b, c)           GET_CTX_REG(CB_PRRR, (b), (c))
 #define GET_NMRR(b, c)           GET_CTX_REG(CB_NMRR, (b), (c))
-#define GET_PAR(b, c)            GET_CTX_REG_L(CB_PAR, (b), (c))
+#define GET_PAR(b, c)            GET_CTX_REG_Q(CB_PAR, (b), (c))
 #define GET_FSR(b, c)            GET_CTX_REG(CB_FSR, (b), (c))
 #define GET_FSRRESTORE(b, c)     GET_CTX_REG(CB_FSRRESTORE, (b), (c))
 #define GET_FAR(b, c)            GET_CTX_REG(CB_FAR, (b), (c))

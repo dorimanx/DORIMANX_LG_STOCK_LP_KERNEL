@@ -267,7 +267,7 @@ static u64 cpr_read_efuse_row(struct cpr_regulator *cpr_vreg, u32 row_num,
 	} rsp;
 
 	if (!use_tz_api) {
-		efuse_bits = readll_relaxed(cpr_vreg->efuse_base
+		efuse_bits = readq_relaxed(cpr_vreg->efuse_base
 			+ row_num * BYTES_PER_FUSE_ROW);
 		return efuse_bits;
 	}
