@@ -33,6 +33,7 @@ static int devfreq_simple_ondemand_func(struct devfreq *df,
 	struct devfreq_dev_status stat;
 	int err = df->profile->get_dev_status(df->dev.parent, &stat);
 	struct devfreq_msm_adreno_tz_data *priv = df->data;
+	struct devfreq_simple_ondemand_data *data = df->data;
 	struct xstats xs;
 	int err;
 #ifndef CONFIG_LGE_DEVFREQ_DFPS
