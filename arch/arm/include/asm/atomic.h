@@ -102,22 +102,6 @@ static inline int atomic_cmpxchg_relaxed(atomic_t *ptr, int old, int new)
 }
 #define atomic_cmpxchg_relaxed		atomic_cmpxchg_relaxed
 
-static inline void atomic_clear_mask(unsigned long mask, unsigned long *addr)
-{
-	unsigned long tmp, tmp2;
-
-	prefetchw(addr);
-	__asm__ __volatile__("@ atomic_clear_mask\n"
-"1:	ldrex	%0, [%3]\n"
-"	bic	%0, %0, %4\n"
-"	strex	%1, %0, [%3]\n"
-"	teq	%1, #0\n"
-"	bne	1b"
-	: "=&r" (tmp), "=&r" (tmp2), "+Qo" (*addr)
-	: "r" (addr), "Ir" (mask)
-	: "cc");
-}
-
 static inline int __atomic_add_unless(atomic_t *v, int a, int u)
 {
 	int oldval, newval;
@@ -187,15 +171,6 @@ static inline int atomic_cmpxchg(atomic_t *v, int old, int new)
 	raw_local_irq_restore(flags);
 
 	return ret;
-}
-
-static inline void atomic_clear_mask(unsigned long mask, unsigned long *addr)
-{
-	unsigned long flags;
-
-	raw_local_irq_save(flags);
-	*addr &= ~mask;
-	raw_local_irq_restore(flags);
 }
 
 static inline int __atomic_add_unless(atomic_t *v, int a, int u)
