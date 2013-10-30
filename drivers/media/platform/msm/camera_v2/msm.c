@@ -669,6 +669,18 @@ static unsigned int msm_poll(struct file *f,
 	return rc;
 }
 
+static void msm_print_event_error(struct v4l2_event *event)
+{
+	struct msm_v4l2_event_data *event_data =
+		(struct msm_v4l2_event_data *)&event->u.data[0];
+
+	pr_err("Evt_type=%x Evt_id=%d Evt_cmd=%x\n", event->type,
+		event->id, event_data->command);
+	pr_err("Evt_session_id=%d Evt_stream_id=%d Evt_arg=%d\n",
+		event_data->session_id, event_data->stream_id,
+		event_data->arg_value);
+}
+
 /* something seriously wrong if msm_close is triggered
  *   !!! user space imaging server is shutdown !!!
  */
@@ -741,6 +753,7 @@ int msm_post_event(struct v4l2_event *event, int timeout)
 		if (!rc) {
 			pr_err("%s: Timed out: event id is %d\n",
 				__func__, event->id);
+			msm_print_event_error(event);
 			rc = -ETIMEDOUT;
 
 /* LGE_CHANGE_S, Camera Recovery Code, 2013-08-20, jungki.kim@lge.com */
@@ -751,6 +764,7 @@ int msm_post_event(struct v4l2_event *event, int timeout)
 		} else {
 			pr_err("%s: Error: No timeout but list empty!",
 					__func__);
+			msm_print_event_error(event);
 			mutex_unlock(&session->lock);
 			return rc;
 		}
