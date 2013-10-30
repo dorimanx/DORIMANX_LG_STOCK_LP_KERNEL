@@ -334,7 +334,7 @@ do {									\
 #endif
 
 #ifndef this_cpu_sub
-# define this_cpu_sub(pcp, val)		this_cpu_add((pcp), -(val))
+# define this_cpu_sub(pcp, val)		this_cpu_add((pcp), -(typeof(pcp))(val))
 #endif
 
 #ifndef this_cpu_inc
@@ -404,7 +404,7 @@ do {									\
 # define this_cpu_add_return(pcp, val)	__pcpu_size_call_return2(this_cpu_add_return_, pcp, val)
 #endif
 
-#define this_cpu_sub_return(pcp, val)	this_cpu_add_return(pcp, -(val))
+#define this_cpu_sub_return(pcp, val)	this_cpu_add_return(pcp, -(typeof(pcp))(val))
 #define this_cpu_inc_return(pcp)	this_cpu_add_return(pcp, 1)
 #define this_cpu_dec_return(pcp)	this_cpu_add_return(pcp, -1)
 
@@ -569,7 +569,7 @@ do {									\
 #endif
 
 #ifndef raw_cpu_sub
-# define raw_cpu_sub(pcp, val)	raw_cpu_add((pcp), -(val))
+# define raw_cpu_sub(pcp, val)	raw_cpu_add((pcp), -(typeof(pcp))(val))
 #endif
 
 #ifndef raw_cpu_inc
@@ -635,7 +635,7 @@ do {									\
 	__pcpu_size_call_return2(raw_add_return_, pcp, val)
 #endif
 
-#define raw_cpu_sub_return(pcp, val)	raw_cpu_add_return(pcp, -(val))
+#define raw_cpu_sub_return(pcp, val)	raw_cpu_add_return(pcp, -(typeof(pcp))(val))
 #define raw_cpu_inc_return(pcp)	raw_cpu_add_return(pcp, 1)
 #define raw_cpu_dec_return(pcp)	raw_cpu_add_return(pcp, -1)
 
