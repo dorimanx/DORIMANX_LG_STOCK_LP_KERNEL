@@ -60,8 +60,6 @@
 #include "spm-regulator.h"
 
 static struct memtype_reserve msm8226_reserve_table[] __initdata = {
-	[MEMTYPE_SMI] = {
-	},
 	[MEMTYPE_EBI0] = {
 		.flags	=	MEMTYPE_FLAGS_1M_ALIGN,
 	},
