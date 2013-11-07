@@ -3277,6 +3277,7 @@ static int __devexit sdhci_msm_remove(struct platform_device *pdev)
 	return 0;
 }
 
+#ifdef CONFIG_PM_RUNTIME
 static int sdhci_msm_cfg_sdio_wakeup(struct sdhci_host *host, bool enable)
 {
 	struct sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
@@ -3379,6 +3380,7 @@ skip_enable_host_irq:
 
 	return 0;
 }
+#endif
 
 #ifdef CONFIG_PM_SLEEP
 
@@ -3461,7 +3463,7 @@ static const struct dev_pm_ops sdhci_msm_pmops = {
 #define SDHCI_MSM_PMOPS (&sdhci_msm_pmops)
 
 #else
-#define SDHCI_PM_OPS NULL
+#define SDHCI_MSM_PMOPS NULL
 #endif
 static const struct of_device_id sdhci_msm_dt_match[] = {
 	{.compatible = "qcom,sdhci-msm"},
