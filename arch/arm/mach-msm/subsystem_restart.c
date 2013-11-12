@@ -33,6 +33,7 @@
 #include <linux/miscdevice.h>
 #include <linux/interrupt.h>
 #include <linux/of_gpio.h>
+#include <linux/platform_device.h>
 
 #include <asm/current.h>
 
@@ -43,7 +44,6 @@
 #ifdef CONFIG_LGE_HANDLE_PANIC
 #include <mach/lge_handle_panic.h>
 #endif
-#include "smd_private.h"
 
 static int enable_debug;
 
