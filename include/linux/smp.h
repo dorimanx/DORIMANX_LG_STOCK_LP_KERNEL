@@ -86,7 +86,6 @@ void kick_all_cpus_sync(void);
 /*
  * Generic and arch helpers
  */
-#ifdef CONFIG_USE_GENERIC_SMP_HELPERS
 void __init call_function_init(void);
 void generic_smp_call_function_single_interrupt(void);
 #define generic_smp_call_function_interrupt \
@@ -95,9 +94,6 @@ void ipi_call_lock(void);
 void ipi_call_unlock(void);
 void ipi_call_lock_irq(void);
 void ipi_call_unlock_irq(void);
-#else
-static inline void call_function_init(void) { }
-#endif
 
 /*
  * Call a function on all processors
