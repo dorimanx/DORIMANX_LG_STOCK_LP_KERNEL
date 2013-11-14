@@ -2474,7 +2474,6 @@ static void get_tcp4_sock(struct sock *sk, struct seq_file *f, int i)
 		(icsk->icsk_ack.quick << 1) | icsk->icsk_ack.pingpong,
 		tp->snd_cwnd,
 		tcp_in_initial_slowstart(tp) ? -1 : tp->snd_ssthresh);
-
 }
 
 static void get_timewait4_sock(const struct inet_timewait_sock *tw,
