@@ -26,19 +26,19 @@
 
 	memory {
 		secure_mem: secure_region {
-			linux,contiguous-region;
+			linux,reserve-contiguous-region;
 			reg = <0 0x6D00000>;
 			label = "secure_mem";
 		};
 
 		adsp_mem: adsp_region {
-			linux,contiguous-region;
+			linux,reserve-contiguous-region;
 			reg = <0 0x2a00000>;
 			label = "adsp_mem";
 		};
 
 		qsecom_mem: qsecom_region {
-			linux,contiguous-region;
+			linux,reserve-contiguous-region;
 			reg = <0 0xd00000>;
 			label = "qsecom_mem";
 		};
