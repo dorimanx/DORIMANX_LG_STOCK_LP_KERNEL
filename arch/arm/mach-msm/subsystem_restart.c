@@ -752,6 +752,7 @@ static void subsystem_restart_wq_func(struct work_struct *work)
 	struct subsys_tracking *track;
 	unsigned count;
 	unsigned long flags;
+	bool force_stop = true;
 
 	/*
 	 * It's OK to not take the registration lock at this point.
@@ -782,9 +783,11 @@ static void subsystem_restart_wq_func(struct work_struct *work)
 			desc->name);
 	if (!strncmp(desc->name, "modem", SUBSYS_NAME_MAX_LENGTH))
 		modem_restarts++;
-	notify_each_subsys_device(list, count, SUBSYS_BEFORE_SHUTDOWN, NULL);
+	notify_each_subsys_device(list, count, SUBSYS_BEFORE_SHUTDOWN,
+							(void *)force_stop);
 	for_each_subsys_device(list, count, NULL, subsystem_shutdown);
-	notify_each_subsys_device(list, count, SUBSYS_AFTER_SHUTDOWN, NULL);
+	notify_each_subsys_device(list, count, SUBSYS_AFTER_SHUTDOWN,
+							(void *)force_stop);
 
 	notify_each_subsys_device(list, count, SUBSYS_RAMDUMP_NOTIFICATION,
 									NULL);
