@@ -32,8 +32,6 @@
 #include <linux/io.h>
 #include <linux/debugfs.h>
 #include <linux/gpio.h>
-#include <linux/remote_spinlock.h>
-#include <linux/pm_qos.h>
 #include <linux/of.h>
 #include <linux/of_gpio.h>
 #include <linux/dma-mapping.h>
@@ -2260,9 +2258,6 @@ static int msm_spi_transfer_one_message(struct spi_master *master,
 	if (!pm_runtime_enabled(dd->dev))
 		msm_spi_pm_resume_runtime(dd->dev);
 
-	if (dd->use_rlock)
-		remote_mutex_lock(&dd->r_lock);
-
 	spin_lock_irqsave(&dd->queue_lock, flags);
 	dd->transfer_pending = 1;
 	spin_unlock_irqrestore(&dd->queue_lock, flags);
@@ -2304,8 +2299,6 @@ static int msm_spi_transfer_one_message(struct spi_master *master,
 	dd->transfer_pending = 0;
 	spin_unlock_irqrestore(&dd->queue_lock, flags);
 
-	if (dd->use_rlock)
-		remote_mutex_unlock(&dd->r_lock);
 
 
 	/*
@@ -3234,28 +3227,7 @@ skip_dma_resources:
 		goto err_probe_reqmem;
 	}
 
-	if (pdata && pdata->rsl_id) {
-		struct remote_mutex_id rmid;
-		rmid.r_spinlock_id = pdata->rsl_id;
-		rmid.delay_us = SPI_TRYLOCK_DELAY;
-
-		rc = remote_mutex_init(&dd->r_lock, &rmid);
-		if (rc) {
-			dev_err(&pdev->dev, "%s: unable to init remote_mutex "
-				"(%s), (rc=%d)\n", rmid.r_spinlock_id,
-				__func__, rc);
-			goto err_probe_rlock_init;
-		}
-
-		dd->use_rlock = 1;
-		dd->pm_lat = pdata->pm_lat;
-		pm_qos_add_request(&qos_req_list, PM_QOS_CPU_DMA_LATENCY,
-						PM_QOS_DEFAULT_VALUE);
-	}
-
 	mutex_lock(&dd->core_lock);
-	if (dd->use_rlock)
-		remote_mutex_lock(&dd->r_lock);
 
 	locked = 1;
 	dd->dev = &pdev->dev;
@@ -3345,8 +3317,6 @@ skip_dma_resources:
 		goto err_probe_irq;
 
 	msm_spi_disable_irqs(dd);
-	if (dd->use_rlock)
-		remote_mutex_unlock(&dd->r_lock);
 
 	mutex_unlock(&dd->core_lock);
 	locked = 0;
@@ -3391,13 +3361,8 @@ err_probe_clk_enable:
 err_probe_pclk_get:
 	clk_put(dd->clk);
 err_probe_clk_get:
-	if (locked) {
-		if (dd->use_rlock)
-			remote_mutex_unlock(&dd->r_lock);
-
+	if (locked)
 		mutex_unlock(&dd->core_lock);
-	}
-err_probe_rlock_init:
 err_probe_reqmem:
 err_probe_res:
 	spi_master_put(master);
@@ -3519,8 +3484,6 @@ static int msm_spi_resume(struct device *device)
 #else
 #define msm_spi_suspend NULL
 #define msm_spi_resume NULL
-#define msm_spi_pm_suspend_runtime NULL
-#define msm_spi_pm_resume_runtime NULL
 #endif /* CONFIG_PM */
 
 static int __devexit msm_spi_remove(struct platform_device *pdev)
@@ -3528,7 +3491,6 @@ static int __devexit msm_spi_remove(struct platform_device *pdev)
 	struct spi_master *master = platform_get_drvdata(pdev);
 	struct msm_spi    *dd = spi_master_get_devdata(master);
 
-	pm_qos_remove_request(&qos_req_list);
 	spi_debugfs_exit(dd);
 	sysfs_remove_group(&pdev->dev.kobj, &dev_attr_grp);
 
