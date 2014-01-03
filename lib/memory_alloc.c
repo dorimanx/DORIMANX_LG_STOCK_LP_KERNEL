@@ -187,7 +187,7 @@ static void *__alloc(struct mem_pool *mpool, unsigned long size,
 		goto out;
 
 	if (cached)
-		vaddr = ioremap_cached(paddr, aligned_size);
+		vaddr = ioremap_cache(paddr, aligned_size);
 	else
 		vaddr = ioremap(paddr, aligned_size);
 

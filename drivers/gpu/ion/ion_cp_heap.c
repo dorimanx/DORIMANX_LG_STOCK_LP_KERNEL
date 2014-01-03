@@ -523,7 +523,7 @@ void *ion_cp_heap_map_kernel(struct ion_heap *heap, struct ion_buffer *buffer)
 			vfree(pages);
 		} else {
 			if (ION_IS_CACHED(buffer->flags))
-				ret_value = ioremap_cached(buf->buffer,
+				ret_value = ioremap_cache(buf->buffer,
 							   buffer->size);
 			else
 				ret_value = ioremap(buf->buffer,
