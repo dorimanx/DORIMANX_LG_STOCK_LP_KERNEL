@@ -17,7 +17,6 @@
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/slab.h>
-#include <mach/msm_iomap.h>
 
 #include "spm_driver.h"
 
