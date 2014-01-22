@@ -110,7 +110,7 @@ static int debug_int_stats(char *buf, int max)
 
 	for (subsys = 0; subsys < NUM_SMD_SUBSYSTEMS; ++subsys) {
 		subsys_name = smd_pid_to_subsystem(subsys);
-		if (subsys_name) {
+		if (!IS_ERR_OR_NULL(subsys_name)) {
 			i += scnprintf(buf + i, max - i,
 				"%-10s %4s |    %9d | %9u |       %9u |       %9u |\n",
 				smd_pid_to_subsystem(subsys), "smd",
