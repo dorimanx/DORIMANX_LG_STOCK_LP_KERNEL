@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* Copyright (c) 2008-2015, The Linux Foundation. All rights reserved.
+=======
+/* Copyright (c) 2008-2014, The Linux Foundation. All rights reserved.
+>>>>>>> e8b08ec... spi_qsd: Fix SPI L2 Crash
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1863,6 +1867,10 @@ static int msm_spi_transfer_one_message(struct spi_master *master,
 
 	mutex_lock(&dd->core_lock);
 
+	spin_lock_irqsave(&dd->queue_lock, flags);
+	dd->transfer_pending = 1;
+	dd->cur_msg = msg;
+	spin_unlock_irqrestore(&dd->queue_lock, flags);
 	/*
 	 * Counter-part of system-suspend when runtime-pm is not enabled.
 	 * This way, resume can be left empty and device will be put in
@@ -1871,9 +1879,6 @@ static int msm_spi_transfer_one_message(struct spi_master *master,
 	if (!pm_runtime_enabled(dd->dev))
 		msm_spi_pm_resume_runtime(dd->dev);
 
-	spin_lock_irqsave(&dd->queue_lock, flags);
-	dd->transfer_pending = 1;
-	spin_unlock_irqrestore(&dd->queue_lock, flags);
 	/*
 	 * get local resources for each transfer to ensure we're in a good
 	 * state and not interfering with other EE's using this device
@@ -1898,10 +1903,7 @@ static int msm_spi_transfer_one_message(struct spi_master *master,
 			__func__);
 		status_error = 1;
 	}
-	spin_lock_irqsave(&dd->queue_lock, flags);
-	dd->transfer_pending = 1;
-	dd->cur_msg = msg;
-	spin_unlock_irqrestore(&dd->queue_lock, flags);
+
 
 	if (status_error)
 		dd->cur_msg->status = -EIO;
