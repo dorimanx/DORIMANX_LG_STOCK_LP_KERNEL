@@ -404,9 +404,9 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 	if (!mutex_can_spin_on_owner(lock))
 		goto slowpath;
 
+	mcs_spin_lock(&lock->mcs_lock, &node);
 	for (;;) {
 		struct task_struct *owner;
-		struct mcs_spinlock  node;
 
 		if (use_ww_ctx && ww_ctx->acquired > 0) {
 			struct ww_mutex *ww;
@@ -421,19 +421,16 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 			 * performed the optimistic spinning cannot be done.
 			 */
 			if (ACCESS_ONCE(ww->ctx))
-				goto slowpath;
+				break;
 		}
 
 		/*
 		 * If there's an owner, wait for it to either
 		 * release the lock or go to sleep.
 		 */
-		mcs_spin_lock(&lock->mcs_lock, &node);
 		owner = ACCESS_ONCE(lock->owner);
-		if (owner && !mutex_spin_on_owner(lock, owner)) {
-			mcs_spin_unlock(&lock->mcs_lock, &node);
-			goto slowpath;
-		}
+		if (owner && !mutex_spin_on_owner(lock, owner))
+			break;
 
 		if ((atomic_read(&lock->count) == 1) &&
 		    (atomic_cmpxchg(&lock->count, 1, 0) == 1)) {
@@ -450,7 +447,6 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 			preempt_enable();
 			return 0;
 		}
-		mcs_spin_unlock(&lock->mcs_lock, &node);
 
 		/*
 		 * When there's no owner, we might have preempted between the
@@ -459,7 +455,7 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 		 * the owner complete.
 		 */
 		if (!owner && (need_resched() || rt_task(task)))
-			goto slowpath;
+			break;
 
 		/*
 		 * The cpu_relax() call is a compiler barrier which forces
@@ -480,6 +476,7 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
                  */
                 udelay(1);
 	}
+	mcs_spin_unlock(&lock->mcs_lock, &node);
 slowpath:
 #endif
 	spin_lock_mutex(&lock->wait_lock, flags);
