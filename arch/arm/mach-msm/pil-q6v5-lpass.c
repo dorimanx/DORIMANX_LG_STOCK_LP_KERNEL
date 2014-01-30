@@ -27,7 +27,6 @@
 #include <mach/clk.h>
 #include <mach/subsystem_restart.h>
 #include <mach/subsystem_notif.h>
-#include <mach/scm.h>
 #include <mach/ramdump.h>
 #include <mach/msm_smem.h>
 #include <mach/msm_bus_board.h>
@@ -289,15 +288,6 @@ static irqreturn_t adsp_err_fatal_intr_handler (int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-#define SCM_Q6_NMI_CMD 0x1
-
-static void send_q6_nmi(void)
-{
-	/* Send NMI to QDSP6 via an SCM call. */
-	scm_call_atomic1(SCM_SVC_UTIL, SCM_Q6_NMI_CMD, 0x1);
-	pr_debug("%s: Q6 NMI was sent.\n", __func__);
-}
-
 /*
  * The "status" file where a static variable is read from and written to.
  */
@@ -332,11 +322,6 @@ static int adsp_shutdown(const struct subsys_desc *subsys, bool force_stop)
 {
 	struct lpass_data *drv = subsys_to_lpass(subsys);
 
-	if (force_stop) {
-		send_q6_nmi();
-		/* The write needs to go through before the q6 is shutdown. */
-		mb();
-	}
 	pil_shutdown(&drv->q6->desc);
 	disable_irq_nosync(drv->subsys_desc.wdog_bite_irq);
 
@@ -373,7 +358,6 @@ static void adsp_crash_shutdown(const struct subsys_desc *subsys)
 
 	drv->crash_shutdown = 1;
 	gpio_set_value(subsys->force_stop_gpio, 1);
-	send_q6_nmi();
 }
 
 static irqreturn_t adsp_wdog_bite_irq(int irq, void *dev_id)

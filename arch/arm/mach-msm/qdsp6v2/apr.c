@@ -26,6 +26,7 @@
 #include <linux/sysfs.h>
 #include <linux/device.h>
 #include <linux/slab.h>
+#include <mach/scm.h>
 #include <sound/apr_audio-v2.h>
 #include <asm/mach-types.h>
 #include <mach/subsystem_restart.h>
@@ -35,6 +36,8 @@
 #include <mach/qdsp6v2/dsp_debug.h>
 #include <mach/subsystem_notif.h>
 #include <mach/subsystem_restart.h>
+
+#define SCM_Q6_NMI_CMD 0x1
 
 static struct apr_q6 q6;
 static struct apr_client client[APR_DEST_MAX][APR_CLIENT_MAX];
@@ -775,10 +778,13 @@ static struct notifier_block mnb = {
 	.notifier_call = modem_notifier_cb,
 };
 
+static bool powered_on;
+
 static int lpass_notifier_cb(struct notifier_block *this, unsigned long code,
 			     void *_cmd)
 {
 	static int boot_count = 2;
+	struct notif_data *data = (struct notif_data *)_cmd;
 
 	if (boot_count) {
 		boot_count--;
@@ -790,8 +796,16 @@ static int lpass_notifier_cb(struct notifier_block *this, unsigned long code,
 		pr_debug("L-Notify: Shutdown started\n");
 		apr_set_q6_state(APR_SUBSYS_DOWN);
 		dispatch_event(code, APR_DEST_QDSP6);
+		if (data && data->crashed) {
+			/* Send NMI to QDSP6 via an SCM call. */
+			scm_call_atomic1(SCM_SVC_UTIL, SCM_Q6_NMI_CMD, 0x1);
+			/* The write should go through before q6 is shutdown */
+			mb();
+			pr_debug("L-Notify: Q6 NMI was sent.\n");
+		}
 		break;
 	case SUBSYS_AFTER_SHUTDOWN:
+		powered_on = false;
 		pr_debug("L-Notify: Shutdown Completed\n");
 		break;
 	case SUBSYS_BEFORE_POWERUP:
@@ -801,6 +815,7 @@ static int lpass_notifier_cb(struct notifier_block *this, unsigned long code,
 		if (apr_cmpxchg_q6_state(APR_SUBSYS_DOWN,
 				APR_SUBSYS_LOADED) == APR_SUBSYS_DOWN)
 			wake_up(&dsp_wait);
+		powered_on = true;
 		pr_debug("L-Notify: Bootup Completed\n");
 		break;
 	default:
@@ -814,6 +829,18 @@ static struct notifier_block lnb = {
 	.notifier_call = lpass_notifier_cb,
 };
 
+static int panic_handler(struct notifier_block *this,
+				unsigned long event, void *ptr)
+{
+	if (powered_on)
+		/* Send NMI to QDSP6 via an SCM call. */
+		scm_call_atomic1(SCM_SVC_UTIL, SCM_Q6_NMI_CMD, 0x1);
+	return NOTIFY_DONE;
+}
+
+static struct notifier_block panic_nb = {
+	.notifier_call  = panic_handler,
+};
 
 static int __init apr_init(void)
 {
@@ -832,6 +859,8 @@ static int __init apr_init(void)
 	apr_reset_workqueue = create_singlethread_workqueue("apr_driver");
 	if (!apr_reset_workqueue)
 		return -ENOMEM;
+	atomic_notifier_chain_register(&panic_notifier_list, &panic_nb);
+
 	return 0;
 }
 device_initcall(apr_init);
