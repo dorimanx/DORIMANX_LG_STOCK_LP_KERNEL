@@ -145,6 +145,7 @@ struct restart_log {
  * @id: ida
  * @restart_level: restart level (0 - panic, 1 - related, 2 - independent, etc.)
  * @restart_order: order of other devices this devices restarts with
+ * @crash_count: number of times the device has crashed
  * @dentry: debugfs directory for this device
  * @do_ramdump_on_put: ramdump on subsystem_put() if true
  * @err_ready: completion variable to record error ready from subsystem
@@ -163,6 +164,7 @@ struct subsys_device {
 	int count;
 	int id;
 	int restart_level;
+	int crash_count;
 	struct subsys_soc_restart_order *restart_order;
 #ifdef CONFIG_DEBUG_FS
 	struct dentry *dentry;
@@ -196,6 +198,12 @@ static ssize_t state_show(struct device *dev, struct device_attribute *attr,
 {
 	enum subsys_state state = to_subsys(dev)->track.state;
 	return snprintf(buf, PAGE_SIZE, "%s\n", subsys_states[state]);
+}
+
+static ssize_t crash_count_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n", to_subsys(dev)->crash_count);
 }
 
 static ssize_t
@@ -262,6 +270,7 @@ EXPORT_SYMBOL(subsys_default_online);
 static struct device_attribute subsys_attrs[] = {
 	__ATTR_RO(name),
 	__ATTR_RO(state),
+	__ATTR_RO(crash_count),
 	__ATTR(restart_level, 0644, restart_level_show, restart_level_store),
 	__ATTR_NULL,
 };
@@ -464,6 +473,7 @@ static void subsystem_shutdown(struct subsys_device *dev, void *data)
 		PR_BUG("subsys-restart: [%p]: Failed to shutdown %s!",
 			current, name);
 	}
+	dev->crash_count++;
 	subsys_set_state(dev, SUBSYS_OFFLINE);
 	disable_all_irqs(dev);
 }
