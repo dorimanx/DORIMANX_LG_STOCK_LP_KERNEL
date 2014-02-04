@@ -1082,7 +1082,7 @@ static ssize_t mtp_read(struct file *fp, char __user *buf,
 	int r = count, xfer, len;
 	int ret = 0;
 
-	DBG(cdev, "mtp_read(%d)\n", count);
+	DBG(cdev, "mtp_read(%zu)\n", count);
 
 #ifdef CONFIG_USB_G_LGE_ANDROID
 	if (!dev->ep_out)
@@ -1176,7 +1176,7 @@ static ssize_t mtp_write(struct file *fp, const char __user *buf,
 	int sendZLP = 0;
 	int ret;
 
-	DBG(cdev, "mtp_write(%d)\n", count);
+	DBG(cdev, "mtp_write(%zu)\n", count);
 
 	spin_lock_irq(&dev->lock);
 	if (dev->state == STATE_CANCELED) {
@@ -1547,7 +1547,7 @@ static int mtp_send_event(struct mtp_dev *dev, struct mtp_event *event)
 	int ret;
 	int length = event->length;
 
-	DBG(dev->cdev, "mtp_send_event(%d)\n", event->length);
+	DBG(dev->cdev, "mtp_send_event(%zu)\n", event->length);
 
 	if (length < 0 || length > INTR_BUFFER_SIZE)
 		return -EINVAL;
