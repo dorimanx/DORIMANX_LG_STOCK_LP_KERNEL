@@ -674,7 +674,7 @@ config ARM_THUMBEE
 
 config SWP_EMULATE
 	bool "Emulate SWP/SWPB instructions"
-	depends on !CPU_USE_DOMAINS && CPU_V7
+	depends on CPU_V7
 	select HAVE_PROC_CPU if PROC_FS
 	default y if SMP
 	help
