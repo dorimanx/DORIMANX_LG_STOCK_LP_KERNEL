@@ -2677,6 +2677,7 @@ static int tomtom_codec_enable_adc(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
+<<<<<<< HEAD
 static int tomtom_codec_ext_clk_en(struct snd_soc_codec *codec,
 		int enable, bool dapm)
 {
@@ -2692,6 +2693,8 @@ static int tomtom_codec_ext_clk_en(struct snd_soc_codec *codec,
 	return tomtom->codec_ext_clk_en_cb(codec, enable, dapm);
 }
 
+=======
+>>>>>>> ce8bc5c... ASoC: wcd9xxx: Update RCO and MCLK sequence for wcd9330
 /* tomtom_codec_internal_rco_ctrl( )
  * Make sure that BG_CLK_LOCK is not acquired. Exit if acquired to avoid
  * potential deadlock as ext_clk_en_cb() also tries to acquire the same
@@ -2701,11 +2704,15 @@ static int tomtom_codec_internal_rco_ctrl(struct snd_soc_codec *codec,
 					  bool enable)
 {
 	struct tomtom_priv *tomtom = snd_soc_codec_get_drvdata(codec);
+<<<<<<< HEAD
 	int ret = 0;
+=======
+>>>>>>> ce8bc5c... ASoC: wcd9xxx: Update RCO and MCLK sequence for wcd9330
 
 	if (mutex_is_locked(&tomtom->resmgr.codec_bg_clk_lock)) {
 		dev_err(codec->dev, "%s: BG_CLK already acquired\n",
 			__func__);
+<<<<<<< HEAD
 		ret = -EINVAL;
 		goto done;
 	}
@@ -2716,6 +2723,9 @@ static int tomtom_codec_internal_rco_ctrl(struct snd_soc_codec *codec,
 			__func__);
 		ret = -EINVAL;
 		goto done;
+=======
+		return -EINVAL;
+>>>>>>> ce8bc5c... ASoC: wcd9xxx: Update RCO and MCLK sequence for wcd9330
 	}
 
 	if (enable) {
@@ -2726,14 +2736,22 @@ static int tomtom_codec_internal_rco_ctrl(struct snd_soc_codec *codec,
 						     WCD9XXX_CLK_RCO);
 			WCD9XXX_BG_CLK_UNLOCK(&tomtom->resmgr);
 		} else {
+<<<<<<< HEAD
 			tomtom_codec_ext_clk_en(codec, true, false);
+=======
+			tomtom->codec_ext_clk_en_cb(codec, true, false);
+>>>>>>> ce8bc5c... ASoC: wcd9xxx: Update RCO and MCLK sequence for wcd9330
 			WCD9XXX_BG_CLK_LOCK(&tomtom->resmgr);
 			tomtom->resmgr.ext_clk_users =
 					tomtom->codec_get_ext_clk_cnt();
 			wcd9xxx_resmgr_get_clk_block(&tomtom->resmgr,
 						     WCD9XXX_CLK_RCO);
 			WCD9XXX_BG_CLK_UNLOCK(&tomtom->resmgr);
+<<<<<<< HEAD
 			tomtom_codec_ext_clk_en(codec, false, false);
+=======
+			tomtom->codec_ext_clk_en_cb(codec, false, false);
+>>>>>>> ce8bc5c... ASoC: wcd9xxx: Update RCO and MCLK sequence for wcd9330
 		}
 
 	} else {
@@ -2743,8 +2761,12 @@ static int tomtom_codec_internal_rco_ctrl(struct snd_soc_codec *codec,
 		WCD9XXX_BG_CLK_UNLOCK(&tomtom->resmgr);
 	}
 
+<<<<<<< HEAD
 done:
 	return ret;
+=======
+	return 0;
+>>>>>>> ce8bc5c... ASoC: wcd9xxx: Update RCO and MCLK sequence for wcd9330
 }
 
 static int tomtom_codec_enable_aux_pga(struct snd_soc_dapm_widget *w,
@@ -3552,6 +3574,7 @@ static int tomtom_hphl_dac_event(struct snd_soc_dapm_widget *w,
 		else
 			dev_dbg(codec->dev, "%s: Failed to get mbhc impedance %d\n",
 						__func__, ret);
+<<<<<<< HEAD
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_update_bits(codec, TOMTOM_A_CDC_RX1_B3_CTL, 0xBC, 0x94);
@@ -3560,6 +3583,8 @@ static int tomtom_hphl_dac_event(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_PRE_PMD:
 		snd_soc_update_bits(codec, TOMTOM_A_CDC_RX1_B3_CTL, 0xBC, 0x00);
 		snd_soc_update_bits(codec, TOMTOM_A_CDC_RX1_B4_CTL, 0x30, 0x00);
+=======
+>>>>>>> ce8bc5c... ASoC: wcd9xxx: Update RCO and MCLK sequence for wcd9330
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		break;
