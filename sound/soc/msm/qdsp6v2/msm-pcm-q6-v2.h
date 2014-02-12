@@ -65,6 +65,8 @@ struct msm_audio_in_frame_info {
 #define CAPTURE_MAX_NUM_PERIODS     8
 #define CAPTURE_MAX_PERIOD_SIZE     16384
 #define CAPTURE_MIN_PERIOD_SIZE     64
+#define CMD_EOS_MIN_TIMEOUT_LENGTH  50
+#define CMD_EOS_TIMEOUT_MULTIPLIER  (HZ * 50)
 
 struct msm_audio {
 	struct snd_pcm_substream *substream;
