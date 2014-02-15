@@ -886,9 +886,6 @@ void __init setup_arch(char **cmdline_p)
 
 	parse_early_param();
 
-	if (mdesc->init_very_early)
-		mdesc->init_very_early();
-
 	/* XXX argh */
 	sanity_check_meminfo();
 	arm_memblock_init(mdesc);
