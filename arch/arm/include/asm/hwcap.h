@@ -27,6 +27,11 @@
 #define HWCAP_IDIV	(HWCAP_IDIVA | HWCAP_IDIVT)
 #define HWCAP_LPAE     (1 << 20)
 #define HWCAP_EVTSTRM  (1 << 21)
+
+/*
+ * HWCAP2 flags - for elf_hwcap2 (in kernel) and AT_HWCAP2
+ */
+
 #if defined(__KERNEL__)
 #if !defined(__ASSEMBLY__)
 /*
@@ -34,7 +39,8 @@
  * instruction set this cpu supports.
  */
 #define ELF_HWCAP	(elf_hwcap)
-extern unsigned int elf_hwcap;
+#define ELF_HWCAP2	(elf_hwcap2)
+extern unsigned int elf_hwcap, elf_hwcap2;
 #endif
 #endif
 
