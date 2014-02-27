@@ -35,6 +35,7 @@ static struct v4l2_device *msm_v4l2_dev;
 static struct list_head    ordered_sd_list;
 
 static struct msm_queue_head *msm_session_q;
+static atomic_t serv_running;
 
 /* config node envent queue */
 static struct v4l2_fh  *msm_eventq;
@@ -625,13 +626,19 @@ static long msm_private_ioctl(struct file *file, void *fh,
 static int msm_unsubscribe_event(struct v4l2_fh *fh,
 	struct v4l2_event_subscription *sub)
 {
-	return v4l2_event_unsubscribe(fh, sub);
+	int rc = v4l2_event_unsubscribe(fh, sub);
+	if (rc == 0)
+		 atomic_set(&serv_running, 0);
+	return rc;
 }
 
 static int msm_subscribe_event(struct v4l2_fh *fh,
 	struct v4l2_event_subscription *sub)
 {
-	return v4l2_event_subscribe(fh, sub, 5);
+	int rc = v4l2_event_subscribe(fh, sub, 5);
+	if (rc == 0)
+		atomic_set(&serv_running, 1);
+	return rc;
 }
 
 static const struct v4l2_ioctl_ops g_msm_ioctl_ops = {
@@ -679,7 +686,7 @@ int msm_post_event(struct v4l2_event *event, int timeout)
 		spin_unlock_irqrestore(&msm_eventq_lock, flags);
 		pr_err("%s : msm event queue not available Line %d\n",
 				__func__, __LINE__);
-		return -ENODEV;
+		return -EIO;
 	}
 	spin_unlock_irqrestore(&msm_eventq_lock, flags);
 
@@ -691,6 +698,11 @@ int msm_post_event(struct v4l2_event *event, int timeout)
 	if (WARN_ON(!session)) {
 		pr_err("%s : session not found Line %d\n",
 				__func__, __LINE__);
+		return -EIO;
+	}
+
+	if (!atomic_read(&serv_running)) {
+		pr_info("%s: daemon hasn't subscribed yet!\n", __func__);
 		return -EIO;
 	}
 	mutex_lock(&session->lock);
@@ -717,12 +729,17 @@ int msm_post_event(struct v4l2_event *event, int timeout)
 	}
 
 	/* should wait on session based condition */
-	rc = wait_for_completion_timeout(&cmd_ack->wait_complete,
+	do {
+		rc = wait_for_completion_timeout(&cmd_ack->wait_complete, 
 			msecs_to_jiffies(timeout));
+		if (rc != -ERESTARTSYS)
+			break;
+	} while (1);
 
 	if (list_empty_careful(&cmd_ack->command_q.list)) {
 		if (!rc) {
-			pr_err("%s: Timed out\n", __func__);
+			pr_err("%s: Timed out: event id is %d\n",
+				__func__, event->id);
 			rc = -ETIMEDOUT;
 
 /* LGE_CHANGE_S, Camera Recovery Code, 2013-08-20, jungki.kim@lge.com */
@@ -1044,6 +1061,7 @@ static int __devinit msm_probe(struct platform_device *pdev)
 #endif
 
 	atomic_set(&pvdev->opened, 0);
+	atomic_set(&serv_running, 0);
 	video_set_drvdata(pvdev->vdev, pvdev);
 
 	msm_session_q = kzalloc(sizeof(*msm_session_q), GFP_KERNEL);
