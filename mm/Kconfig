@@ -329,6 +329,16 @@ config KSM_LEGACY
 	The legacy KSM implementation from Redhat.
 endchoice
 
+config KSM_CHECK_PAGE
+	bool "Check page before scanning"
+	depends on KSM
+	default y
+	help
+	  If enabled, this will check and skip if page is already scanned in
+	  same KSM scan cycle.
+	  This is useful in situation where you have parent and
+	  child process marking same area for KSM scanning.
+
 config DEFAULT_MMAP_MIN_ADDR
         int "Low address space to protect from user allocation"
 	depends on MMU
