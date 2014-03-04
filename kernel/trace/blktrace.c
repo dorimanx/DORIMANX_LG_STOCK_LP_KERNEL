@@ -718,11 +718,11 @@ static void blk_add_trace_rq(struct request_queue *q, struct request *rq,
 	if (rq->cmd_type == REQ_TYPE_BLOCK_PC) {
 		what |= BLK_TC_ACT(BLK_TC_PC);
 		__blk_add_trace(bt, 0, nr_bytes, rq->cmd_flags,
-				what, rq->errors, rq->cmd_len, rq->cmd, tsk);
+				what, rq->errors, rq->cmd_len, rq->cmd);
 	} else  {
 		what |= BLK_TC_ACT(BLK_TC_FS);
 		__blk_add_trace(bt, blk_rq_pos(rq), nr_bytes,
-				rq->cmd_flags, what, rq->errors, 0, NULL, tsk);
+				rq->cmd_flags, what, rq->errors, 0, NULL);
 	}
 }
 
