@@ -215,8 +215,6 @@ void *smsm_log_ctx;
 #define OVERFLOW_ADD_UNSIGNED(type, a, b) \
 	(((type)~0 - (a)) < (b) ? true : false)
 
-static inline void smd_write_intr(unsigned int val,
-				const void __iomem *addr);
 #ifndef INT_ADSP_A11_SMSM
 #define INT_ADSP_A11_SMSM -1
 #endif
@@ -238,8 +236,7 @@ static int smd_stream_read_avail(struct smd_channel *ch);
 
 static bool pid_is_on_edge(uint32_t edge_num, unsigned pid);
 
-static inline void smd_write_intr(unsigned int val,
-				const void __iomem *addr)
+static inline void smd_write_intr(unsigned int val, void __iomem *addr)
 {
 	wmb();
 	__raw_writel(val, addr);
