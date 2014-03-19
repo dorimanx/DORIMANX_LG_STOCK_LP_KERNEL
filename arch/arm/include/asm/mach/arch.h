@@ -11,7 +11,6 @@
 #ifndef __ASSEMBLY__
 
 struct tag;
-struct meminfo;
 struct sys_timer;
 struct pt_regs;
 struct smp_operations;
@@ -42,8 +41,7 @@ struct machine_desc {
 	unsigned char		reserve_lp2 :1;	/* never has lp2	*/
 	char			restart_mode;	/* default restart mode	*/
 	struct smp_operations  *smp;    /* SMP operations  */
-	void			(*fixup)(struct tag *, char **,
-					 struct meminfo *);
+	void			(*fixup)(struct tag *, char **);
 	void			(*reserve)(void);/* reserve mem blocks	*/
 	void			(*map_io)(void);/* IO mapping function	*/
 	void			(*init_very_early)(void);
