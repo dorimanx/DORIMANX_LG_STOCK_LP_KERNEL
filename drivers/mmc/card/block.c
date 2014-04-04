@@ -2600,6 +2600,7 @@ static int mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *rqc)
 			    (card->ext_csd.data_sector_size == 4096)) {
 				pr_err("%s: Transfer size is not 4KB sector size aligned\n",
 					req->rq_disk->disk_name);
+				mq_rq = mq->mqrq_cur;
 				goto cmd_abort;
 			}
 
