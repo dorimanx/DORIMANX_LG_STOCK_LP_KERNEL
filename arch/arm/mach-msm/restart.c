@@ -302,6 +302,8 @@ static void msm_restart_prepare(const char *cmd)
 			__raw_writel(0x77665502, restart_reason);
 		} else if (!strncmp(cmd, "fota", 4)) {
 			__raw_writel(0x77665566, restart_reason);
+		} else if (!strncmp(cmd, "adbrecovery", 11)) {
+			__raw_writel(0x77665511, restart_reason);
 		} else if (!strncmp(cmd, "--bnr_recovery", 14)) {
 			__raw_writel(0x77665555, restart_reason);
 		} else if (!strcmp(cmd, "rtc")) {
