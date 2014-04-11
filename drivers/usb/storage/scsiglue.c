@@ -251,6 +251,15 @@ static int slave_configure(struct scsi_device *sdev)
 		/* A few buggy USB-ATA bridges don't understand FUA */
 		if (us->fflags & US_FL_BROKEN_FUA)
 			sdev->broken_fua = 1;
+
+		/*
+		 * This quirk enables sending consecutive TEST_UNIT_READY
+		 * commands in WRITE(10) command processing context. Increase
+		 * the timeout to 60 seconds.
+		 */
+		if (us->fflags & US_FL_TUR_AFTER_WRITE)
+			blk_queue_rq_timeout(sdev->request_queue, (60 * HZ));
+
 	} else {
 
 		/* Non-disk-type devices don't need to blacklist any pages

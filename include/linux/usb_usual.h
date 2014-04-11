@@ -67,6 +67,9 @@
 		/* Initial READ(10) (and others) must be retried */	\
 	US_FLAG(BROKEN_FUA,	0x01000000)			\
 		/* Cannot handle FUA in WRITE or READ CDBs */	\
+		/* Initial READ(10) (and others) must be retried */ \
+	US_FLAG(TUR_AFTER_WRITE, 0x00200000)			\
+		/* 5 TEST_UNIT_READY after 8 WRITE(10) */ \
 
 #define US_FLAG(name, value)	US_FL_##name = value ,
 enum { US_DO_ALL_FLAGS };
