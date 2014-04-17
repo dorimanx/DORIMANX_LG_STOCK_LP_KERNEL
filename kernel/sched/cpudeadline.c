@@ -208,7 +208,5 @@ int cpudl_init(struct cpudl *cp)
  */
 void cpudl_cleanup(struct cpudl *cp)
 {
-	/*
-	 * nothing to do for the moment
-	 */
+	free_cpumask_var(cp->free_cpus);
 }
