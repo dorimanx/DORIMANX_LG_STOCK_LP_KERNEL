@@ -3736,7 +3736,6 @@ no_journal:
 		ret = -ENOMEM;
 		goto failed_mount4;
 	}
-
 	if (ext4_setup_super(sb, es, sb->s_flags & MS_RDONLY))
 		sb->s_flags |= MS_RDONLY;
 
