@@ -7385,7 +7385,7 @@ static int taiko_setup_zdet(struct wcd9xxx_mbhc *mbhc,
 
 	switch (stage) {
 
-	case PRE_MEAS:
+	case MBHC_ZDET_PRE_MEASURE:
 		INIT_LIST_HEAD(&taiko->reg_save_restore);
 		wcd9xxx_prepare_static_pa(mbhc, &taiko->reg_save_restore);
 		wcd9xxx_enable_static_pa(mbhc, true);
@@ -7429,7 +7429,7 @@ static int taiko_setup_zdet(struct wcd9xxx_mbhc *mbhc,
 		/* Set HPH_MBHC for zdet */
 		__wr(WCD9XXX_A_MBHC_HPH, 0xB3, 0x80);
 		break;
-	case POST_MEAS:
+	case MBHC_ZDET_POST_MEASURE:
 		/* Phase 2 */
 		/* Start the PA ramp on HPH L and R */
 		snd_soc_write(codec, WCD9XXX_A_CDC_PA_RAMP_B2_CTL, 0x05);
@@ -7443,7 +7443,7 @@ static int taiko_setup_zdet(struct wcd9xxx_mbhc *mbhc,
 		usleep_range(ramp_wait_us,
 				ramp_wait_us + WCD9XXX_USLEEP_RANGE_MARGIN_US);
 		break;
-	case PA_DISABLE:
+	case MBHC_ZDET_PA_DISABLE:
 		/* Ramp HPH L & R back to Zero */
 		snd_soc_write(codec, WCD9XXX_A_CDC_PA_RAMP_B2_CTL, 0x0A);
 		/* Ramp generator takes ~17ms */
@@ -7460,13 +7460,18 @@ static int taiko_setup_zdet(struct wcd9xxx_mbhc *mbhc,
 			wcd9xxx_enable_static_pa(mbhc, false);
 		wcd9xxx_restore_registers(codec, &taiko->reg_save_restore);
 		break;
+	default:
+		dev_dbg(codec->dev, "%s: Case %d not supported\n",
+			__func__, stage);
+		break;
 	}
 #undef __wr
 
 	return ret;
 }
 
-static void taiko_compute_impedance(s16 *l, s16 *r, uint32_t *zl, uint32_t *zr)
+static void taiko_compute_impedance(struct wcd9xxx_mbhc *mbhc, s16 *l, s16 *r,
+					uint32_t *zl, uint32_t *zr)
 {
 
 	int64_t rl = 0, rr = 0; /* milliohm */
@@ -7476,6 +7481,11 @@ static void taiko_compute_impedance(s16 *l, s16 *r, uint32_t *zl, uint32_t *zr)
 	const int beta = 3855; /* 0.011765 * 5 * 65536 = 3855.15 */
 	const int rref = 11333; /* not scaled up */
 	const int shift = 16;
+
+	if (!mbhc) {
+		pr_err("%s: NULL pointer for MBHC", __func__);
+		return;
+	}
 
 	zld = l[0] - l[2];
 	if (zld)
