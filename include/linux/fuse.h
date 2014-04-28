@@ -69,6 +69,8 @@
  *
  * 7.23
  *  - add FUSE_WRITEBACK_CACHE
+ *  - add time_gran to fuse_init_out
+ *  - add reserved space to fuse_init_out
  */
 
 #ifndef _LINUX_FUSE_H
@@ -524,6 +526,9 @@ struct fuse_init_in {
 	__u32	flags;
 };
 
+#define FUSE_COMPAT_INIT_OUT_SIZE 8
+#define FUSE_COMPAT_22_INIT_OUT_SIZE 24
+
 struct fuse_init_out {
 	__u32	major;
 	__u32	minor;
@@ -532,6 +537,8 @@ struct fuse_init_out {
 	__u16   max_background;
 	__u16   congestion_threshold;
 	__u32	max_write;
+	uint32_t	time_gran;
+	uint32_t	unused[9];
 };
 
 #define CUSE_INIT_INFO_MAX 4096
