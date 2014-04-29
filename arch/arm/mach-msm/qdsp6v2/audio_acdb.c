@@ -655,7 +655,7 @@ static int register_memory(void)
 	mutex_lock(&acdb_data.acdb_mutex);
 
 	acdb_data.ion_client =
-		msm_ion_client_create(UINT_MAX, "audio_acdb_client");
+		msm_ion_client_create("audio_acdb_client");
 	if (IS_ERR_OR_NULL(acdb_data.ion_client)) {
 		pr_err("%s: Could not register ION client!!!\n", __func__);
 		result = PTR_ERR(acdb_data.ion_client);

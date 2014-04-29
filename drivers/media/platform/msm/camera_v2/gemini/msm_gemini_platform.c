@@ -103,7 +103,7 @@ static struct msm_cam_clk_info gemini_imem_clk_info[] = {
 static struct ion_client *msm_gemini_ion_client_create(unsigned int heap_mask,
 		  const char *name)
 {
-	return msm_ion_client_create(heap_mask, name);
+	return msm_ion_client_create(name);
 }
 #else
 static struct ion_client *msm_gemini_ion_client_create(unsigned int heap_mask,

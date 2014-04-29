@@ -851,7 +851,7 @@ static struct notifier_block pil_pm_notifier = {
 
 static int __init msm_pil_init(void)
 {
-	ion = msm_ion_client_create(UINT_MAX, "pil");
+	ion = msm_ion_client_create("pil");
 	if (IS_ERR(ion)) /* Can't support relocatable images */
 		ion = NULL;
 	return register_pm_notifier(&pil_pm_notifier);

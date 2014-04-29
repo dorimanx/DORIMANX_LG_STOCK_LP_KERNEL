@@ -50,7 +50,7 @@ static unsigned long msm_mem_allocate(struct videobuf2_contig_pmem *mem)
 	unsigned long phyaddr;
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
 	int rc, len;
-	mem->client = msm_ion_client_create(-1, "camera");
+	mem->client = msm_ion_client_create("camera");
 	if (IS_ERR((void *)mem->client)) {
 		pr_err("%s Could not create client\n", __func__);
 		goto client_failed;

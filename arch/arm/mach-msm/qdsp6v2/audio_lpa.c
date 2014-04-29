@@ -1381,7 +1381,7 @@ static int audio_open(struct inode *inode, struct file *file)
 	pr_info("%s: audio instance 0x%08x created session[%d]\n", __func__,
 						(int)audio,
 						audio->ac->session);
-	audio->client = msm_ion_client_create(UINT_MAX, "Audio_LPA_Client");
+	audio->client = msm_ion_client_create("Audio_LPA_Client");
 	if (IS_ERR_OR_NULL(audio->client)) {
 		pr_err("Unable to create ION client\n");
 		goto err;

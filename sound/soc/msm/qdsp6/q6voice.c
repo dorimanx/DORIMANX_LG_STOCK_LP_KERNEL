@@ -4579,7 +4579,7 @@ static void voice_allocate_shared_memory(void)
 	void                    *kvptr;
 	pr_debug("%s\n", __func__);
 
-	common.ion_client = msm_ion_client_create(UINT_MAX, "q6voice_client");
+	common.ion_client = msm_ion_client_create("q6voice_client");
 	if (IS_ERR_OR_NULL((void *)common.ion_client)) {
 		pr_err("%s: ION create client failed\n", __func__);
 		goto err;

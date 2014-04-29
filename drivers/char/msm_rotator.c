@@ -1628,7 +1628,7 @@ static int __devinit msm_rotator_probe(struct platform_device *pdev)
 
 	mutex_init(&msm_rotator_dev->rotator_lock);
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
-	msm_rotator_dev->client = msm_ion_client_create(-1, pdev->name);
+	msm_rotator_dev->client = msm_ion_client_create(pdev->name);
 #endif
 	platform_set_drvdata(pdev, msm_rotator_dev);
 

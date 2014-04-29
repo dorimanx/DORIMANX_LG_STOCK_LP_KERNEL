@@ -529,7 +529,7 @@ int q6asm_audio_client_buf_alloc(unsigned int dir,
 				if (!buf[cnt].data) {
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
 					buf[cnt].client = msm_ion_client_create
-						(UINT_MAX, "audio_client");
+						("audio_client");
 					if (IS_ERR_OR_NULL((void *)
 						buf[cnt].client)) {
 						pr_err("%s: ION create client for AUDIO failed\n",
@@ -674,7 +674,7 @@ int q6asm_audio_client_buf_alloc_contiguous(unsigned int dir,
 	ac->port[dir].buf = buf;
 
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
-	buf[0].client = msm_ion_client_create(UINT_MAX, "audio_client");
+	buf[0].client = msm_ion_client_create("audio_client");
 	if (IS_ERR_OR_NULL((void *)buf[0].client)) {
 		pr_err("%s: ION create client for AUDIO failed\n", __func__);
 		mutex_unlock(&ac->cmd_lock);

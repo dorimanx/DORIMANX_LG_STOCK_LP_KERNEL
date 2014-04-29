@@ -1271,7 +1271,7 @@ static int __init msm_soc_platform_init(void)
 	memset(&hpcm_drv, 0, sizeof(hpcm_drv));
 	mutex_init(&hpcm_drv.lock);
 
-	hpcm_drv.ion_client = msm_ion_client_create(UINT_MAX, "host_voice_pcm");
+	hpcm_drv.ion_client = msm_ion_client_create("host_voice_pcm");
 	if (IS_ERR_OR_NULL((void *)hpcm_drv.ion_client)) {
 		pr_err("%s: ION create client failed\n", __func__);
 		return -ENOMEM;
