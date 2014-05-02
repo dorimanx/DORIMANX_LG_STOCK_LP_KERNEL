@@ -1793,6 +1793,7 @@ void submit_bio(int rw, struct bio *bio)
 {
 	int count = bio_sectors(bio);
 
+	struct task_struct *tsk = current;
 	bio->bi_rw |= rw;
 
 	/*
@@ -1810,8 +1811,18 @@ void submit_bio(int rw, struct bio *bio)
 
 		if (unlikely(block_dump)) {
 			char b[BDEVNAME_SIZE];
+
+			/*
+			 * Not all the pages in the bio are dirtied by the
+			 * same task but most likely it will be, since the
+			 * sectors accessed on the device must be adjacent.
+			 */
+			if (bio->bi_io_vec && bio->bi_io_vec->bv_page &&
+			    bio->bi_io_vec->bv_page->tsk_dirty)
+				tsk = bio->bi_io_vec->bv_page->tsk_dirty;
+
 			printk(KERN_DEBUG "%s(%d): %s block %Lu on %s (%u sectors)\n",
-			current->comm, task_pid_nr(current),
+				tsk->comm, task_pid_nr(tsk),
 				(rw & WRITE) ? "WRITE" : "READ",
 				(unsigned long long)bio->bi_sector,
 				bdevname(bio->bi_bdev, b),
