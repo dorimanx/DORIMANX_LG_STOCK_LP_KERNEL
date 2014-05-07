@@ -1653,8 +1653,6 @@ static inline void write_force_cs(struct msm_spi *dd, bool set_flag)
 
 static inline int combine_transfers(struct msm_spi *dd)
 {
-	struct spi_transfer *t = dd->cur_transfer;
-	struct spi_transfer *nxt;
 	int xfrs_grped = 1;
 	dd->xfrs_delay_usec = 0;
 
@@ -1667,30 +1665,7 @@ static inline int combine_transfers(struct msm_spi *dd)
 	if (dd->cur_transfer->rx_buf)
 		dd->bam.bam_rx_len += dd->cur_transfer->len;
 
-	while (t->transfer_list.next != &dd->cur_msg->transfers) {
-		nxt = list_entry(t->transfer_list.next,
-				 struct spi_transfer,
-				 transfer_list);
-		if (t->cs_change != nxt->cs_change)
-			return xfrs_grped;
-		if (t->delay_usecs) {
-			dd->xfrs_delay_usec = t->delay_usecs;
-			dev_info(dd->dev, "SPI slave requests delay per txn :%d usecs",
-					t->delay_usecs);
-			return xfrs_grped;
-		}
-		if (nxt->tx_buf)
-			dd->bam.bam_tx_len += nxt->len;
-		if (nxt->rx_buf)
-			dd->bam.bam_rx_len += nxt->len;
-
-		dd->cur_msg_len += nxt->len;
-		xfrs_grped++;
-		t = nxt;
-	}
-
-	if (1 == xfrs_grped)
-		dd->xfrs_delay_usec = dd->cur_transfer->delay_usecs;
+	dd->xfrs_delay_usec = dd->cur_transfer->delay_usecs;
 
 	return xfrs_grped;
 }
@@ -1740,7 +1715,7 @@ static void msm_spi_process_message(struct msm_spi *dd)
 			dd->cur_tx_transfer = dd->cur_transfer;
 			dd->cur_rx_transfer = dd->cur_transfer;
 			msm_spi_process_transfer(dd);
-			if (dd->qup_ver && !dd->xfrs_delay_usec)
+			if (dd->qup_ver && dd->cur_transfer->cs_change)
 				write_force_cs(dd, 0);
 			xfrs_grped--;
 		}
@@ -1764,9 +1739,9 @@ static void msm_spi_process_message(struct msm_spi *dd)
 		dd->num_xfrs_grped = 1;
 		msm_spi_process_transfer(dd);
 	}
-
+	if (dd->qup_ver)
+		write_force_cs(dd, 0);
 	return;
-
 error:
 	msm_spi_free_cs_gpio(dd);
 }
