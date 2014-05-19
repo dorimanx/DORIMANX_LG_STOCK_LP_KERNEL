@@ -485,7 +485,8 @@ ENDPROC(__und_usr)
  * The out of line fixup for the ldrt instructions above.
  */
 	.pushsection .fixup, "ax"
-4:	mov	pc, r9
+4:	str     r4, [sp, #S_PC]			@ retry current instruction
+	mov	pc, r9
 	.popsection
 	.pushsection __ex_table,"a"
 	.long	1b, 4b
