@@ -971,8 +971,8 @@ ffs_epfile_release(struct inode *inode, struct file *file)
 
 	ENTER();
 
-	ffs_data_closed(epfile->ffs);
 	atomic_set(&epfile->error, 1);
+	ffs_data_closed(epfile->ffs);
 
 	return 0;
 }
