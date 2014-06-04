@@ -486,8 +486,8 @@ void refresh_cpu_vm_stats(int cpu)
 		if (p->expire)
 			continue;
 
-		if (p->pcp.count)
-			drain_zone_pages(zone, &p->pcp);
+		if (__this_cpu_read(p->pcp.count))
+			drain_zone_pages(zone, this_cpu_ptr(&p->pcp));
 #endif
 	}
 
@@ -1282,7 +1282,7 @@ static void vmstat_update(struct work_struct *w)
 {
 	refresh_cpu_vm_stats(smp_processor_id());
 	schedule_delayed_work_on(smp_processor_id(),
-		&__get_cpu_var(vmstat_work),
+		this_cpu_ptr(&vmstat_work),
 		round_jiffies_relative(sysctl_stat_interval));
 }
 
