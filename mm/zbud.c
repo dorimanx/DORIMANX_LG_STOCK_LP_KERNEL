@@ -16,7 +16,7 @@
  *
  * zbud works by storing compressed pages, or "zpages", together in pairs in a
  * single memory page called a "zbud page".  The first buddy is "left
- * justifed" at the beginning of the zbud page, and the last buddy is "right
+ * justified" at the beginning of the zbud page, and the last buddy is "right
  * justified" at the end of the zbud page.  The benefit is that if either
  * buddy is freed, the freed buddy space, coalesced with whatever slack space
  * that existed between the buddies, results in the largest possible free region
@@ -346,7 +346,7 @@ void zbud_destroy_pool(struct zbud_pool *pool)
  * gfp should not set __GFP_HIGHMEM as highmem pages cannot be used
  * as zbud pool pages.
  *
- * Return: 0 if success and handle is set, otherwise -EINVAL is the size or
+ * Return: 0 if success and handle is set, otherwise -EINVAL if the size or
  * gfp arguments are invalid or -ENOMEM if the pool was unable to allocate
  * a new page.
  */
@@ -359,7 +359,7 @@ int zbud_alloc(struct zbud_pool *pool, size_t size, gfp_t gfp,
 	struct page *page;
 	int found = 0;
 
-	if (size <= 0 || gfp & __GFP_HIGHMEM)
+	if (!size || (gfp & __GFP_HIGHMEM))
 		return -EINVAL;
 	if (size > PAGE_SIZE - ZHDR_SIZE_ALIGNED - CHUNK_SIZE)
 		return -ENOSPC;
@@ -639,5 +639,5 @@ module_init(init_zbud);
 module_exit(exit_zbud);
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Seth Jennings <sjenning@linux.vnet.ibm.com>");
+MODULE_AUTHOR("Seth Jennings <sjennings@variantweb.net>");
 MODULE_DESCRIPTION("Buddy Allocator for Compressed Pages");
