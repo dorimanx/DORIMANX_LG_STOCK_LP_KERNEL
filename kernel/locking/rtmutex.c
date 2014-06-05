@@ -320,6 +320,22 @@ static inline struct rt_mutex *task_blocked_on_lock(struct task_struct *p)
 /*
  * Adjust the priority chain. Also used for deadlock detection.
  * Decreases task's usage by one - may thus free the task.
+ *
+ * @task:	the task owning the mutex (owner) for which a chain walk is
+ *		probably needed
+ * @deadlock_detect: do we have to carry out deadlock detection?
+ * @orig_lock:	the mutex (can be NULL if we are walking the chain to recheck
+ *		things for a task that has just got its priority adjusted, and
+ *		is waiting on a mutex)
+ * @next_lock:	the mutex on which the owner of @orig_lock was blocked before
+ *		we dropped its pi_lock. Is never dereferenced, only used for
+ *		comparison to detect lock chain changes.
+ * @orig_waiter: rt_mutex_waiter struct for the task that has just donated
+ *		its priority to the mutex owner (can be NULL in the case
+ *		depicted above or if the top waiter is gone away and we are
+ *		actually deboosting the owner)
+ * @top_task:	the current top waiter
+ *
  * Returns 0 or -EDEADLK.
  */
 static int rt_mutex_adjust_prio_chain(struct task_struct *task,
@@ -624,18 +640,6 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
 	if (owner == task)
 		return -EDEADLK;
 
-	/*
-	 * Early deadlock detection. We really don't want the task to
-	 * enqueue on itself just to untangle the mess later. It's not
-	 * only an optimization. We drop the locks, so another waiter
-	 * can come in before the chain walk detects the deadlock. So
-	 * the other will detect the deadlock and return -EDEADLOCK,
-	 * which is wrong, as the other waiter is not in a deadlock
-	 * situation.
-	 */
-	if (owner == task)
-		return -EDEADLK;
-
 	raw_spin_lock_irqsave(&task->pi_lock, flags);
 	__rt_mutex_adjust_prio(task);
 	waiter->task = task;
@@ -781,7 +785,6 @@ static void remove_waiter(struct rt_mutex *lock,
 
 		raw_spin_unlock_irqrestore(&owner->pi_lock, flags);
 	}
-
 
 	if (!next_lock)
 		return;
