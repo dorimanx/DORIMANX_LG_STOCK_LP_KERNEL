@@ -1528,7 +1528,7 @@ int mem_cgroup_swappiness(struct mem_cgroup *memcg)
 	struct cgroup *cgrp = memcg->css.cgroup;
 
 	/* root ? */
-	if (cgrp->parent == NULL)
+	if (mem_cgroup_disabled() || !css_parent(&memcg->css))
 		return vm_swappiness;
 
 	return memcg->swappiness;
