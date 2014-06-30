@@ -132,6 +132,6 @@ UNWIND(	.fnstart			)
 	strneb	r2, [r0], #1		@ 1
 	tst	r1, #1			@ 1 a byte left over
 	strneb	r2, [r0], #1		@ 1
-	mov	pc, lr			@ 1
+	ret	lr			@ 1
 UNWIND(	.fnend				)
 ENDPROC(__memzero)

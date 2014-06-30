@@ -122,7 +122,7 @@ UNWIND( .fnstart            )
 	strneb	r1, [ip], #1
 	tst	r2, #1
 	strneb	r1, [ip], #1
-	mov	pc, lr
+	ret	lr
 
 6:	subs	r2, r2, #4		@ 1 do we have enough
 	blt	5b			@ 1 bytes to align with?
