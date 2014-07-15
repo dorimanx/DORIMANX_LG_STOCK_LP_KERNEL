@@ -223,6 +223,7 @@ static struct kgsl_cmdbatch *_get_cmdbatch(struct adreno_context *drawctxt)
 {
 	struct kgsl_cmdbatch *cmdbatch = NULL;
 	bool pending = false;
+	unsigned long flags;
 
 	if (drawctxt->cmdqueue_head == drawctxt->cmdqueue_tail)
 		return NULL;
@@ -252,10 +253,10 @@ static struct kgsl_cmdbatch *_get_cmdbatch(struct adreno_context *drawctxt)
 			pending = true;
 	}
 
-	spin_lock(&cmdbatch->lock);
+	spin_lock_irqsave(&cmdbatch->lock, flags);
 	if (!list_empty(&cmdbatch->synclist))
 		pending = true;
-	spin_unlock(&cmdbatch->lock);
+	spin_unlock_irqrestore(&cmdbatch->lock, flags);
 
 	/*
 	 * If changes are pending and the canary timer hasn't been
