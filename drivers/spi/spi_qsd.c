@@ -2365,20 +2365,18 @@ static int msm_spi_setup(struct spi_device *spi)
 	if (spi->bits_per_word < 4 || spi->bits_per_word > 32) {
 		dev_err(&spi->dev, "%s: invalid bits_per_word %d\n",
 			__func__, spi->bits_per_word);
-		rc = -EINVAL;
+		return -EINVAL;
 	}
 	if (spi->chip_select > SPI_NUM_CHIPSELECTS-1) {
 		dev_err(&spi->dev, "%s, chip select %d exceeds max value %d\n",
 			__func__, spi->chip_select, SPI_NUM_CHIPSELECTS - 1);
-		rc = -EINVAL;
+		return -EINVAL;
 	}
-
-	if (rc)
-		goto err_setup_exit;
 
 	dd = spi_master_get_devdata(spi->master);
 
 	pm_runtime_get_sync(dd->dev);
+	get_local_resources(dd);
 
 	mutex_lock(&dd->core_lock);
 
@@ -2387,8 +2385,8 @@ static int msm_spi_setup(struct spi_device *spi)
 		msm_spi_pm_resume_runtime(dd->dev);
 
 	if (dd->suspended) {
-		mutex_unlock(&dd->core_lock);
-		return -EBUSY;
+		rc = -EBUSY;
+		goto err_setup_exit;
 	}
 
 	if (dd->pdata->is_shared) {
@@ -2421,12 +2419,11 @@ static int msm_spi_setup(struct spi_device *spi)
 		msm_spi_pm_suspend_runtime(dd->dev);
 no_resources:
 
+err_setup_exit:
 	mutex_unlock(&dd->core_lock);
-
+	put_local_resources(dd);
 	pm_runtime_mark_last_busy(dd->dev);
 	pm_runtime_put_autosuspend(dd->dev);
-
-err_setup_exit:
 	return rc;
 }
 
