@@ -37,6 +37,7 @@ extern unsigned int sysctl_sched_wakeup_granularity;
 extern unsigned int sysctl_sched_child_runs_first;
 extern unsigned int sysctl_sched_wake_to_idle;
 extern unsigned int sysctl_sched_window_stats_policy;
+extern unsigned int sysctl_sched_account_wait_time;
 
 #ifdef CONFIG_SCHED_DEBUG
 extern __read_mostly unsigned int sysctl_sched_yield_sleep_duration;
@@ -101,6 +102,9 @@ extern int sched_hmp_proc_update_handler(struct ctl_table *table,
 
 extern int sched_boost_handler(struct ctl_table *table, int write,
 		void __user *buffer, size_t *lenp, loff_t *ppos);
+
+extern int sched_acct_wait_time_update_handler(struct ctl_table *table,
+		 int write, void __user *buffer, size_t *lenp, loff_t *ppos);
 
 extern int sched_window_stats_policy_update_handler(struct ctl_table *table,
 		 int write, void __user *buffer, size_t *lenp, loff_t *ppos);
