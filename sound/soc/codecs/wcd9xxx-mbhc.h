@@ -286,6 +286,10 @@ struct wcd9xxx_mbhc_cb {
 	int (*enable_mb_source) (struct snd_soc_codec *, bool, bool);
 	void (*setup_int_rbias) (struct snd_soc_codec *, bool);
 	void (*pull_mb_to_vddio) (struct snd_soc_codec *, bool);
+	bool (*insert_rem_status) (struct snd_soc_codec *);
+	void (*micbias_pulldown_ctrl) (struct wcd9xxx_mbhc *, bool);
+	int (*codec_rco_ctrl) (struct snd_soc_codec *, bool);
+	void (*hph_auto_pulldown_ctrl) (struct snd_soc_codec *, bool);
 	struct firmware_cal * (*get_hwdep_fw_cal) (struct snd_soc_codec *,
 				enum wcd_cal_type);
 
