@@ -256,10 +256,7 @@
 #include <linux/ptrace.h>
 #include <linux/kmemcheck.h>
 #include <linux/workqueue.h>
-
-#ifdef CONFIG_GENERIC_HARDIRQS
-# include <linux/irq.h>
-#endif
+#include <linux/irq.h>
 
 #include <asm/processor.h>
 #include <asm/uaccess.h>
@@ -834,8 +831,6 @@ static void add_timer_randomness(struct timer_rand_state *state, unsigned num)
 void add_input_randomness(unsigned int type, unsigned int code,
 				 unsigned int value)
 {
-/* random: prevent add_input from doing anything */
-#if 0
 	static unsigned char last_value;
 
 	/* ignore autorepeat and the like */
@@ -846,8 +841,6 @@ void add_input_randomness(unsigned int type, unsigned int code,
 	add_timer_randomness(&input_timer_state,
 			     (type << 4) ^ code ^ (code >> 4) ^ value);
 	trace_add_input_randomness(ENTROPY_BITS(&input_pool));
-#endif
-	return;
 }
 EXPORT_SYMBOL_GPL(add_input_randomness);
 
