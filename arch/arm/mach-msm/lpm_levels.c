@@ -348,7 +348,7 @@ static void lpm_system_prepare(struct lpm_system_state *system_state,
 		return;
 	}
 
-	if (from_idle) {
+	if (from_idle && !timekeeping_suspended) {
 		dbg_mask = lpm_lvl_dbg_msk & MSM_LPM_LVL_DBG_IDLE_LIMITS;
 		us = ktime_to_us(ktime_sub(bc->next_event, ktime_get()));
 		nextcpu = bc->cpumask;
@@ -710,7 +710,7 @@ static int lpm_system_select(struct lpm_system_state *system_state,
 	if (!ed)
 		return -EINVAL;
 
-	if (from_idle)
+	if (from_idle && !timekeeping_suspended)
 		us = ktime_to_us(ktime_sub(ed->next_event, ktime_get()));
 	else
 		us = (~0ULL);
@@ -740,8 +740,13 @@ static void lpm_enter_low_power(struct lpm_system_state *system_state,
 static int lpm_cpuidle_enter(struct cpuidle_device *dev,
 		struct cpuidle_driver *drv, int index)
 {
-	int64_t time = ktime_to_ns(ktime_get());
+	int64_t time;
 	int idx;
+
+	if (!timekeeping_suspended)
+		time = ktime_to_ns(ktime_get());
+	else
+		time = (~0ULL);
 
 	idx = menu_select ? lpm_cpu_menu_select(dev, &index) :
 			lpm_cpu_power_select(dev, &index);
@@ -752,7 +757,11 @@ static int lpm_cpuidle_enter(struct cpuidle_device *dev,
 
 	lpm_enter_low_power(&sys_state, idx, true);
 
-	time = ktime_to_ns(ktime_get()) - time;
+	if (!timekeeping_suspended)
+		time = ktime_to_ns(ktime_get()) - time;
+	else
+		time = (~0ULL);
+
 	do_div(time, 1000);
 	dev->last_residency = (int)time;
 	local_irq_enable();
