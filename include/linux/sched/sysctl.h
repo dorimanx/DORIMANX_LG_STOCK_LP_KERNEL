@@ -39,6 +39,7 @@ extern unsigned int sysctl_sched_wake_to_idle;
 extern unsigned int sysctl_sched_window_stats_policy;
 extern unsigned int sysctl_sched_account_wait_time;
 extern unsigned int sysctl_sched_ravg_hist_size;
+extern unsigned int sysctl_sched_freq_legacy_mode;
 
 #ifdef CONFIG_SCHED_DEBUG
 extern __read_mostly unsigned int sysctl_sched_yield_sleep_duration;
