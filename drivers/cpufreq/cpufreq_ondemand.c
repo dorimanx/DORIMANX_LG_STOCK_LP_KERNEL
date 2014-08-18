@@ -529,8 +529,8 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 		 * - during long idle intervals
 		 * - explicitly set to zero
 		 */
-		if (unlikely(wall_time > 2 * sampling_rate) &&
-			     j_dbs_info->prev_load) {
+		if (unlikely(wall_time > 2 * sampling_rate &&
+					j_dbs_info->prev_load)) {
 			cur_load = j_dbs_info->prev_load;
 			/*
 			 * Perform a destructive copy, to ensure that we copy
