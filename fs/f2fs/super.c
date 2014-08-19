@@ -477,6 +477,9 @@ static void f2fs_put_super(struct super_block *sb)
 	release_dirty_inode(sbi);
 	release_discard_addrs(sbi);
 
+	/* normally superblock is clean, so we need to release this */
+	release_dirty_inode(sbi);
+
 	iput(sbi->node_inode);
 	iput(sbi->meta_inode);
 
