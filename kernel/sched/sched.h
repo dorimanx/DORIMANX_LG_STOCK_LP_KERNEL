@@ -833,6 +833,14 @@ static inline unsigned int group_first_cpu(struct sched_group *group)
 	return cpumask_first(sched_group_cpus(group));
 }
 
+extern int group_balance_cpu(struct sched_group *sg);
+
+/*
+ * Returns the rq capacity of any rq in a group. This does not play
+ * well with groups where rq capacity can change independently.
+ */
+#define group_rq_capacity(group) capacity(cpu_rq(group_first_cpu(group)))
+
 #endif /* CONFIG_SMP */
 
 #include "stats.h"
