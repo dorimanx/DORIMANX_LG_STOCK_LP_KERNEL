@@ -764,6 +764,7 @@ static void ffs_epfile_io_complete(struct usb_ep *_ep, struct usb_request *req)
 	}
 }
 
+#define MAX_BUF_LEN	4096
 static ssize_t ffs_epfile_io(struct file *file,
 			     char __user *buf, size_t len, int read)
 {
@@ -919,10 +920,19 @@ first_try:
 				ret = -ENODEV;
 			spin_unlock_irq(&epfile->ffs->eps_lock);
 			if (read && ret > 0) {
-				if (ret > len)
+				if (len != MAX_BUF_LEN && ret < len)
+					pr_err("less data(%zd) recieved than intended length(%zu)\n",
+								ret, len);
+				if (ret > len) {
 					ret = -EOVERFLOW;
-				else if (unlikely(copy_to_user(buf, data, ret)))
+					pr_err("More data(%zd) recieved than intended length(%zu)\n",
+								ret, len);
+				} else if (unlikely(copy_to_user(
+							buf, data, ret))) {
+					pr_err("Fail to copy to user len:%zd\n",
+									ret);
 					ret = -EFAULT;
+				}
 			}
 		}
 	}
@@ -930,6 +940,8 @@ first_try:
 	mutex_unlock(&epfile->mutex);
 error:
 	kfree(data);
+	if (ret < 0)
+		pr_err("Error: returning %zd value\n", ret);
 	return ret;
 }
 
