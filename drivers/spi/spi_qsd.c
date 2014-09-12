@@ -2307,14 +2307,6 @@ static int msm_spi_transfer_one_message(struct spi_master *master,
 	if (dd->use_rlock)
 		remote_mutex_unlock(&dd->r_lock);
 
-	mutex_unlock(&dd->core_lock);
-
-	/*
-	 * If needed, this can be done after the current message is complete,
-	 * and work can be continued upon resume. No motivation for now.
-	 */
-	if (dd->suspended)
-		wake_up_interruptible(&dd->continue_suspend);
 
 	/*
 	 * Put local resources prior to calling finalize to ensure the hw
