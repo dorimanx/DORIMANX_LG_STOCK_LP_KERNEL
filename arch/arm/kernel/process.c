@@ -354,7 +354,7 @@ static void show_data(unsigned long addr, int nbytes, const char *name)
 				if (is_cma || probe_kernel_address(p, data)) {
 					printk(" ********");
 				} else {
-					printk(" %08x", data);
+					printk(KERN_CONT " %08x", data);
 				}
 				++p;
 			}
@@ -362,7 +362,7 @@ static void show_data(unsigned long addr, int nbytes, const char *name)
 				printk(" ********");
 			}
 		}
-		printk("\n");
+		printk(KERN_CONT "\n");
 	}
 }
 
