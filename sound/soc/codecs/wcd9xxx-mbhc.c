@@ -5062,7 +5062,7 @@ int wcd9xxx_mbhc_init(struct wcd9xxx_mbhc *mbhc, struct wcd9xxx_resmgr *resmgr,
 
 	core_res = mbhc->resmgr->core_res;
 #if defined(CONFIG_SWITCH_MAX1462X)|| defined(CONFIG_INPUT_MAX14688)
-	goto skip;
+	goto skip_lg;
 #endif
 	if (is_mbhc_disabled())
 		goto skip;
@@ -5128,7 +5128,7 @@ skip :
 	wcd9xxx_regmgr_cond_register(resmgr, 1 << WCD9XXX_COND_HPH_MIC |
 					     1 << WCD9XXX_COND_HPH);
 #if defined(CONFIG_SWITCH_MAX1462X)|| defined(CONFIG_INPUT_MAX14688)
-skip:
+skip_lg:
 #endif
 	pr_debug("%s: leave ret %d\n", __func__, ret);
 	return ret;
