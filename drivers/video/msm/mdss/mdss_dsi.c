@@ -1383,7 +1383,9 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 	switch (event) {
 	case MDSS_EVENT_UNBLANK:
 #ifdef CONFIG_POWERSUSPEND
-		set_power_suspend_state_panel_hook(POWER_SUSPEND_INACTIVE);
+		if (suspend_mode == 2)
+			set_power_suspend_state_panel_hook(
+				POWER_SUSPEND_INACTIVE);
 #endif
 		rc = mdss_dsi_on(pdata);
 		mdss_dsi_op_mode_config(pdata->panel_info.mipi.mode,
@@ -1412,7 +1414,9 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 #endif
 
 #ifdef CONFIG_POWERSUSPEND
-		set_power_suspend_state_panel_hook(POWER_SUSPEND_ACTIVE);
+		if (suspend_mode == 2)
+			set_power_suspend_state_panel_hook(
+				POWER_SUSPEND_ACTIVE);
 #endif
 		break;
 	case MDSS_EVENT_CONT_SPLASH_FINISH:
