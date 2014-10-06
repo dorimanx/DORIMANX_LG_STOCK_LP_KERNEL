@@ -513,7 +513,7 @@ static ssize_t show_##file_name				\
 	if (!cpu_policy)				\
 		return -EINVAL;					\
 											\
-	freq = cpu_policy->object; 			\
+	freq = cpu_policy->object;			\
 											\
 	__cpufreq_cpu_put(cpu_policy, 1);			\
 												\
@@ -538,7 +538,7 @@ static ssize_t show_##file_name##num_core				\
 			put_online_cpus();									\
 			return -EINVAL;									\
 		}													\
-		freq = cpu_policy->object; 						\
+		freq = cpu_policy->object;						\
 		__cpufreq_cpu_put(cpu_policy, 1);			\
 	}											\
 	put_online_cpus();						\
