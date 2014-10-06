@@ -425,7 +425,6 @@ out:
 	return err;
 }
 
-
 /**
  * cpufreq_per_cpu_attr_read() / show_##file_name() -
  * print out cpufreq information
@@ -784,15 +783,17 @@ static ssize_t store_scaling_governor_all_cpus(struct kobject *a, struct attribu
 			continue;
 		}
 #endif
-		cpu_policy = __cpufreq_cpu_get(cpu, 0);
+		cpu_policy = __cpufreq_cpu_get(cpu, 1);
 		if (!cpu_policy)
 			continue;
 
 		ret = store_scaling_governor(cpu_policy, buf, count);
 
-		__cpufreq_cpu_put(cpu_policy, 0);
+		__cpufreq_cpu_put(cpu_policy, 1);
 	}
 	put_online_cpus();
+
+	return count;
 }
 
 #define store_pcpu_scaling_governor(num_core)					\
@@ -2265,7 +2266,6 @@ int cpufreq_get_policy(struct cpufreq_policy *policy, unsigned int cpu)
 }
 EXPORT_SYMBOL(cpufreq_get_policy);
 
-
 /*
  * data   : current policy.
  * policy : policy to be set.
@@ -2684,9 +2684,7 @@ static int cpu_freq_notify(struct notifier_block *b,
 static int __init cpufreq_core_init(void)
 {
 	int cpu;
-#if defined(CONFIG_CPU_VOLTAGE_TABLE) || defined(CONFIG_MULTI_CPU_POLICY_LIMIT)
 	int rc;
-#endif /* CONFIG_CPU_VOLTAGE_TABLE || CONFIG_MULTI_CPU_POLICY_LIMIT*/
 
 	if (cpufreq_disabled())
 		return -ENODEV;
