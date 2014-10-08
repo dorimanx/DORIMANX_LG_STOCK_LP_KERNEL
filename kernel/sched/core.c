@@ -7318,6 +7318,10 @@ fail:
 	notify = task_notify_on_migrate(p);
 
 	raw_spin_unlock(&p->pi_lock);
+	if (moved && !same_freq_domain(src_cpu, dest_cpu)) {
+		check_for_freq_change(rq_src);
+		check_for_freq_change(rq_dest);
+	}
 	if (moved && task_notify_on_migrate(p)) {
 		struct migration_notify_data mnd;
 
