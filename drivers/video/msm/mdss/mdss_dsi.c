@@ -22,9 +22,6 @@
 #include <linux/err.h>
 #include <linux/regulator/consumer.h>
 #include <mach/board_lge.h>
-#ifdef CONFIG_POWERSUSPEND
-#include <linux/powersuspend.h>
-#endif
 
 #include "mdss.h"
 #include "mdss_panel.h"
@@ -1382,11 +1379,6 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 
 	switch (event) {
 	case MDSS_EVENT_UNBLANK:
-#ifdef CONFIG_POWERSUSPEND
-		if (suspend_mode == 2)
-			set_power_suspend_state_panel_hook(
-				POWER_SUSPEND_INACTIVE);
-#endif
 		rc = mdss_dsi_on(pdata);
 		mdss_dsi_op_mode_config(pdata->panel_info.mipi.mode,
 							pdata);
@@ -1413,11 +1405,6 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
         }
 #endif
 
-#ifdef CONFIG_POWERSUSPEND
-		if (suspend_mode == 2)
-			set_power_suspend_state_panel_hook(
-				POWER_SUSPEND_ACTIVE);
-#endif
 		break;
 	case MDSS_EVENT_CONT_SPLASH_FINISH:
 		if (ctrl_pdata->off_cmds.link_state == DSI_LP_MODE)
