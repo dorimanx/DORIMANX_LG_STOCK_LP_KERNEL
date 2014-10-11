@@ -81,6 +81,28 @@ struct cpufreq_suspend_t {
 
 static DEFINE_PER_CPU(struct cpufreq_suspend_t, cpufreq_suspend);
 
+static unsigned int upper_limit_freq[NR_CPUS] = {0, 0, 0, 0};
+
+unsigned int get_max_lock(unsigned int cpu)
+{
+	if (cpu >= 0 && cpu <= NR_CPUS)
+		return upper_limit_freq[cpu];
+	else
+		return -EINVAL;
+}
+EXPORT_SYMBOL(get_max_lock);
+
+void set_max_lock(unsigned int cpu, unsigned int freq)
+{
+	if (cpu >= 0 && cpu <= NR_CPUS) {
+		if (freq < 300000 || freq > 2803200)
+			upper_limit_freq[cpu] = 0;
+		else
+			upper_limit_freq[cpu] = freq;
+	}
+}
+EXPORT_SYMBOL(set_max_lock);
+
 unsigned long msm_cpufreq_get_bw(void)
 {
 	return mem_bw[max_freq_index];
@@ -124,6 +146,21 @@ static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq,
 	int saved_sched_rt_prio = -EINVAL;
 	struct cpufreq_freqs freqs;
 	struct sched_param param = { .sched_priority = MAX_RT_PRIO-1 };
+	unsigned int limited_cpu_freq = upper_limit_freq[policy->cpu];
+
+	if (limited_cpu_freq) {
+		unsigned int t_freq = new_freq;
+
+		if (limited_cpu_freq && new_freq > limited_cpu_freq)
+			t_freq = limited_cpu_freq;
+
+		new_freq = t_freq;
+
+		if (new_freq < policy->min)
+			new_freq = policy->min;
+		if (new_freq > policy->max)
+			new_freq = policy->max;
+	}
 
 	freqs.old = policy->cur;
 	freqs.new = new_freq;
