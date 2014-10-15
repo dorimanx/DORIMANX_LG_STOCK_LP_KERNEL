@@ -2368,7 +2368,10 @@ static int msm_spi_setup(struct spi_device *spi)
 	dd = spi_master_get_devdata(spi->master);
 
 	pm_runtime_get_sync(dd->dev);
-	get_local_resources(dd);
+	rc = get_local_resources(dd);
+	if (rc)
+		goto no_resources;
+
 
 	mutex_lock(&dd->core_lock);
 
@@ -2414,6 +2417,7 @@ no_resources:
 err_setup_exit:
 	mutex_unlock(&dd->core_lock);
 	put_local_resources(dd);
+no_resources:
 	pm_runtime_mark_last_busy(dd->dev);
 	pm_runtime_put_autosuspend(dd->dev);
 	return rc;
