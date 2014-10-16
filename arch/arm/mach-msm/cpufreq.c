@@ -81,6 +81,7 @@ struct cpufreq_suspend_t {
 
 static DEFINE_PER_CPU(struct cpufreq_suspend_t, cpufreq_suspend);
 
+#ifdef CONFIG_MSM_CPUFREQ_LIMITER
 static unsigned int upper_limit_freq[NR_CPUS] = {0, 0, 0, 0};
 static unsigned int lower_limit_freq[NR_CPUS];
 
@@ -123,6 +124,7 @@ void set_max_lock(unsigned int cpu, unsigned int freq)
 	}
 }
 EXPORT_SYMBOL(set_max_lock);
+#endif
 
 unsigned long msm_cpufreq_get_bw(void)
 {
@@ -167,6 +169,7 @@ static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq,
 	int saved_sched_rt_prio = -EINVAL;
 	struct cpufreq_freqs freqs;
 	struct sched_param param = { .sched_priority = MAX_RT_PRIO-1 };
+#ifdef CONFIG_MSM_CPUFREQ_LIMITER
 	unsigned int ll_freq = lower_limit_freq[policy->cpu];
 	unsigned int ul_freq = upper_limit_freq[policy->cpu];
 
@@ -186,6 +189,7 @@ static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq,
 		if (new_freq > policy->max)
 			new_freq = policy->max;
 	}
+#endif
 
 	freqs.old = policy->cur;
 	freqs.new = new_freq;
