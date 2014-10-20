@@ -750,7 +750,7 @@ static int dwc3_otg_set_power(struct usb_phy *phy, unsigned mA)
 				goto psy_error;
 		}
 #endif
-	} else if (dotg->charger->max_power > 0 && (mA == 0 || mA == 2)) {
+	} else if (mA == 0 || mA == 2) {
 		/* Disable charging */
 		if (power_supply_set_online(dotg->psy, false))
 			goto psy_error;
