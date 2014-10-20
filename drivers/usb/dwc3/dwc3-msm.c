@@ -3733,6 +3733,7 @@ static int __devinit dwc3_msm_probe(struct platform_device *pdev)
 	/* usb_psy required only for vbus_notifications or charging support */
 	if (mdwc->ext_xceiv.otg_capability ||
 			!mdwc->charger.charging_disabled) {
+		mdwc->current_max = DWC3_IDEV_CHG_MIN * 1000;
 		mdwc->usb_psy.name = "usb";
 #ifdef CONFIG_LGE_PM
 		/* B2-BSP-USB@lge.com
