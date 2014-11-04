@@ -1413,6 +1413,7 @@ exit:
 
 static int __validate_send_cmd_inputs(struct qseecom_dev_handle *data,
 				struct qseecom_send_cmd_req *req)
+
 {
 	if (!data || !data->client.ihandle) {
 		pr_err("Client or client handle is not initialized\n");
@@ -1429,10 +1430,10 @@ static int __validate_send_cmd_inputs(struct qseecom_dev_handle *data,
 		pr_err("cmd buffer address not within shared bufffer\n");
 		return -EINVAL;
 	}
-	if (((uintptr_t)req->resp_buf <
-				data->client.user_virt_sb_base)  ||
-		((uintptr_t)req->resp_buf >=
-		(data->client.user_virt_sb_base + data->client.sb_length))) {
+
+	if (((uintptr_t)req->resp_buf < data->client.user_virt_sb_base)  ||
+		((uintptr_t)req->resp_buf >= (data->client.user_virt_sb_base +
+					data->client.sb_length))) {
 		pr_err("response buffer address not within shared bufffer\n");
 		return -EINVAL;
 	}
@@ -1448,8 +1449,8 @@ static int __validate_send_cmd_inputs(struct qseecom_dev_handle *data,
 	}
 
 	if ((req->cmd_req_len + req->resp_len) > data->client.sb_length) {
-		pr_debug("Not enough memory to fit cmd_buf.\n");
-		pr_debug("resp_buf. Required: %u, Available: %zu\n",
+		pr_debug("Not enough memory to fit cmd_buf and "
+			"resp_buf. Required: %u, Available: %u\n",
 				(req->cmd_req_len + req->resp_len),
 					data->client.sb_length);
 		return -ENOMEM;
@@ -1608,6 +1609,7 @@ int __boundary_checks_offset(struct qseecom_send_modfd_cmd_req *cmd_req,
 }
 
 #define SG_ENTRY_SZ   sizeof(struct qseecom_sg_entry)
+
 static int __qseecom_update_cmd_buf(void *msg, bool cleanup,
 					struct qseecom_dev_handle *data,
 					bool listener_svc)
@@ -1708,7 +1710,7 @@ static int __qseecom_update_cmd_buf(void *msg, bool cleanup,
 				}
 			} else if ((listener_svc) &&
 					(lstnr_resp->ifd_data[i].fd > 0)) {
-				if ((lstnr_resp->resp_len <
+					if ((lstnr_resp->resp_len <
 					SG_ENTRY_SZ * sg_ptr->nents) ||
 					(lstnr_resp->ifd_data[i].cmd_buf_offset >
 					(lstnr_resp->resp_len -
