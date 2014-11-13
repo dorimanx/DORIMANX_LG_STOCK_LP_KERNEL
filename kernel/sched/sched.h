@@ -986,6 +986,27 @@ dec_cumulative_runnable_avg(struct hmp_sched_stats *stats,
 #define real_to_pct(tunable)	\
 		(div64_u64((u64)tunable * (u64)100, (u64)max_task_load()))
 
+#define SCHED_HIGH_IRQ_TIMEOUT 3
+static inline u64 sched_irqload(int cpu)
+{
+	struct rq *rq = cpu_rq(cpu);
+	s64 delta;
+
+	delta = get_jiffies_64() - rq->irqload_ts;
+	BUG_ON(delta < 0);
+
+	if (delta < SCHED_HIGH_IRQ_TIMEOUT)
+		return rq->avg_irqload;
+	else
+		return 0;
+}
+
+#define SCHED_HIGH_IRQ_NS (10 * NSEC_PER_MSEC)
+static inline int sched_cpu_high_irqload(int cpu)
+{
+	return sched_irqload(cpu) >= SCHED_HIGH_IRQ_NS;
+}
+
 #else	/* CONFIG_SCHED_HMP */
 
 struct hmp_sched_stats;
@@ -1016,6 +1037,8 @@ static inline void sched_account_irqtime(int cpu, struct task_struct *curr,
 				 u64 delta, u64 wallclock)
 {
 }
+
+static inline int sched_cpu_high_irqload(int cpu) { return 0; }
 
 #endif	/* CONFIG_SCHED_HMP */
 
