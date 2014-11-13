@@ -635,6 +635,10 @@ struct rq {
 	u32 mostly_idle_load;
 	int mostly_idle_nr_run;
 
+	u64 cur_irqload;
+	u64 avg_irqload;
+	u64 irqload_ts;
+
 #ifdef CONFIG_SCHED_FREQ_INPUT
 	unsigned int old_busy_time;
 	int notifier_sent;
