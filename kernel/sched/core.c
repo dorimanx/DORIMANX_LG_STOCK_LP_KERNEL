@@ -9916,6 +9916,7 @@ void __init sched_init(void)
 		rq->avg_irqload = 0;
 		rq->irqload_ts = 0;
 		rq->cluster = &init_cluster;
+		rq->mostly_idle_freq = 0;
 #ifdef CONFIG_SCHED_FREQ_INPUT
 		rq->old_busy_time = 0;
 		rq->curr_runnable_sum = rq->prev_runnable_sum = 0;
