@@ -257,8 +257,6 @@ static void clean_txn_info(struct qmi_handle *handle)
 
 int qmi_handle_destroy(struct qmi_handle *handle)
 {
-	int rc;
-
 	if (!handle)
 		return -EINVAL;
 
@@ -267,8 +265,9 @@ int qmi_handle_destroy(struct qmi_handle *handle)
 	clean_txn_info(handle);
 	mutex_unlock(&handle->handle_lock);
 	flush_delayed_work(&handle->resume_tx_work);
-	rc = wait_event_interruptible(handle->reset_waitq,
-				      list_empty(&handle->txn_list));
+	wait_event(handle->reset_waitq,
+		   (list_empty(&handle->txn_list) &&
+		    list_empty(&handle->pending_txn_list)));
 
 	/* TODO: Destroy client owned transaction */
 	msm_ipc_router_close_port((struct msm_ipc_port *)(handle->src_port));
