@@ -2036,7 +2036,7 @@ static int best_small_task_cpu(struct task_struct *p, int sync)
 						  cpu_load_sync(i, sync), sync),
 				     sched_irqload(i),
 				     power_cost(scale_load_to_cpu(task_load(p),
-						i), i));
+						i), i), cpu_temp(i));
 
 		if (cpu_max_possible_capacity(i) == max_possible_capacity &&
 		    hmp_capable) {
@@ -2321,7 +2321,7 @@ static int select_best_cpu(struct task_struct *p, int target, int reason,
 						  cpu_load_sync(i, sync), sync),
 				     sched_irqload(i),
 				     power_cost(scale_load_to_cpu(task_load(p),
-						i), i));
+						i), i), cpu_temp(i));
 		if (skip_freq_domain(task_cpu(p), i, reason, pref_cluster)) {
 			cpumask_andnot(&search_cpus, &search_cpus,
 						&rq->freq_domain_cpumask);
@@ -3149,6 +3149,16 @@ static inline int is_task_migration_throttled(struct task_struct *p)
 
 	return delta < sched_min_runtime;
 }
+
+unsigned int cpu_temp(int cpu)
+{
+	struct cpu_pwr_stats *per_cpu_info = get_cpu_pwr_stats();
+	if (per_cpu_info)
+		return per_cpu_info[cpu].temp;
+	else
+		return 0;
+}
+
 #else	/* CONFIG_SCHED_HMP */
 
 #define sysctl_sched_enable_power_aware 0
@@ -3223,6 +3233,11 @@ static inline void
 dec_hmp_sched_stats_fair(struct rq *rq, struct task_struct *p) { }
 
 #define preferred_cluster(...) 1
+
+unsigned int cpu_temp(int cpu)
+{
+	return 0;
+}
 
 #endif	/* CONFIG_SCHED_HMP */
 
@@ -6856,7 +6871,8 @@ static inline void update_sg_lb_stats(struct lb_env *env,
 		trace_sched_cpu_load(cpu_rq(i), idle_cpu(i),
 				     mostly_idle_cpu(i),
 				     sched_irqload(i),
-				     power_cost_at_freq(i, 0));
+				     power_cost_at_freq(i, 0),
+				     cpu_temp(i));
 		nr_running = rq->cfs.h_nr_running;
 
 		/* Bias balancing toward cpus of our domain */
