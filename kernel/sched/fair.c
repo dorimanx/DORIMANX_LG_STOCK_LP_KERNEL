@@ -6862,7 +6862,7 @@ static bool update_sd_pick_busiest(struct lb_env *env,
 	 * prioritize spreading work over power optimization.
 	 */
 	cpu = cpumask_first(sched_group_cpus(sg));
-	if (!sds->busiest && sg->group_weight == 1 &&
+	if (!sds->busiest && (capacity(env->dst_rq) == group_rq_capacity(sg)) &&
 	    sgs->sum_nr_running && (env->idle != CPU_NOT_IDLE) &&
 	    power_cost_at_freq(env->dst_cpu, 0) <
 	    power_cost_at_freq(cpu, 0) &&
