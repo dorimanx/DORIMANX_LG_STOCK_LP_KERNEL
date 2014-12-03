@@ -958,6 +958,11 @@ static inline u64 scale_load_to_cpu(u64 task_load, int cpu)
 	return task_load;
 }
 
+static inline int capacity(struct rq *rq)
+{
+	return rq->capacity;
+}
+
 static inline void
 inc_cumulative_runnable_avg(struct hmp_sched_stats *stats,
 				 struct task_struct *p)
@@ -1031,6 +1036,11 @@ static inline unsigned int nr_eligible_big_tasks(int cpu)
 }
 
 static inline int pct_task_load(struct task_struct *p) { return 0; }
+
+static inline int capacity(struct rq *rq)
+{
+	return SCHED_LOAD_SCALE;
+}
 
 static inline void inc_cumulative_runnable_avg(struct hmp_sched_stats *stats,
 		 struct task_struct *p)
@@ -1115,7 +1125,6 @@ static inline void clear_reserved(int cpu)
 	clear_bit(CPU_RESERVED, &rq->hmp_flags);
 }
 
-
 int mostly_idle_cpu(int cpu);
 extern void check_for_migration(struct rq *rq, struct task_struct *p);
 extern void pre_big_small_task_count_change(const struct cpumask *cpus);
@@ -1125,6 +1134,7 @@ extern unsigned int power_cost(u64 task_load, int cpu);
 extern unsigned int power_cost_at_freq(int cpu, unsigned int freq);
 extern void reset_all_window_stats(u64 window_start, unsigned int window_size);
 extern void boost_kick(int cpu);
+extern int sched_boost(void);
 
 #else /* CONFIG_SCHED_HMP */
 
@@ -1458,8 +1468,8 @@ static const u32 prio_to_wmult[40] = {
 #else
 #define ENQUEUE_WAKING		0
 #endif
-#define ENQUEUE_REPLENISH	8
 #define ENQUEUE_MIGRATING	8
+#define ENQUEUE_REPLENISH	16
 
 #define DEQUEUE_SLEEP		1
 #define DEQUEUE_MIGRATING	2
