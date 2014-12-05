@@ -2478,7 +2478,7 @@ done:
 	 * tracepoint towards end to capture prefer_idle flag used for this
 	 * instance of wakeup.
 	 */
-	trace_sched_task_load(p, small_task, boost, reason, sync);
+	trace_sched_task_load(p, small_task, boost, reason, sync, prefer_idle);
 
 	return best_cpu;
 }
