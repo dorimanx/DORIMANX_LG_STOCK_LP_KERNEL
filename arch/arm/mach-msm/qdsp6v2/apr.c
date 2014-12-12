@@ -351,8 +351,8 @@ struct apr_svc *apr_register(char *dest, char *svc_name, apr_fn svc_fn,
 	} else if (dest_id == APR_DEST_MODEM) {
 		if (apr_get_modem_state() == APR_SUBSYS_DOWN) {
 			if (is_modem_up) {
-				pr_err("%s: modem shutdown \
-					due to SSR, return", __func__);
+				pr_err("%s: modem shutdown due to SSR, ret",
+					__func__);
 				return NULL;
 			}
 			pr_debug("%s: Wait for modem to bootup\n", __func__);
@@ -391,7 +391,6 @@ struct apr_svc *apr_register(char *dest, char *svc_name, apr_fn svc_fn,
 		pr_err("APR: Service needs reset\n");
 		goto done;
 	}
-	svc->priv = priv;
 	svc->id = svc_id;
 	svc->dest_id = dest_id;
 	svc->client_id = client_id;
@@ -416,6 +415,7 @@ struct apr_svc *apr_register(char *dest, char *svc_name, apr_fn svc_fn,
 			svc->fn = svc_fn;
 			if (svc->port_cnt)
 				svc->svc_cnt++;
+			svc->priv = priv;
 		}
 	}
 
@@ -754,7 +754,7 @@ static int modem_notifier_cb(struct notifier_block *this, unsigned long code,
 		if (apr_cmpxchg_modem_state(APR_SUBSYS_DOWN, APR_SUBSYS_UP) ==
 						APR_SUBSYS_DOWN)
 			wake_up(&modem_wait);
-                is_modem_up = 1;
+		is_modem_up = 1;
 		pr_debug("M-Notify: Bootup Completed\n");
 		break;
 	default:
