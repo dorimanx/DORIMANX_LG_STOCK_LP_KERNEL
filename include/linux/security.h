@@ -145,6 +145,7 @@ struct request_sock;
 #define LSM_UNSAFE_SHARE	1
 #define LSM_UNSAFE_PTRACE	2
 #define LSM_UNSAFE_PTRACE_CAP	4
+#define LSM_UNSAFE_NO_NEW_PRIVS	8
 
 #ifdef CONFIG_MMU
 extern int mmap_min_addr_handler(struct ctl_table *table, int write,
@@ -2278,6 +2279,16 @@ static inline int security_dentry_open(struct file *file,
 				       const struct cred *cred)
 {
 	return 0;
+}
+
+static inline int security_file_close(struct file *file)
+{
+	return 0;
+}
+
+static inline bool security_allow_merge_bio(struct bio *bio1, struct bio *bio2)
+{
+	return true; /* The default is to allow it for performance */
 }
 
 static inline int security_file_close(struct file *file)
