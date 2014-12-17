@@ -666,6 +666,7 @@ struct rq {
 	int capacity;
 	int max_possible_capacity;
 	u64 window_start;
+	int prefer_idle;
 	u32 mostly_idle_load;
 	int mostly_idle_nr_run;
 	unsigned long hmp_flags;

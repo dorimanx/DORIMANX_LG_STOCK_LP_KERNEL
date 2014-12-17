@@ -1487,13 +1487,6 @@ static int __read_mostly sched_upmigrate_min_nice = 15;
 int __read_mostly sysctl_sched_upmigrate_min_nice = 15;
 
 /*
- * Tunable to govern scheduler wakeup placement CPU selection
- * preference. If set, the scheduler chooses to wake up a task
- * on an idle CPU.
- */
-unsigned int __read_mostly sysctl_sched_prefer_idle;
-
-/*
  * The load scale factor of a CPU gets boosted when its max frequency
  * is restricted due to which the tasks are migrating to higher capacity
  * CPUs early. The sched_upmigrate threshold is auto-upgraded by
@@ -1584,6 +1577,22 @@ int sched_set_init_task_load(struct task_struct *p, int init_load_pct)
 	p->init_load_pct = init_load_pct;
 
 	return 0;
+}
+
+int sched_set_cpu_prefer_idle(int cpu, int prefer_idle)
+{
+	struct rq *rq = cpu_rq(cpu);
+
+	rq->prefer_idle = !!prefer_idle;
+
+	return 0;
+}
+
+int sched_get_cpu_prefer_idle(int cpu)
+{
+	struct rq *rq = cpu_rq(cpu);
+
+	return rq->prefer_idle;
 }
 
 int sched_set_cpu_mostly_idle_load(int cpu, int mostly_idle_pct)
@@ -2179,13 +2188,27 @@ static int select_packing_target(struct task_struct *p, int best_cpu)
 	return target;
 }
 
+/*
+ * Should task be woken to any available idle cpu?
+ *
+ * Waking tasks to idle cpu has mixed implications on both performance and
+ * power. In many cases, scheduler can't estimate correctly impact of using idle
+ * cpus on either performance or power. PF_WAKE_UP_IDLE allows external kernel
+ * module to pass a strong hint to scheduler that the task in question should be
+ * woken to idle cpu, generally to improve performance.
+ */
+static inline int wake_to_idle(struct task_struct *p)
+{
+	return (current->flags & PF_WAKE_UP_IDLE) ||
+			 (p->flags & PF_WAKE_UP_IDLE);
+}
 
 /* return cheapest cpu that can fit this task */
 static int select_best_cpu(struct task_struct *p, int target, int reason,
 			   int sync)
 {
-	int i, j, best_cpu = -1, fallback_idle_cpu = -1, min_cstate_cpu = -1;
-	int prev_cpu;
+	int i, j, prev_cpu, best_cpu = -1;
+	int fallback_idle_cpu = -1, min_cstate_cpu = -1;
 	int cpu_cost, min_cost = INT_MAX;
 	int min_idle_cost = INT_MAX, min_busy_cost = INT_MAX;
 	u64 tload, cpu_load;
@@ -2193,25 +2216,25 @@ static int select_best_cpu(struct task_struct *p, int target, int reason,
 	int small_task = is_small_task(p);
 	int boost = sched_boost();
 	int cstate, min_cstate = INT_MAX;
-	int prefer_idle = reason ? 1 : sysctl_sched_prefer_idle;
-
+	int prefer_idle = -1;
+	int prefer_idle_override = 0;
 	cpumask_t search_cpus;
-	struct rq * trq;
+	struct rq *trq;
 
-	/*
-	 * PF_WAKE_UP_IDLE is a hint to scheduler that the thread waking up
-	 * (p) needs to be placed on idle cpu.
-	 */
-	if ((current->flags & PF_WAKE_UP_IDLE) ||
-			 (p->flags & PF_WAKE_UP_IDLE)) {
+	if (reason) {
 		prefer_idle = 1;
+		prefer_idle_override = 1;
+	}
+
+	if (wake_to_idle(p)) {
+		prefer_idle = 1;
+		prefer_idle_override = 1;
 		small_task = 0;
 	}
 
-	trace_sched_task_load(p, small_task, boost, reason, sync);
-
 	if (small_task && !boost) {
 		best_cpu = best_small_task_cpu(p, sync);
+		prefer_idle = 0;	/* For sched_task_load tracepoint */
 		goto done;
 	}
 
@@ -2260,6 +2283,10 @@ static int select_best_cpu(struct task_struct *p, int target, int reason,
 			continue;
 		}
 
+		/* Set prefer_idle based on the cpu where task will first fit */
+		if (prefer_idle == -1)
+			prefer_idle = cpu_rq(i)->prefer_idle;
+
 		cpu_load = cpu_load_sync(i, sync);
 		if (!eligible_cpu(tload, cpu_load, i, sync))
 			continue;
@@ -2285,6 +2312,8 @@ static int select_best_cpu(struct task_struct *p, int target, int reason,
 			min_cstate = INT_MAX;
 			min_cstate_cpu = -1;
 			best_cpu = -1;
+			if (!prefer_idle_override)
+				prefer_idle = cpu_rq(i)->prefer_idle;
 		}
 
 		/*
@@ -2344,7 +2373,7 @@ static int select_best_cpu(struct task_struct *p, int target, int reason,
 	}
 
 	if (min_cstate_cpu >= 0 &&
-	    (prefer_idle || !(best_cpu >= 0 &&
+	    (prefer_idle > 0 || !(best_cpu >= 0 &&
 			      mostly_idle_cpu_sync(best_cpu, min_load, sync))))
 		best_cpu = min_cstate_cpu;
 done:
@@ -2360,8 +2389,15 @@ done:
 			best_cpu = fallback_idle_cpu;
 	}
 
-	if (cpu_rq(best_cpu)->mostly_idle_freq)
+	if (cpu_rq(best_cpu)->mostly_idle_freq && !prefer_idle_override)
 		best_cpu = select_packing_target(p, best_cpu);
+
+	/*
+	 * prefer_idle is initialized towards middle of function. Leave this
+	 * tracepoint towards end to capture prefer_idle flag used for this
+	 * instance of wakeup.
+	 */
+	trace_sched_task_load(p, small_task, boost, reason, sync);
 
 	return best_cpu;
 }
