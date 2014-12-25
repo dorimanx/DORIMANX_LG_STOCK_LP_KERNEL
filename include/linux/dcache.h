@@ -328,9 +328,6 @@ static inline int __d_rcu_to_refcount(struct dentry *dentry, unsigned seq)
 	return ret;
 }
 
-/* validate "insecure" dentry pointer */
-extern int d_validate(struct dentry *, struct dentry *);
-
 /*
  * helper function for dentry_operations.d_dname() members
  */
