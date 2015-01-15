@@ -394,8 +394,10 @@ static int __cpuinit msm_cpufreq_cpu_callback(struct notifier_block *nfb,
 		if (rc < 0)
 			return NOTIFY_BAD;
 		rc = clk_prepare(cpu_clk[cpu]);
-		if (rc < 0)
+		if (rc < 0) {
+			clk_unprepare(l2_clk);
 			return NOTIFY_BAD;
+		}
 		update_l2_bw(&cpu);
 		break;
 	case CPU_STARTING:
@@ -403,9 +405,10 @@ static int __cpuinit msm_cpufreq_cpu_callback(struct notifier_block *nfb,
 		if (rc < 0)
 			return NOTIFY_BAD;
 		rc = clk_enable(cpu_clk[cpu]);
-		if (rc < 0)
+		if (rc) {
+			clk_disable(l2_clk);
 			return NOTIFY_BAD;
-
+		}
 		break;
 	default:
 		break;
