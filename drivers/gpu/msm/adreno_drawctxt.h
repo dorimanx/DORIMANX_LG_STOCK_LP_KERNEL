@@ -1,4 +1,4 @@
-/* Copyright (c) 2002,2007-2014, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2002,2007-2015, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -133,6 +133,7 @@ extern const struct adreno_context_ops adreno_preamble_ctx_ops;
  * @fault_policy: GFT fault policy set in cmdbatch_skip_cmd();
  * @queued_timestamp: The last timestamp that was queued on this context
  * @submitted_timestamp: The last timestamp that was submitted for this context
+ * @flags: Flags used for knowing certain states of the drawctxt
  */
 struct adreno_context {
 	struct kgsl_context base;
@@ -183,7 +184,13 @@ struct adreno_context {
 	unsigned int fault_policy;
 	unsigned int queued_timestamp;
 	unsigned int submitted_timestamp;
+	unsigned long flags;
 };
+
+/* Flag definitions for flag field in adreno_context */
+
+/* Set when sync timer of cmdbatch belonging to the context times out */
+#define ADRENO_CONTEXT_CMDBATCH_FLAG_FENCE_LOG	BIT(0)
 
 /**
  * enum adreno_context_priv - Private flags for an adreno draw context
