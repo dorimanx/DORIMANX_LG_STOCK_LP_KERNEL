@@ -543,7 +543,9 @@ int diag_process_smd_read_data(struct diag_smd_info *smd_info, void *buf,
 
 	return 0;
 err:
-	if (driver->logging_mode == MEMORY_DEVICE_MODE)
+	if ((smd_info->type == SMD_DATA_TYPE ||
+	     smd_info->type == SMD_CMD_TYPE) &&
+	     driver->logging_mode == MEMORY_DEVICE_MODE)
 		diag_ws_on_read(0);
 
 #ifdef CONFIG_LGE_DM_APP
@@ -558,6 +560,12 @@ void diag_smd_queue_read(struct diag_smd_info *smd_info)
 {
 	if (!smd_info || !smd_info->ch)
 		return;
+
+	if ((smd_info->type == SMD_DATA_TYPE ||
+	     smd_info->type == SMD_CMD_TYPE) &&
+	     driver->logging_mode == MEMORY_DEVICE_MODE) {
+		diag_ws_on_notify();
+	}
 
 	switch (smd_info->type) {
 	case SMD_DCI_TYPE:
@@ -577,12 +585,12 @@ void diag_smd_queue_read(struct diag_smd_info *smd_info)
 	default:
 		pr_err("diag: In %s, invalid type: %d\n", __func__,
 			smd_info->type);
+		if ((smd_info->type == SMD_DATA_TYPE ||
+		     smd_info->type == SMD_CMD_TYPE) &&
+		     driver->logging_mode == MEMORY_DEVICE_MODE)
+			diag_ws_on_read(0);
 		return;
 	}
-
-	if (driver->logging_mode == MEMORY_DEVICE_MODE &&
-	    smd_info->type == SMD_DATA_TYPE)
-		diag_ws_on_notify();
 
 #ifdef CONFIG_LGE_DM_APP
     if (driver->logging_mode == DM_APP_MODE &&
@@ -812,9 +820,11 @@ void diag_smd_send_req(struct diag_smd_info *smd_info)
 				}
 			}
 		}
-		if (smd_info->type == SMD_DATA_TYPE &&
-		    driver->logging_mode == MEMORY_DEVICE_MODE)
-			diag_ws_on_read(pkt_len);
+
+		if ((smd_info->type == SMD_DATA_TYPE ||
+		     smd_info->type == SMD_CMD_TYPE) &&
+		     driver->logging_mode == MEMORY_DEVICE_MODE)
+			diag_ws_on_read(total_recd);
 
 #ifdef CONFIG_LGE_DM_APP
         if (smd_info->type == SMD_DATA_TYPE &&
@@ -862,11 +872,19 @@ void diag_smd_send_req(struct diag_smd_info *smd_info)
 	}
 #endif
 
+          else {
+		if ((smd_info->type == SMD_DATA_TYPE ||
+		     smd_info->type == SMD_CMD_TYPE) &&
+		     driver->logging_mode == MEMORY_DEVICE_MODE) {
+			diag_ws_on_read(0);
+		}
+        }
 	return;
 
 fail_return:
-	if (smd_info->type == SMD_DATA_TYPE &&
-	    driver->logging_mode == MEMORY_DEVICE_MODE)
+	if ((smd_info->type == SMD_DATA_TYPE ||
+	     smd_info->type == SMD_CMD_TYPE) &&
+	     driver->logging_mode == MEMORY_DEVICE_MODE)
 		diag_ws_on_read(0);
 
 #ifdef CONFIG_LGE_DM_APP
@@ -2447,11 +2465,11 @@ void diag_smd_notify(void *ctxt, unsigned event)
 			diag_dci_notify_client(smd_info->peripheral_mask,
 							DIAG_STATUS_OPEN);
 		}
-		wake_up(&driver->smd_wait_q);
 		diag_smd_queue_read(smd_info);
+		wake_up(&driver->smd_wait_q);
 	} else if (event == SMD_EVENT_DATA) {
-		wake_up(&driver->smd_wait_q);
 		diag_smd_queue_read(smd_info);
+		wake_up(&driver->smd_wait_q);
 		if (smd_info->type == SMD_DCI_TYPE ||
 		    smd_info->type == SMD_DCI_CMD_TYPE) {
 			diag_dci_try_activate_wakeup_source();
