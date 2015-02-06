@@ -148,6 +148,11 @@ extern unsigned int sysctl_sched_autogroup_enabled;
  */
 #define RR_TIMESLICE		(100 * HZ / 1000)
 
+#ifdef CONFIG_SCHEDSTATS
+extern unsigned int sysctl_sched_latency_panic_threshold;
+extern unsigned int sysctl_sched_latency_warn_threshold;
+#endif
+
 extern int sched_rr_timeslice;
 
 extern int sched_rr_handler(struct ctl_table *table, int write,
