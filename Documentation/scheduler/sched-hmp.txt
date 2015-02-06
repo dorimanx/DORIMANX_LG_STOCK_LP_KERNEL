@@ -1525,6 +1525,22 @@ account of energy awareness reasons.
 The same logic also applies to the load balancer path to avoid frequent
 migrations due to energy awareness.
 
+** 7.25 cpu.upmigrate_discourage
+
+Default value : 0
+
+This is a cgroup attribute supported by the cpu resource controller. It normally
+appears at [root_cpu]/[name1]/../[name2]/cpu.upmigrate_discourage. Here
+"root_cpu" is the mount point for cgroup (cpu resource control) filesystem
+and name1, name2 etc are names of cgroups that form a hierarchy.
+
+Setting this flag to 1 discourages upmigration for all tasks of a cgroup. High
+demand tasks of such a cgroup will never be classified as big tasks and hence
+not upmigrated. Any task of the cgroup is allowed to upmigrate only under
+overcommitted scenario. See notes on sched_spill_nr_run and sched_spill_load for
+how overcommitment threshold is defined and also notes on
+'sched_upmigrate_min_nice' tunable.
+
 =========================
 8. HMP SCHEDULER TRACE POINTS
 =========================
