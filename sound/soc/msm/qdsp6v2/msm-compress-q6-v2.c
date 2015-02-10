@@ -578,9 +578,9 @@ static void populate_codec_list(struct msm_compr_audio *prtd)
 	prtd->compr_cap.max_fragments =
 			COMPR_PLAYBACK_MAX_NUM_FRAGMENTS;
 #ifdef CONFIG_HIFI_SOUND
-	prtd->compr_cap.num_codecs = 8;
+	prtd->compr_cap.num_codecs = 9;
 #else
-	prtd->compr_cap.num_codecs = 4;
+	prtd->compr_cap.num_codecs = 5;
 #endif
 	prtd->compr_cap.codecs[0] = SND_AUDIOCODEC_MP3;
 	prtd->compr_cap.codecs[1] = SND_AUDIOCODEC_AAC;
