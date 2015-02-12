@@ -53,9 +53,9 @@ static ssize_t name##_show(struct device *d,		\
 }									\
 static DEVICE_ATTR_RO(name);
 
-static inline int init_done(struct zram *zram)
+static inline bool init_done(struct zram *zram)
 {
-	return zram->meta != NULL;
+	return zram->disksize;
 }
 
 static inline struct zram *dev_to_zram(struct device *dev)
@@ -365,6 +365,18 @@ out_error:
 	vfree(meta->table);
 	kfree(meta);
 	return NULL;
+}
+
+static inline bool zram_meta_get(struct zram *zram)
+{
+	if (atomic_inc_not_zero(&zram->refcount))
+		return true;
+	return false;
+}
+
+static inline void zram_meta_put(struct zram *zram)
+{
+	atomic_dec(&zram->refcount);
 }
 
 static void update_position(u32 *index, int *offset, struct bio_vec *bvec)
@@ -728,6 +740,10 @@ static void zram_bio_discard(struct zram *zram, u32 index,
 
 static void zram_reset_device(struct zram *zram)
 {
+	struct zram_meta *meta;
+	struct zcomp *comp;
+	u64 disksize;
+
 	down_write(&zram->init_lock);
 
 	zram->limit_pages = 0;
@@ -737,16 +753,31 @@ static void zram_reset_device(struct zram *zram)
 		return;
 	}
 
-	zcomp_destroy(zram->comp);
-	zram->max_comp_streams = 1;
-	zram_meta_free(zram->meta, zram->disksize);
-	zram->meta = NULL;
+	meta = zram->meta;
+	comp = zram->comp;
+	disksize = zram->disksize;
+	/*
+	 * Refcount will go down to 0 eventually and r/w handler
+	 * cannot handle further I/O so it will bail out by
+	 * check zram_meta_get.
+	 */
+	zram_meta_put(zram);
+	/*
+	 * We want to free zram_meta in process context to avoid
+	 * deadlock between reclaim path and any other locks.
+	 */
+	wait_event(zram->io_done, atomic_read(&zram->refcount) == 0);
+
 	/* Reset stats */
 	memset(&zram->stats, 0, sizeof(zram->stats));
 	zram->disksize = 0;
+	zram->max_comp_streams = 1;
 	set_capacity(zram->disk, 0);
 
 	up_write(&zram->init_lock);
+	/* I/O operation under all of CPU are done so let's free */
+	zram_meta_free(meta, disksize);
+	zcomp_destroy(comp);
 }
 
 static ssize_t disksize_store(struct device *dev,
@@ -782,6 +813,8 @@ static ssize_t disksize_store(struct device *dev,
 		goto out_destroy_comp;
 	}
 
+	init_waitqueue_head(&zram->io_done);
+	atomic_set(&zram->refcount, 1);
 	zram->meta = meta;
 	zram->comp = comp;
 	zram->disksize = disksize;
@@ -910,23 +943,21 @@ static void zram_make_request(struct request_queue *queue, struct bio *bio)
 {
 	struct zram *zram = queue->queuedata;
 
-	down_read(&zram->init_lock);
-	if (unlikely(!init_done(zram)))
+	if (unlikely(!zram_meta_get(zram)))
 		goto error;
 
 	if (!valid_io_request(zram, bio->bi_sector,
 					bio->bi_size)) {
 		atomic64_inc(&zram->stats.invalid_io);
-		goto error;
+		goto put_zram;
 	}
 
 	__zram_make_request(zram, bio);
-	up_read(&zram->init_lock);
-
+	zram_meta_put(zram);
 	return;
-
+put_zram:
+	zram_meta_put(zram);
 error:
-	up_read(&zram->init_lock);
 	bio_io_error(bio);
 }
 
@@ -945,8 +976,56 @@ static void zram_slot_free_notify(struct block_device *bdev,
 	atomic64_inc(&zram->stats.notify_free);
 }
 
+/* not ready for this change right now: Dorimanx */
+#if 0
+static int zram_rw_page(struct block_device *bdev, sector_t sector,
+		       struct page *page, int rw)
+{
+	int offset, err = -EIO;
+	u32 index;
+	struct zram *zram;
+	struct bio_vec bv;
+
+	zram = bdev->bd_disk->private_data;
+	if (unlikely(!zram_meta_get(zram)))
+		goto out;
+
+	if (!valid_io_request(zram, sector, PAGE_SIZE)) {
+		atomic64_inc(&zram->stats.invalid_io);
+		err = -EINVAL;
+		goto put_zram;
+	}
+
+	index = sector >> SECTORS_PER_PAGE_SHIFT;
+	offset = sector & (SECTORS_PER_PAGE - 1) << SECTOR_SHIFT;
+
+	bv.bv_page = page;
+	bv.bv_len = PAGE_SIZE;
+	bv.bv_offset = 0;
+
+	err = zram_bvec_rw(zram, &bv, index, offset, rw);
+put_zram:
+	zram_meta_put(zram);
+out:
+	/*
+	 * If I/O fails, just return error(ie, non-zero) without
+	 * calling page_endio.
+	 * It causes resubmit the I/O with bio request by upper functions
+	 * of rw_page(e.g., swap_readpage, __swap_writepage) and
+	 * bio->bi_end_io does things to handle the error
+	 * (e.g., SetPageError, set_page_dirty and extra works).
+	 */
+	if (err == 0)
+		page_endio(page, rw, 0);
+	return err;
+}
+#endif
+
 static const struct block_device_operations zram_devops = {
 	.swap_slot_free_notify = zram_slot_free_notify,
+#if 0
+	.rw_page = zram_rw_page,
+#endif
 	.owner = THIS_MODULE
 };
 
