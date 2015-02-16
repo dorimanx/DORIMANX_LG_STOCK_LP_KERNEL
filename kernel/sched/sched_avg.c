@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012, 2015, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -54,12 +54,12 @@ void sched_get_nr_running_avg(int *avg, int *iowait_avg, int *big_avg)
 	if (!diff)
 		return;
 
-	last_get_time = curr_time;
 	/* read and reset nr_running counts */
 	for_each_possible_cpu(cpu) {
 		unsigned long flags;
 
 		spin_lock_irqsave(&per_cpu(nr_lock, cpu), flags);
+		curr_time = sched_clock();
 		tmp_avg += per_cpu(nr_prod_sum, cpu);
 		tmp_avg += per_cpu(nr, cpu) *
 			(curr_time - per_cpu(last_time, cpu));
@@ -81,6 +81,9 @@ void sched_get_nr_running_avg(int *avg, int *iowait_avg, int *big_avg)
 		spin_unlock_irqrestore(&per_cpu(nr_lock, cpu), flags);
 	}
 
+	diff = curr_time - last_get_time;
+	last_get_time = curr_time;
+
 	*avg = (int)div64_u64(tmp_avg * 100, diff);
 	*big_avg = (int)div64_u64(tmp_big_avg * 100, diff);
 	*iowait_avg = (int)div64_u64(tmp_iowait * 100, diff);
@@ -96,25 +99,26 @@ EXPORT_SYMBOL(sched_get_nr_running_avg);
 /**
  * sched_update_nr_prod
  * @cpu: The core id of the nr running driver.
- * @nr: Updated nr running value for cpu.
+ * @delta: Adjust nr by 'delta' amount
  * @inc: Whether we are increasing or decreasing the count
  * @return: N/A
  *
  * Update average with latest nr_running value for CPU
  */
-void sched_update_nr_prod(int cpu, unsigned long nr_running, bool inc)
+void sched_update_nr_prod(int cpu, long delta, bool inc)
 {
 	int diff;
 	s64 curr_time;
-	unsigned long flags;
+	unsigned long flags, nr_running;
 
 	spin_lock_irqsave(&per_cpu(nr_lock, cpu), flags);
+	nr_running = per_cpu(nr, cpu);
 	curr_time = sched_clock();
 	diff = curr_time - per_cpu(last_time, cpu);
 	per_cpu(last_time, cpu) = curr_time;
-	per_cpu(nr, cpu) = nr_running + (inc ? 1 : -1);
+	per_cpu(nr, cpu) = nr_running + (inc ? delta : -delta);
 
-	BUG_ON(per_cpu(nr, cpu) < 0);
+	BUG_ON((s64)per_cpu(nr, cpu) < 0);
 
 	per_cpu(nr_prod_sum, cpu) += nr_running * diff;
 	per_cpu(nr_big_prod_sum, cpu) += nr_eligible_big_tasks(cpu) * diff;
