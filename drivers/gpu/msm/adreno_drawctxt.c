@@ -171,13 +171,17 @@ void adreno_drawctxt_dump(struct kgsl_device *device,
 {
 	unsigned int queue, start, retire;
 	struct adreno_context *drawctxt = ADRENO_CONTEXT(context);
+	int locked = 0;
 
 	queue = kgsl_readtimestamp(device, context, KGSL_TIMESTAMP_QUEUED);
 	start = kgsl_readtimestamp(device, context, KGSL_TIMESTAMP_CONSUMED);
 	retire = kgsl_readtimestamp(device, context, KGSL_TIMESTAMP_RETIRED);
 
-	if (!test_bit(ADRENO_CONTEXT_CMDBATCH_FLAG_FENCE_LOG, &drawctxt->flags))
-		spin_lock(&drawctxt->lock);
+	if (!test_bit(ADRENO_CONTEXT_CMDBATCH_FLAG_FENCE_LOG,
+			&drawctxt->flags)) {
+		locked = 1;
+ 		spin_lock(&drawctxt->lock);
+	}
 	dev_err(device->dev,
 		"  context[%d]: queue=%d, submit=%d, start=%d, retire=%d\n",
 		context->id, queue, drawctxt->submitted_timestamp,
@@ -211,7 +215,7 @@ void adreno_drawctxt_dump(struct kgsl_device *device,
 		spin_unlock_bh(&cmdbatch->lock);
 	}
 done:
-	if (!test_bit(ADRENO_CONTEXT_CMDBATCH_FLAG_FENCE_LOG, &drawctxt->flags))
+	if (locked)
 		spin_unlock(&drawctxt->lock);
 }
 
