@@ -152,6 +152,7 @@ struct pde_opener {
 	int closing;
 	struct completion *c;
 };
+extern const struct inode_operations proc_link_inode_operations;
 
 void proc_entry_rundown(struct proc_dir_entry *);
 
