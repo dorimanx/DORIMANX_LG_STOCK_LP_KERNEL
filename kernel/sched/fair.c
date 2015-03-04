@@ -2102,31 +2102,39 @@ static int best_small_task_cpu(struct task_struct *p, int sync)
 	return task_cpu(p);
 }
 
-#define MOVE_TO_BIG_CPU			1
-#define MOVE_TO_LITTLE_CPU		2
-#define MOVE_TO_POWER_EFFICIENT_CPU	3
+#define UP_MIGRATION		1
+#define DOWN_MIGRATION		2
+#define EA_MIGRATION		3
+#define IRQLOAD_MIGRATION	4
 
 static int skip_freq_domain(int tcpu, int cpu, int reason)
 {
-        int skip;
+	int skip;
 
-        if (!reason)
-                return 0;
+	if (!reason)
+		return 0;
 
 	switch (reason) {
-	case MOVE_TO_BIG_CPU:
+	case UP_MIGRATION:
 		skip = (cpu_capacity(cpu) <= cpu_capacity(tcpu));
 		break;
 
-	case MOVE_TO_LITTLE_CPU:
+	case DOWN_MIGRATION:
 		skip = (cpu_capacity(cpu) >= cpu_capacity(tcpu));
 		break;
+
+	case EA_MIGRATION:
+		skip = (cpu_capacity(cpu) != cpu_capacity(tcpu));
+		break;
+
+	case IRQLOAD_MIGRATION:
+		/* Purposely fall through */
 
 	default:
 		return 0;
 	}
 
-        return skip;
+	return skip;
 }
 
 static int skip_cpu(struct rq *task_rq, struct rq * rq, int cpu, int reason)
@@ -2925,7 +2933,7 @@ static inline int migration_needed(struct rq *rq, struct task_struct *p)
 
 	if (sched_boost()) {
 		if (cpu_capacity(cpu) != max_capacity)
-			return MOVE_TO_BIG_CPU;
+			return UP_MIGRATION;
 
 		return 0;
 	}
@@ -2933,18 +2941,21 @@ static inline int migration_needed(struct rq *rq, struct task_struct *p)
 	if (is_small_task(p))
 		return 0;
 
+	if (sched_cpu_high_irqload(cpu_of(rq)))
+		return IRQLOAD_MIGRATION;
+
 	if ((nice > sched_upmigrate_min_nice || upmigrate_discouraged(p)) &&
 			 cpu_capacity(cpu_of(rq)) > min_capacity)
-		return MOVE_TO_LITTLE_CPU;
+		return DOWN_MIGRATION;
 
 	if (!task_will_fit(p, cpu))
-		return MOVE_TO_BIG_CPU;
+		return UP_MIGRATION;
 
 	if (sysctl_sched_enable_power_aware &&
 	    !is_task_migration_throttled(p) &&
 	    is_cpu_throttling_imminent(cpu) &&
 	    lower_power_cpu_available(p, cpu))
-		return MOVE_TO_POWER_EFFICIENT_CPU;
+		return EA_MIGRATION;
 
 	return 0;
 }
