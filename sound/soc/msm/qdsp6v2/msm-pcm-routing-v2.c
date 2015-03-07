@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -456,7 +456,7 @@ void msm_pcm_routing_reg_phy_stream(int fedai_id, int perf_mode,
 	mutex_unlock(&routing_lock);
 }
 
-void msm_pcm_routing_reg_phy_stream_v2(int fedai_id, bool perf_mode,
+void msm_pcm_routing_reg_phy_stream_v2(int fedai_id, int perf_mode,
 				       int dspst_id, int stream_type,
 				       struct msm_pcm_routing_evt event_info)
 {
