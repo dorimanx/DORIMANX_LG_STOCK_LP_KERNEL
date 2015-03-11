@@ -2821,8 +2821,11 @@ static int msm_spi_pm_resume_runtime(struct device *device)
 	if (!dd->suspended)
 		return 0;
 	
-	if (!dd->pdata->is_shared)
-		get_local_resources(dd);
+	if (!dd->pdata->is_shared) {
+		ret = get_local_resources(dd);
+		if (ret)
+			return ret;
+	}
 	msm_spi_clk_path_init(dd);
 	if (!dd->pdata->active_only)
 		msm_spi_clk_path_vote(dd);
