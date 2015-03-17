@@ -2185,7 +2185,7 @@ pfmfs_delete_dentry(const struct dentry *dentry)
 static char *pfmfs_dname(struct dentry *dentry, char *buffer, int buflen)
 {
 	return dynamic_dname(dentry, buffer, buflen, "pfm:[%lu]",
-			     dentry->d_inode->i_ino);
+			     d_inode(dentry)->i_ino);
 }
 
 static const struct dentry_operations pfmfs_dentry_operations = {
