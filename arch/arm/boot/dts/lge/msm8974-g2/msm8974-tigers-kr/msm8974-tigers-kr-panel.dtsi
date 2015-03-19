@@ -12,9 +12,9 @@
 
 &mdss_dsi0 {
 	qcom,platform-lane-config = [00 00 00 00 00 00 00 01 c8
-			00 00 00 00 05 00 00 01 c8
-			00 00 00 00 0a 00 00 01 c8
-			00 00 00 00 0f 00 00 01 c8
+			00 00 00 00 00 00 00 01 c8
+			00 00 00 00 00 00 00 01 c8
+			00 00 00 00 00 00 00 01 c8
 			00 c0 00 00 00 00 00 01 bb];
 	qcom,dsi-pref-prim-pan = <&mdss_dsi_tigers_lgd_cmd>;
 	qcom,platform-supply-entry2 {
