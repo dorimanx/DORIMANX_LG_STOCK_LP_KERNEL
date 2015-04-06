@@ -33,6 +33,9 @@ modules.builtin
 *.patch
 *.gcno
 
+arch/arm/boot/compressed/piggy.lz4
+arch/arm/mach-msm/smd_rpc_sym.c
+
 #
 # Top-level generic files
 #
