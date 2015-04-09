@@ -16,6 +16,7 @@ enum {
 	ARM_SEC_DEVEXIT,
 	ARM_SEC_HOT,
 	ARM_SEC_UNLIKELY,
+	ARM_SEC_REF,
 	ARM_SEC_MAX,
 };
 #endif
