@@ -1768,6 +1768,8 @@ static int dwc3_gadget_pullup(struct usb_gadget *g, int is_on)
 
 	is_on = !!is_on;
 
+	pm_runtime_get_sync(dwc->dev);
+
 	spin_lock_irqsave(&dwc->lock, flags);
 
 	dwc->softconnect = is_on;
@@ -1787,6 +1789,8 @@ static int dwc3_gadget_pullup(struct usb_gadget *g, int is_on)
 	ret = dwc3_gadget_run_stop(dwc, is_on);
 
 	spin_unlock_irqrestore(&dwc->lock, flags);
+
+	pm_runtime_put_noidle(dwc->dev);
 
 	return ret;
 }
