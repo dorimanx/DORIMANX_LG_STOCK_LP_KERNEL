@@ -1,0 +1,28 @@
+#menu "CPU Controls"
+
+config CPU_OVERCLOCK
+	bool "Enable 2.572 Ghz CPU Overclock"
+	default y
+	help
+	  Enabled CPU overclocking to 2.572 Ghz per core
+
+config OC_ULTIMATE
+	bool "Enable Ultimate Overclocking option"
+	depends on CPU_OVERCLOCK
+	default y
+	help
+	  Krait overclocking up to 2.8 GHz
+
+config CPU_UNDERCLOCK
+	bool "Enable CPU Underclocking option"
+	default n
+	help
+	  Krait underclocking to 96Mhz
+
+config CPU_VOLTAGE_TABLE
+	bool "Enable CPU Voltage Table via sysfs for adjustements"
+	default y
+	help
+	  Krait CPU User Votlage Control
+
+#endmenu
