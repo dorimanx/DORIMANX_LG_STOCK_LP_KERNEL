@@ -1,0 +1,67 @@
+menuconfig SWITCH
+	tristate "Switch class support"
+	help
+	  Say Y here to enable switch class support. This allows
+	  monitoring switches by userspace via sysfs and uevent.
+
+if SWITCH
+
+config SWITCH_GPIO
+	tristate "GPIO Swith support"
+	depends on GENERIC_GPIO
+	help
+	  Say Y here to enable GPIO based switch support.
+
+config SWITCH_ARIZONA
+	tristate "Arizona Switch support"
+	default n
+	depends on MFD_ARIZONA
+	help
+	  Say Y here to enable Arizona switch support.
+
+config SWITCH_MAX1462X
+	tristate "LGE Headset detection driver(MAX14628)"
+	depends on MACH_LGE
+	default n
+	help
+	  Say Y here to enable GPIO based switch support.
+
+endif # SWITCH
+
+config INPUT_MAX14688
+	tristate "MAXIM MAX14688 headset jack detector support"
+	depends on MACH_LGE
+	help
+	  This option enables device driver support for MAX14688, a headset jack
+	  detection IC.
+
+	  To compile this driver as module, choose M here: the
+	  module will be called max14688.
+
+config EARJACK_DEBUGGER
+    bool "Earjack UART debugger support"
+    default n
+    help
+      Support earjack type UART debugger cable
+
+config  LGE_HEADSET_MIC_NOISE_WA
+    bool "Workaround for Headset MIC noise"
+    depends on MACH_LGE
+    default n
+    help
+      to reduce mic noise when remove earjack
+
+config  LGE_HEADSET_INSERT_DELAY
+    bool "Delay to decide 3 or 4 poly while detecting"
+    depends on MACH_LGE
+    default n
+    help
+      delay to decide 3 or 4 poly while detecting
+
+config  LGE_HEADSET_INSERT_ADDITIONAL_DELAY
+    bool "Delay to decide 3 or 4 poly while detecting"
+    depends on MACH_LGE
+    default n
+    help
+      delay to decide 3 or 4 poly while detecting
+

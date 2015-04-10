@@ -1,0 +1,19 @@
+BCM43XX DHD 1.201.54.1 for L OS.
+
+DHD 1.201.54.1 (2014.10.06)
+  - Initial release for L OS
+
+
+DHD 1.201.54.2.1 (2014.11.14)
+  - Implemented Link statistics, Gscan and RTT features
+  - Enabled tailpadding for packets (CSP#854392)
+  - Disabled async suspend mode in case of PCIE (CSP#855409, CSP#857993)
+  - Enabled HT40 feature when config file had the option for it
+  - Disabled scb probe function in case of SDIO (CSP#849685)
+  - Fixed event mask length (CSP#854318)
+  - Changed message level due to excessive logs
+  - Fixed suspend entrance failure problem
+  - Fixed no interworking element in probe request frame (CSP#802673)
+  - Fixed kernel panic while disconnecting from AP (CSP#854980)
+  - Handled the case that rssi was 0 during scan operation (CSP#848536)
+  - Fixed unlocked wlan_wake lock problem (CSP#849645)

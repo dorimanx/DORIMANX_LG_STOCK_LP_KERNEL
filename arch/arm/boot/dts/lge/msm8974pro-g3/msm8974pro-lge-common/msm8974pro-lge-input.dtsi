@@ -1,0 +1,337 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+ &rpm_bus {
+		rpm-regulator-ldoa22 {
+			status = "okay";
+			pm8941_l22: regulator-l22 {
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+				qcom,init-voltage = <3300000>;
+				status = "okay";
+			};
+		};
+	};
+
+&soc {
+	i2c_2: i2c@f9924000 {
+		#address-cells = <0x1>;
+		#size-cells = <0x0>;
+		cell-index = <0x2>;
+		compatible = "qcom,i2c-qup";
+		interrupt-names = "qup_err_intr";
+		interrupts = <0x0 0x60 0x0>;
+	/*	qcom,active-only;
+		qcom,i2c-bus-freq = <0x61a80>;
+		qcom,i2c-src-freq = <0x124f800>; */
+		qcom,master-id = <0x56>;
+/*		qcom,scl-gpio = <&msmgpio 0x7 0x0>;
+		qcom,sda-gpio = <&msmgpio 0x6 0x0>; */
+		reg = <0xf9924000 0x1000>;
+		reg-names = "qup_phys_addr";
+	};
+
+		 i2c@f9924000 {
+		       	rmi_s3528@20  {
+				compatible = "rmi,s3528";
+				status = "disable";
+				reg = <0x20>;
+				interrupt-parent = <&msmgpio>;
+				interrupts = <73 0x2>;
+				vdd_ana-supply = <&pm8941_l22>;
+				vcc_i2c-supply = <&pm8941_lvs3>;
+				#rmi4,x_flip;
+				#rmi4,y_flip;
+				rmi4,regulator_en;
+				rmi4,reset_gpio = <&msmgpio 8 0x00>;
+				rmi4,irq_gpio = <&msmgpio 73 0x00>;
+				rmi4,irq_flags = <0x00000002>;
+				rmi4,panel_x = <1440>;
+				rmi4,panel_y = <2560>;
+			};
+
+			synaptics_s3528@20 {
+				compatible = "synaptics,s3528";
+				status = "disable";
+				reg = <0x20>;
+				interrupt-parent = <&msmgpio>;
+				interrupts = <73 0x2>;
+				vdd_ana-supply = <&pm8941_l22>;
+				vcc_i2c-supply = <&pm8941_lvs3>;
+				reset-gpio = <&msmgpio 8 0x00>;
+				irq-gpio = <&msmgpio 73 0x00>;
+
+				/*Caps*/
+				button_support = <0>;
+				number_of_button = <4>;
+				button_name = [9e 8b 66 d9];
+				max_x = <1440>;
+				max_y = <2560>;
+				max_pressure = <0xff>;
+				max_width = <15>;
+				max_orientation = <1>;
+				max_id = <10>;
+				/*role*/
+				protocol_type = <1>;
+				report_mode = <0>;
+				delta_pos_threshold = <1>;
+				report_period = <10000000>;
+				booting_delay = <60>;
+				reset_delay = <10>;
+				wake_up_by_touch = <1>;
+				use_sleep_mode = <1>;
+				thermal_check = <1>;
+				palm_ctrl_mode = <0>;
+				mini_os_finger_amplitude = <41>;
+				irqflags = <0x00000002>;
+				bouncing.enable = <0>;
+				grip.enable = <0>;
+				grip.edge_region = <5>;
+				grip.max_delta = <10>;
+				grip.width_ratio = <2>;
+				accuracy.enable = <0>;
+				accuracy.min_delta = <3>;
+				accuracy.curr_ratio = <5>;
+				accuracy.min_pressure = <50>;
+				jitter.enable = <0>;
+				jitter.curr_ratio = <115>;
+				quickcover.enable = <1>;
+				quickcover.X1 = <148>;
+				quickcover.X2 = <1292>;
+				quickcover.Y1 = <0>;
+				quickcover.Y2 = <1101>;
+				crack.enable = <1>;
+				crack.min.cap = <300>;
+				/*ghost_detection -S*/
+				ghost_detection_enable = <1>;
+				ghost_detection_chk_cnt = <3>;
+				jitter_value = <10>;
+				ta_noise_chk = <0>;
+				incoming_call_chk = <0>;
+				first_finger_chk = <1>;
+				first_finger_time = <200>;
+				pressure_zero_chk = <1>;
+				ta_debouncing_chk = <0>;
+				ta_debouncing_cnt =<2>;
+				ta_debouncing_finger_num = <2>;
+				press_interval_chk = <1>;
+				press_interval = <29>;
+				diff_fingers_chk = <1>;
+				diff_finger_num = <5>;
+				subtraction_finger_chk = <0>;
+				subtraction_time = <11>;
+				subtraction_finger_cnt = <5>;
+				long_press_chk = <1>;
+				long_press_chk_time = <10>;
+				long_press_cnt = <700>;
+				button_chk = <0>;
+				button_int_num = <6>;
+				button_duration = <100>;
+				rebase_repetition_chk = <1>;
+				rebase_since_init = <3>;
+				rebase_since_rebase = <5>;
+				use_lpwg_all = <1>;
+				/*ghost_detection -E*/
+				/*pwr*/
+				use_regulator = <1>;
+				vdd = "vdd_ana";
+				vdd_voltage = <3300000>;
+				vio = "vcc_i2c";
+				vio_voltage = <0>;
+				/*firmware*/
+				need_upgrade = <1>;
+				/* Rx & Tx cap*/
+				tx_cap = <5 10 2 9 7 5 1 2 2 1 10 2 3 83 7 2 8 0 10 0 5 8 4 8 6 40 88>;
+				rx_cap = <53 12 15 26 28 13 27 25 4 15 5 6 22 9 44>;
+				/* 1:sd. 2:ref_rebase. 3:TX. 4:RX.*/
+				ref_chk_option = <0 0 1 1>;
+			};
+			synaptics_s3528_rev_a@20 {
+				compatible = "synaptics,s3528";
+				status = "disable";
+				reg = <0x20>;
+				interrupt-parent = <&msmgpio>;
+				interrupts = <73 0x2>;
+				vdd_ana-supply = <&pm8941_l22>;
+				vcc_i2c-supply = <&pm8941_lvs3>;
+				reset-gpio = <&msmgpio 8 0x00>;
+				irq-gpio = <&msmgpio 73 0x00>;
+
+				/*Caps*/
+				button_support = <0>;
+				number_of_button = <4>;
+				button_name = [9e 8b 66 d9];
+				max_x = <1440>;
+				max_y = <2560>;
+				max_pressure = <0xff>;
+				max_width = <15>;
+				max_orientation = <1>;
+				max_id = <10>;
+				/*role*/
+				protocol_type = <1>;
+				report_mode = <0>;
+				delta_pos_threshold = <1>;
+				report_period = <10000000>;
+				booting_delay = <60>;
+				reset_delay = <10>;
+				wake_up_by_touch = <1>;
+				use_sleep_mode = <1>;
+				thermal_check = <1>;
+				palm_ctrl_mode = <0>;
+				mini_os_finger_amplitude = <41>;
+				irqflags = <0x00000002>;
+				bouncing.enable = <0>;
+				grip.enable = <0>;
+				grip.edge_region = <5>;
+				grip.max_delta = <10>;
+				grip.width_ratio = <2>;
+				accuracy.enable = <0>;
+				accuracy.min_delta = <3>;
+				accuracy.curr_ratio = <5>;
+				accuracy.min_pressure = <50>;
+				jitter.enable = <0>;
+				jitter.curr_ratio = <115>;
+				quickcover.enable = <1>;
+				quickcover.X1 = <148>;
+				quickcover.X2 = <1292>;
+				quickcover.Y1 = <0>;
+				quickcover.Y2 = <1101>;
+				crack.enable = <1>;
+				crack.min.cap = <300>;
+				/*ghost_detection -S*/
+				ghost_detection_enable = <1>;
+				ghost_detection_chk_cnt = <3>;
+				jitter_value = <10>;
+				ta_noise_chk = <0>;
+				incoming_call_chk = <0>;
+				first_finger_chk = <1>;
+				first_finger_time = <200>;
+				pressure_zero_chk = <1>;
+				ta_debouncing_chk = <0>;
+				ta_debouncing_cnt =<2>;
+				ta_debouncing_finger_num = <2>;
+				press_interval_chk = <1>;
+				press_interval = <29>;
+				diff_fingers_chk = <1>;
+				diff_finger_num = <5>;
+				subtraction_finger_chk = <0>;
+				subtraction_time = <11>;
+				subtraction_finger_cnt = <5>;
+				long_press_chk = <1>;
+				long_press_chk_time = <10>;
+				long_press_cnt = <700>;
+				button_chk = <0>;
+				button_int_num = <6>;
+				button_duration = <100>;
+				rebase_repetition_chk = <1>;
+				rebase_since_init = <3>;
+				rebase_since_rebase = <5>;
+				use_lpwg_all = <1>;
+				/*ghost_detection -E*/
+				/*pwr*/
+				use_regulator = <1>;
+				vdd = "vdd_ana";
+				vdd_voltage = <3300000>;
+				vio = "vcc_i2c";
+				vio_voltage = <0>;
+				/*firmware*/
+				need_upgrade = <1>;
+				/* Rx & Tx cap*/
+				tx_cap = <5 10 2 9 7 5 1 2 2 1 10 2 3 83 7 2 8 0 10 0 5 8 4 8 6 40 88>;
+				rx_cap = <53 12 15 26 28 13 27 25 4 15 5 6 22 9 44>;
+				/* 1:sd. 2:ref_rebase. 3:TX. 4:RX.*/
+				ref_chk_option = <0 0 1 1>;
+			};
+		synaptics_s7020@20 {
+			compatible = "synaptics,s7020";
+			status = "disable";
+			reg = <0x20>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <5 0x2>;
+			vdd_ana-supply = <&pm8941_l22>;
+			vcc_i2c-supply = <&pm8941_lvs3>;
+			synaptics,reset-gpio = <&msmgpio 69 0x00>;
+			synaptics,irq-gpio = <&msmgpio 5 0x00>;
+			synaptics,maker = "Synaptics";
+			synaptics,fw_version = "E004";
+			synaptics,platform_data	{
+				/*Caps*/
+				button_support = <0>;
+				y_button_boundary	= <0>;
+				button_margin = <0>;
+				number_of_button = <2>;
+				button_name = [9e 8b];
+				is_width_supported = <1>;
+				is_pressure_supported	= <1>;
+				is_id_supported = <1>;
+				max_width = <15>;
+				max_pressure = <0xff>;
+				max_id = <10>;
+				x_max = <2150>;
+				y_max	= <3790>;
+				lcd_x	= <1080>;
+				lcd_y	= <1920>;
+				operation_mode = <1>;
+				key_type = <3>;
+				report_mode = <0>;
+				delta_pos_threshold = <1>;
+				/*role*/
+				orientation = <0>;
+				report_period = <10000000>;
+				booting_delay = <200>;
+				reset_delay = <5>;
+				suspend_pwr = <0>;
+				resume_pwr = <1>;
+				jitter_filter_enable = <0>;
+				jitter_curr_ratio = <30>;
+				accuracy_filter_enable = <1>;
+                #ghost_finger_solution_enable = <0>;
+				ghost_detection_enable = <1>;
+				irqflags = <0x00000002>;
+				show_touches = <0>;
+				pointer_location = <0>;
+				ta_debouncing_count =<2>;
+				ta_debouncing_finger_num = <2>;
+				pen_enable = <0>;
+				/*pwr*/
+				use_regulator = <0>;
+				vdd = "vdd_ana";
+				vdd_voltage = <3300000>;
+				vio = "vcc_i2c";
+                vio_voltage = <1800000>;
+
+			};
+		};
+		};
+    gpio_keys {
+        compatible = "gpio-keys";
+        input-name = "gpio-keys";
+
+        vol_down {
+            label = "volume_down";
+            gpios = <&pm8941_gpios 3 0x1>;
+            linux,input-type = <1>;
+            linux,code = <114>;
+            gpio-key,wakeup;
+            debounce-interval = <15>;
+        };
+
+        vol_up {
+            label = "volume_up";
+            gpios = <&pm8941_gpios 2 0x1>;
+            linux,input-type = <1>;
+            linux,code = <115>;
+            gpio-key,wakeup;
+            debounce-interval = <15>;
+        };
+    };
+};

@@ -1,0 +1,32 @@
+Device Tree bindings for max77819 Charger
+
+Required Properties :
+ - compatible : Should be "maxim,max77819-charger".
+
+Optional Properties :
+ - psy_name : Power supply name.
+ - fast_charge_current : fast charge current(uA)
+ - charge_termination_voltage : CV voltage(uV)
+ - topoff_timer : topoff timer(min)
+ - topoff_current : topoff current (uA)
+ - charge_restart_threshold : restart charging threshold (uV)
+ - enable_coop : enable dual charging with MAX8971.
+		If you use only MAX77819 charger, you should not define it.
+ - coop_psy_name : cooperation power supply name if you use dual charging.
+ - enable_thermistor : Enable thermistor
+ - enable_aicl : enable AICL function.
+ - aicl_detection_voltage : AICL detection voltage(uV)
+ - aicl_reset_threshold : AICL reset threshold(uV)
+
+
+Example:
+
+		charger {
+			compatible = "maxim,max77819-charger";
+			psy_name = "max77819-charger";
+			fast_charge_current = <0>;
+			enable_thermistor;
+			enable_aicl;
+			aicl_detection_voltage = <4500000>;
+			aicl_reset_threshold = <100000>;
+		};

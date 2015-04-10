@@ -1,0 +1,31 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+
+	&soc {
+
+
+		 i2c@f9924000 {
+		       	rmi_s3528@20  {
+				status = "disable";
+			};
+
+			synaptics_s3528@20 {
+				status = "ok";
+				interrupts = <5 0x2>;
+				irq-gpio = <&msmgpio 5 0x00>;
+
+				max_x = <2159>;
+				max_y = <3839>;
+			};
+		};
+	};

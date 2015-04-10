@@ -1,0 +1,275 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License version 2 and
+* only version 2 as published by the Free Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*/
+
+&soc {
+	i2c@f9923000 {
+		status = "ok";
+		qcom,active-only;
+		qcom,i2c-src-freq = <50000000>;
+		qcom,master-id = <86>;
+
+		max17048@36 {
+			status = "ok";
+		};
+
+		smb349@2d {
+			compatible = "summit,smb349-charger";
+			interrupt-parent = <&pm8941_gpios>;
+			interrupts = <0x1e 0x2>;
+			lge,cable-100k = <0x3a598 0x4b0 0x1f4>;
+			lge,cable-130k = <0x53020 0x5dc 0x5dc>;
+			lge,cable-180k = <0x61a80 0x4b0 0x1f4>;
+			lge,cable-200k = <0x64190 0x4b0 0x1f4>;
+			lge,cable-220k = <0x76688 0x4b0 0x1f4>;
+			lge,cable-270k = <0x88b80 0x4b0 0x1f4>;
+			lge,cable-28p7k = <0x1770 0x4b0 0x1f4>;
+			lge,cable-330k = <0xb3718 0x4b0 0x1f4>;
+			lge,cable-56k = <0x30d40 0x5dc 0x5dc>;
+			lge,cable-620k = <0xe9278 0x4b0 0x1f4>;
+			lge,cable-910k = <0x116520 0x5dc 0x5dc>;
+			lge,cable-mhl-1k = <0x1388 0x1f4 0x1f4>;
+			lge,cable-none = <0x1cfde0 0x4b0 0x1f4>;
+			lge,cable-u-28p7k = <0x157c 0x4b0 0x1f4>;
+			lge,no-init-cable = <0x0 0x0 0x0>;
+			reg = <0x2d>;
+			status = "ok";
+			summit,chg-current-ma = <0x578>;
+			summit,otg-en-gpio = <&pm8941_gpios 0x23 0x0>;
+			summit,stat-gpio = <&pm8941_gpios 0x1e 0x2>;
+			summit,term-current-ma = <0x64>;
+			qcom,smbchg-vadc = <&pm8941_vadc>;
+		};
+	};
+
+	spi@f9923000 {
+		ethernet-switch@2 {
+			status = "disable";
+		};
+	};
+};
+
+/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+&pm8941_gpios {
+
+	gpio@ce00 { /* GPIO 15 */
+		status = "ok";
+		qcom,mode = <1>;
+		qcom,output-type = <0>;
+		qcom,pull = <5>;
+		qcom,vin-sel = <2>;
+		qcom,out-strength = <3>;
+		qcom,src-sel = <2>;
+		qcom,master-en = <1>;
+	};
+
+	gpio@d100 { /* GPIO 18 */
+		status = "ok";
+		qcom,mode = <1>;
+		qcom,output-type = <0>;
+		qcom,pull = <5>;
+		qcom,vin-sel = <2>;
+		qcom,out-strength = <3>;
+		qcom,src-sel = <3>;
+		qcom,master-en = <1>;
+	};
+
+	gpio@df00 { 			/* GPIO 32 */
+		status = "ok";
+		qcom,mode = <0>;	/* QPNP_PIN_MODE_DIG_IN */
+		qcom,pull = <5>;	/* QPNP_PIN_PULL_NO */
+		qcom,master-en = <1>;   /* Enable Module */
+		qcom,vin-sel = <2>;	/* Select 1.8V Source */
+	};
+
+};
+&spmi_bus {
+	qcom,pm8941@0 {
+		qcom,temp-alarm@2400 {
+			spmi-dev-container;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			qcom,chg-bat-if@1200 {
+				status = "ok";
+				reg = <0x1200 0x100>;
+				interrupts =	<0x0 0x12 0x0>;
+				interrupt-names = "batt-pres";
+			};
+		};
+
+		pm8941_chg: qcom,charger {
+			status = "disabled";
+
+			qcom,bat-if@1200 {
+				status = "disabled";
+			};
+
+			qcom,boost@1500 {
+				status = "disabled";
+			};
+
+			qcom,buck@1100 {
+				status = "disabled";
+			};
+
+			qcom,chgr@1000 {
+				status = "disabled";
+			};
+
+			qcom,dc-chgpth@1400 {
+				status = "disabled";
+			};
+
+			qcom,chg-misc@1600 {
+				status = "disabled";
+			};
+
+			qcom,usb-chgpth@1300 {
+				status = "disabled";
+			};
+		};
+	};
+	qcom,pm8941@1 {
+		qcom,leds@d000 {
+			status = "okay";
+			qcom,rgb_0 {
+				label = "rgb";
+				linux,name = "red";
+				qcom,mode = "lpg";
+				qcom,pwm-channel = <6>;
+				qcom,pwm-us = <5000>;
+				qcom,duty-ms = <70>;
+				qcom,start-idx = <0>;
+				qcom,idx-len = <63>;
+				qcom,duty-pcts = [
+					 00 09 09 00 00
+					 00 00 00 15 2A
+					 3F 2A 15 00 00
+					 00 00 00 00 00
+					 00 00 2C 57 5E
+					 64 63 63 63 62
+					 60 5F 5D 5A 58
+					 53 4F 4A 41 37
+					 2D 17 00 00 00
+					 22 43 2C 16 00
+					 00 00 00 00 00
+					 09 10 21 31 21
+					 10 09 00
+					 ];
+				qcom,max-current = <12>;
+				qcom,default-state = "off";
+				qcom,id = <3>;
+				linux,default-trigger = "none";
+			};
+
+			qcom,rgb_1 {
+				label = "rgb";
+				linux,name = "green";
+				qcom,mode = "lpg";
+				qcom,pwm-channel = <5>;
+				qcom,pwm-us = <5000>;
+				qcom,duty-ms = <70>;
+				qcom,start-idx = <0>;
+				qcom,idx-len = <63>;
+				qcom,duty-pcts = [
+					 00 09 09 00 00
+					 00 00 00 15 2A
+					 3F 2A 15 00 00
+					 00 00 00 00 00
+					 00 00 2C 57 5E
+					 64 63 63 63 62
+					 60 5F 5D 5A 58
+					 53 4F 4A 41 37
+					 2D 17 00 00 00
+					 22 43 2C 16 00
+					 00 00 00 00 00
+					 09 10 21 31 21
+					 10 09 00
+					 ];
+				qcom,max-current = <12>;
+				qcom,default-state = "off";
+				qcom,id = <4>;
+				linux,default-trigger = "none";
+			};
+
+			qcom,rgb_2 {
+				label = "rgb";
+				linux,name = "blue";
+				qcom,mode = "lpg";
+				qcom,pwm-channel = <4>;
+				qcom,pwm-us = <5000>;
+				qcom,duty-ms = <70>;
+				qcom,start-idx = <0>;
+				qcom,idx-len = <63>;
+				qcom,duty-pcts = [
+					 00 09 09 00 00
+					 00 00 00 15 2A
+					 3F 2A 15 00 00
+					 00 00 00 00 00
+					 00 00 2C 57 5E
+					 64 63 63 63 62
+					 60 5F 5D 5A 58
+					 53 4F 4A 41 37
+					 2D 17 00 00 00
+					 22 43 2C 16 00
+					 00 00 00 00 00
+					 09 10 21 31 21
+					 10 09 00
+					 ];
+				qcom,max-current = <12>;
+				qcom,default-state = "off";
+				qcom,id = <5>;
+				linux,default-trigger = "none";
+			};
+		};
+	            qcom,leds@e200 {
+	                     status = "okay";
+	                     qcom,kpdbl1 {
+	                              linux,name = "button-backlight1";
+	                     };
+
+	                     qcom,kpdbl2 {
+	                            linux,name = "button-backlight2";
+	                            qcom,mode = "pwm";
+	                     };
+            	};
+      };
+
+};
+
+&pm8941_gpios {
+	gpio@dd00 {			/* GPIO 30 */
+		status = "ok";
+		qcom,mode = <0>;	/* QPNP_PIN_MODE_DIG_IN */
+		qcom,pull = <0>;	/* pull-up */
+		qcom,master-en = <1>;	/* Enable Module */
+		qcom,src-select = <0>;	/* QPNP_PIN_SEL_FUNC_CONSTANT */
+		qcom,vin-sel = <2>;	/* Select 1.8V Source */
+	};
+};
+
+&pm8941_bms {
+	status = "disabled";
+};
+
+&pm8941_vadc {
+	chan@33 {
+		label = "smb349_vchg";
+		reg = <0x33>;
+		qcom,decimation = <0x0>;
+		qcom,pre-div-channel-scaling = <0x0>;
+		qcom,calibration-type = "absolute";
+		qcom,scale-function = <0x0>;
+		qcom,hw-settle-time = <0x0>;
+		qcom,fast-avg-setup = <0x0>;
+	};
+};
+

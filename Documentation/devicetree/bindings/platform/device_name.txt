@@ -1,0 +1,73 @@
+Setting simple platform device name
+
+In case of legacy platform bus, device name could be set to combination
+with name and id of device in platform data of machine-board file.
+Especially, device name was same as platform device name itself when
+device id is -1.
+
+Now, in the age of device tree, platform device name consists of node name
+and unique id from global atomic value which are increased by registering
+order. So, this name has variant by device environment even though it points
+to same device. For example, simple platform device, "simple_dev" supports
+sysfs for user space to provide device information may have name as
+"simple_dev.95" in A device. But, same platform device in B devices may have
+"simple_dev.83" as name. Therefore, user space can't determine proper sysfs
+to get the information.
+
+Of course, this can be solved by using class driver. But, to simple platform
+driver like "simple_dev" as above example, usage of class driver is cost-waste.
+
+By this reason, it introduces two properties as following;
+
+- platform,dev,id
+- platform,dev,name
+
+If platform,dev,id and platform,dev,name are exist both, name is assigned to
+[name].[id].
+
+If platform,dev,id is 0 and platform,dev,name is exist, name is assigned to
+[name].
+
+If platform,dev,id is exist only, name is assigned to [node name].[id].
+
+If platform,dev,id is not exist(at this time, existence of name is not care),
+name is followed by original setting([node name].[unique id by atomic value]).
+
+Example:
+&soc {
+	...
+	platform,device,A@0 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		interrupt-controller;
+		#interrupt-cells = <3>;
+
+		/* /sys/devices/sim/... */
+		platform,dev,id = <0>;
+		platform,dev,name = "sim";
+	};
+
+	platform,device,B@1 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		interrupt-controller;
+		#interrupt-cells = <3>;
+
+		/* /sys/devices/sim.32/... */
+		platform,dev,id = <32>;
+		platform,dev,name = "sim";
+
+	};
+
+	platform,device,C@1 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		interrupt-controller;
+		#interrupt-cells = <3>;
+
+		/* maybe /sys/devices/platform,device,C.36/... */
+		platform,dev,name = "sim";
+	};
+
+	...
+};

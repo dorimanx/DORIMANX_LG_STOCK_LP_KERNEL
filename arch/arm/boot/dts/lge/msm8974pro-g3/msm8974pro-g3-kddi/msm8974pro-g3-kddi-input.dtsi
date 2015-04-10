@@ -1,0 +1,45 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+
+    &soc {
+         i2c@f9924000 {
+                rmi_s3528@20  {
+                status = "disable";
+            };
+
+            synaptics_s3528@20 {
+                status = "ok";
+                revision = "rev_a";
+                fw_image_s3528_a0 = "synaptics/g3_kddi_jp/PLG352-V1.08-PR1670515-DS5.5.1.0-30055188.img";
+                fw_image_s3528_a1 = "synaptics/g3_kddi_jp/PLG352-V1.08-PR1670515-DS5.5.1.0-30055188.img";
+                fw_image_s3528_a1_suntel = "synaptics/g3_att_us/PLG391-V1.05-PR1653201-DS5.5.1.0.1066_10055185_S3528A1.img";
+				fw_image_s3528_a1_factory = "synaptics/g3_kddi_jp/PLG352-V1.05-PR1648545-DS5.5.1.0-30055185.img";
+                fw_image_s3621 = "synaptics/g3_kddi_jp/PLG298-F004.img";
+				panel_spec = "synaptics/g3_kddi_jp/g3_kddi_jp_limit.txt";
+            };
+
+			synaptics_s3528_rev_a@20 {
+				status = "ok";
+				revision = "rev_a1...";
+                fw_image_s3528_a0 = "synaptics/g3_kddi_jp/PLG352-V1.08-PR1670515-DS5.5.1.0-30055188.img";
+                fw_image_s3528_a1 = "synaptics/g3_kddi_jp/PLG352-V1.08-PR1670515-DS5.5.1.0-30055188.img";
+                fw_image_s3528_a1_suntel = "synaptics/g3_att_us/PLG391-V1.05-PR1653201-DS5.5.1.0.1066_10055185_S3528A1.img";
+				fw_image_s3528_a1_factory = "synaptics/g3_kddi_jp/PLG352-V1.05-PR1648545-DS5.5.1.0-30055185.img";
+                fw_image_s3621 = "synaptics/g3_kddi_jp/PLG298-F004.img";
+				panel_spec = "synaptics/g3_kddi_jp/g3_kddi_jp_limit.txt";
+                /* Rx & Tx cap*/
+                tx_cap = <30 12 11 11 8 0 11 6 5 9 1 2 29>;
+                rx_cap = <15 6 5 10 3 9 3 1 0 5 7 6 1 56 0 10 1 3 4 3 4 9 7 22>;
+		};
+    };
+};

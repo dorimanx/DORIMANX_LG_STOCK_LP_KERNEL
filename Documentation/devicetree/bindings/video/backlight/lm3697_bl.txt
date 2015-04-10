@@ -1,0 +1,83 @@
+TI LM3697 backlight device tree bindings
+
+Required properties:
+  - compatible: "ti,lm3697"
+
+Optional properties: Only specified in PWM brightness control mode
+  - pwms: OF device-tree PWM specification.
+  - pwm-names: a list of names for the PWM devices specified in the "pwms"
+               property.
+  For the PWM user nodes, please refer to
+  Documentation/devicetree/bindings/pwm/pwm.txt.
+
+Sub-nodes:
+  LM3697 backlight should have backlight device specifiers in each sub-node.
+  Each sub-node exactly matches with backlight control bank configuration.
+  Maximum number of sub-nodes is 2.
+
+  Required properties of sub-node:
+  - hvled1-used, hvled2-used, hvled3-used: Backlight string configuration about
+                                           which backlight string is used.
+
+  Optional properties of sub-node:
+  - backlight-name: Name string for backlight device identification
+  - max-current-milliamp: Max current setting. Type is <u32>. Unit is mA.
+                          Range is from 5 to 30mA.
+  - initial-brightness: Backlight initial brightness. Type is <u32>.
+                        Range is from 0 to 2047.
+  - pwm-period: PWM period. Only valid in PWM brightness mode. Type is <u32>.
+
+Examples:
+
+One backlight device is defined. It's PWM based control with period 10KHz.
+
+lm3697@36 {
+	compatible = "ti,lm3697";
+	reg = <0x36>;
+
+	/* GPIO134 for HWEN pin */
+	ti,enable-gpio = <&gpio5 6 0>;
+
+	pwms = <&pwm3943 1 10000>;
+	pwm-names = "lm3697-backlight";
+
+	lcd_bl {
+		backlight-name = "lcd";
+		hvled1-used;
+		hvled2-used;
+		hvled3-used;
+
+		max-current-milliamp = <20>;
+		initial-brightness = <2000>;
+		pwm-period = <10000>;
+	};
+};
+
+Brightness register base, two backlight devices are configured,
+'lcd' and 'status'. The 'lcd' is connected to HVLED1 and 2.
+The 'status' is connected to HVLED3.
+
+lm3697@36 {
+	compatible = "ti,lm3697";
+	reg = <0x36>;
+
+	/* GPIO134 for HWEN pin */
+	ti,enable-gpio = <&gpio5 6 0>;
+
+	lcd_bl {
+		backlight-name = "lcd";
+		hvled1-used;
+		hvled2-used;
+
+		max-current-milliamp = <20>;
+		initial-brightness = <10>;
+	};
+
+	status {
+		backlight-name = "status";
+		hvled3-used;
+
+		max-current-milliamp = <10>;
+		initial-brightness = <20>;
+	};
+};

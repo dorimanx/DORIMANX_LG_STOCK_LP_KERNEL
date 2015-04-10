@@ -1,0 +1,120 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&slim_msm {
+	/delete-node/taiko_codec;
+};
+
+&spi_epm {
+	/delete-node/epm-adc@0;
+};
+
+&soc {
+	spi_7: spi_epm: spi@f9966000 { /* BLSP2 QUP4 */
+		compatible = "qcom,spi-qup-v2";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg-names = "spi_physical", "spi_bam_physical";
+		reg = <0xf9966000 0x1000>,
+		      <0xf9944000 0x15000>;
+		interrupt-names = "spi_irq", "spi_bam_irq";
+		interrupts = <0 104 0>, <0 239 0>;
+		spi-max-frequency = <19200000>;
+
+		qcom,gpio-mosi = <&msmgpio 53 0>;
+		qcom,gpio-miso = <&msmgpio 54 0>;
+		qcom,gpio-clk  = <&msmgpio 56 0>;
+		qcom,gpio-cs0  = <&msmgpio 55 0>;
+
+		qcom,infinite-mode = <0>;
+		qcom,use-bam;
+		qcom,ver-reg-exists;
+		qcom,bam-consumer-pipe-index = <18>;
+		qcom,bam-producer-pipe-index = <19>;
+		qcom,master-id = <84>;
+
+		wm5110-codec@1{
+			compatible = "wlf,wm5110";
+			reg=<0>;
+
+			spi-max-frequency = <19200000>;
+			reset   = <&msmgpio 63 0>;
+
+			gpio-defaults = <0xfffff 0xfffff 0xfffff 0xfffff 0xfffff>;
+
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <93 0>;
+			irq_base = <700>;
+
+			AVDD-supply =    <&pm8941_s3>;
+                        wlf,AVDD-voltage = <1800000 1800000>;
+                        wlf,AVDD-current = <25000>;
+			CPVDD-supply =  <&pm8941_s3>;
+                        wlf,CPVDD-voltage = <1800000 1800000>;
+                        wlf,CPVDD-current = <25000>;
+			DBVDD2-supply =  <&pm8941_s3>;
+                        wlf,DBVDD2-voltage = <1800000 1800000>;
+                        wlf,DBVDD2-current = <25000>;
+			DBVDD3-supply =  <&pm8941_s3>;
+                        wlf,DBVDD3-voltage = <1800000 1800000>;
+                        wlf,DBVDD3-current = <25000>;
+			DBVDD1-supply =  <&pm8941_s3>;
+                        wlf,DBVDD1-voltage = <1800000 1800000>;
+                        wlf,DBVDD1-current = <25000>;
+			DCVDD-supply =  <&pm8941_l1>;
+                        wlf,DCVDD-voltage = <1225000 1225000>;
+                        wlf,DCVDD-current = <10000>;
+			SPKVDDL-supply =  <&pm8941_l1>;
+                        wlf,SPKVDDL-voltage = <1225000 1225000>;
+                        wlf,SPKVDDL-current = <10000>;
+			SPKVDDR-supply =  <&pm8941_l1>;
+                        wlf,SPKVDDR-voltage = <1225000 1225000>;
+                        wlf,SPKVDDR-current = <10000>;
+		};
+	};
+};
+
+&pm8941_lsid0 {
+		pm8941_clkdiv1: clkdiv@5b00 {
+				qcom,cxo-freq = <19200000>;
+				qcom,cxo-div = <1>;
+				qcom,enable = <1>;
+	      };
+};
+
+&pm8941_gpios {
+
+	gpio@ce00 { /* GPIO 15 */
+		status = "ok";
+		qcom,mode = <1>;
+		qcom,output-type = <0>;
+		qcom,pull = <5>;
+		qcom,vin-sel = <2>;
+		qcom,out-strength = <3>;
+		qcom,src-sel = <2>;
+		qcom,master-en = <1>;
+	};
+
+	gpio@d100 { /* GPIO 18 */
+		status = "ok";
+		qcom,mode = <1>;
+		qcom,output-type = <0>;
+		qcom,pull = <5>;
+		qcom,vin-sel = <2>;
+		qcom,out-strength = <3>;
+		qcom,src-sel = <3>;
+		qcom,master-en = <1>;
+	};
+
+};

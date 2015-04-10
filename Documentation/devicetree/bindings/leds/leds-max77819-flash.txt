@@ -1,0 +1,23 @@
+Device Tree bindings for max77819 Flash
+
+Valid node name : flash
+
+Optional properties for regulator:
+ - flash-en-control : Boolean. Flash triggered by FLASHEN pin.
+ - torch-en-control : Boolean. Flash triggered by TORCHEN pin.
+ - enable-maxflash : Boolean. MaxFlash function enable/disable.
+ - maxflash-threshold : Integer. Max Flash Low battery detection threshold.
+		2400000uV to 3400000uV in 33333uV steps.
+ - maxflash-hysteresis: Integer. Low battery detection hysteresis.
+		One of 100000uV, 200000uV, 300000uV or -1. -1 means disabled.
+ - maxflash-falling-timer : Integer. Low Battery mask timer for falling edge of battery.
+		256us to 2048us in 256us steps.
+ - maxflash-rising-timer : Integer. Low Battery mask timer for rising edge of battery.
+		256us to 2048us in 256us steps.
+
+Example:
+
+	flash {
+		flash-en-control;
+		enable-maxflash;
+	};

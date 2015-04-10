@@ -1,0 +1,47 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&mdss_dsi0 {
+	status = "ok";
+};
+
+&mdss_dsi1 {
+	status = "ok";
+};
+
+&soc {
+	i2c@f9967000 {
+		lm3631@29{
+			status = "ok";
+			revision = "rev_a";
+		};
+		lm3697@36 {
+			status = "ok";
+			revision = "rev_b...";
+			lcd_bl {
+				lge,hvled = <
+					12 12  // evb1  = hvled1, hvled2  ; evb2  = hvled1, hvled2
+					12 23  // rev_a = hvled1, hvled2 ; rev_b = hvled2, hvled3
+					23 12  // rev_c = hvled1, hvled2 ; rev_d = hvled1, hvled2
+					12 12  // rev_e = hvled1, hvled2 ; rev_f = hvled1, hvled2
+					12 12  // rev_g = hvled1, hvled2 ; rev_h = hvled1, hvled2
+					12 12  // rev_10 = hvled1, hvled2 ; rev_11 = hvled1, hvled2
+					12     // rev_12 = hvled1, hvled2
+					>;
+			};
+		};
+		tps65132@3e {
+			status = "ok";
+			revision = "rev_b...";
+		};
+     };
+};

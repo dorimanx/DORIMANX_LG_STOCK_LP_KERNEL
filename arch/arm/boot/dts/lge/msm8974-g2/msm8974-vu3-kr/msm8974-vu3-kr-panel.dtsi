@@ -1,0 +1,60 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&mdss_dsi0 {
+    qcom,platform-lane-config = [00 00 00 00 00 00 00 01 97
+			00 00 00 00 05 00 00 01 97
+			00 00 00 00 0a 00 00 01 97
+			00 00 00 00 0f 00 00 01 97
+			00 c0 00 00 00 00 00 01 bb];
+	qcom,dsi-pref-prim-pan = <&mdss_dsi_lgd_960p_video>;
+	qcom,platform-supply-entry2 {
+		qcom,supply-enable-load = <300000>;
+	};
+};
+&mdss_mdp {
+	qcom,mdss_fb_primary {
+		qcom,memblock-reserve = <0x03200000 0x01E00000>;
+	};
+};
+&mdss_dsi_lgd_960p_video{
+	qcom,mdss-dsi-panel-clock-rate = <601870000>;
+};
+
+&soc {
+	i2c@f9967000 {
+		lm3630_rev_b@38 {
+			status = "ok";
+			revision = "...";
+			lm3630,enable_pwm = <1>;
+			lm3630,blmap = <
+				1 1 1 1 1 1 1 1 1 1 1 1 1 2 2
+				2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+				2 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+				4 4 4 4 4 4 4 4 4 4 4 4 4 5 5
+				5 5 5 5 5 5 5 6 6 6 6 6 6 6 6
+				6 6 7 7 7 7 7 7 7 8 8 8 9 9 9
+				10 10 10 10 10 11 11 12 12 13 13 13 14 14 14
+				15 15 16 16 17 17 18 19 19 19 20 21 21 22 23
+				24 25 25 25 26 27 27 28 29 29 30 31 32 32 32
+				33 34 35 36 37 38 39 40 40 40 42 43 44 45 46
+				47 48 49 49 49 50 51 53 54 55 56 58 59 60 60
+				60 62 64 66 68 70 71 72 72 72 74 76 78 80 80
+				80 83 84 86 86 86 88 90 92 94 96 97 98 99 101
+				101 101 103 104 105 107 109 111 113 115 117 117 117 120 123
+				126 127 130 133 135 135 135 138 141 143 145 146 147 149 151
+				154 154 154 157 160 163 166 169 172 175 175 175 178 181 184
+				186 189 192 195 198 198 198 201 204 207 210 214 218 220 221
+				223>;
+		};
+	};
+};

@@ -1,0 +1,57 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+/ {
+	aliases{
+		smd0 = &smdtty_ds;
+	};
+};
+
+&soc {
+	/* ModemBSP: DDM tty & smd driver */
+	qcom,smdttyatnt {
+		compatible = "qcom,smdttyatnt";
+
+		smdtty_data11: qcom,smdtty-data11 {
+			qcom,smdtty-remote = "modem";
+			qcom,smdtty-port-name = "DATA11";
+		};
+	};
+
+	qcom,smdtty {
+		smdtty_ds: qcom,smdtty-ds {
+			qcom,smdtty-remote = "modem";
+			qcom,smdtty-port-name = "DS";
+		};
+
+		/* ModemBSP: DDM tty & smd driver */
+		/delete-node/qcom,smdtty-data11;
+	};
+};
+
+&usb3{
+	compatible = "qcom,dwc-usb3-msm";
+	reg = <0xf9200000 0xfc000>,
+				<0xfd4ab000 0x4>;
+	qcom,dwc-usb3-msm-tx-fifo-size = <0>;
+	qcom,dwc-vadc = <&pm8941_vadc>;
+	qcom,otg-capability;
+	qcom,dwc-hsphy-init = <0x00D1DDA4>;
+	qcom,dwc-ssphy-rx-eq-value = <0x3>;
+	qcom,dwc-ssphy-tx-amplitude-value = <0x7F>;
+	qcom,dwc-ssphy-deemphasis-value = <0x30>;
+};
+&pm8941_lsid1 {
+	pm8941_mvs1: regulator@8300 {
+		parent-supply = <&pm8941_boost>;
+	};
+};

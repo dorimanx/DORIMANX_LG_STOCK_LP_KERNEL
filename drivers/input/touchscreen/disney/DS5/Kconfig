@@ -1,0 +1,7 @@
+config TOUCHSCREEN_SYNAPTICS_FW_PATH
+	   string "Synaptics Touchscreen Firmware Path"
+	   help
+	      TOUCHSCREEN_SYNAPTICS_FW_PATH is set to path of synaptics firmware
+	      in firmware/synaptics.
+	      ex) TOUCHSCREEN_SYNAPTICS_FW_PATH="dzny_dcm_jp".
+

@@ -1,0 +1,124 @@
+config MACH_LGE
+	bool
+
+menu "LGE Board Selection"
+
+source "arch/arm/mach-msm/lge/8974-g2/Kconfig"
+source "arch/arm/mach-msm/lge/8974ac-g3/Kconfig"
+source "arch/arm/mach-msm/lge/8974ac-dzny/Kconfig"
+
+menuconfig LGE_SPECIFIC_PATCHES
+    depends on MACH_LGE
+    bool "LGE Specific Patches"
+
+config DTS_TARGET
+	string "DTS target dir"
+	help
+	  CONFIG_DTS_TARGET should be set to support appended dts.
+	  ex) CONFIG_DTS_TARGET="msm8974-g3".
+
+config LGE_HANDLE_PANIC
+    tristate "Support LGE Kernel Panic Handler"
+    default n
+    depends on MACH_LGE
+    help
+      LGE Error handler
+
+config LGE_BOOTLOADER_LOG
+	tristate "Support LGE bootloader log"
+	default n
+	depends on MACH_LGE
+	help
+	  LGE bootloader log
+
+config LGE_LCD_TUNING
+	bool "lcd_gamma_tuning"
+	default n
+	depends on MACH_LGE
+	help
+	  Support LCD gamma tuning.
+
+config LGE_PSEUDO_CHG_UI
+	bool "Support pseudo charging UI"
+	default n
+	depends on MACH_LGE
+	help
+	  LGE PSEUDO CHG UI.
+
+config LGE_BOOTLOADER_TIME_CHECKER
+	bool "Show bootloader(LK, SBL) time"
+	default n
+	depends on MACH_LGE
+	help
+	  This shows the lk and sbl1 booting time in MSM8974.
+	  If this feature is enabled, it should be check by adb shell.
+	  Device Node : sys/module/lge_bootloader_time_checker/
+
+config LGE_USES_SMD_DS_TTY
+    bool "Explicitly use smd tty driver for DS"
+	default n
+	depends on MSM_SMD_TTY && MACH_LGE
+	help
+	  In Qualcomm MSM89xx, smd tty driver for ds(/dev/smd0) is not used.
+	  Say yes if this tty driver must be used on LGE device. This is used
+	  to connect smd channel in user space(for example, ATCMD processing).
+
+config LGE_KSWITCH
+    tristate "Support LGE Kill Switch"
+    default n
+    depends on MACH_LGE
+    help
+      LGE Kill Switch
+
+config LCD_KCAL
+	depends on MACH_LGE
+	bool "Enable sysfs for LCD KCAL"
+	default n
+
+config LGE_QSDL_SUPPORT
+    tristate "Support for Quality Statistics Data Logging"
+    default n
+    depends on MACH_LGE
+    help
+       QSDL is a feature which notify infomation for quality statistics
+       data logging of device.
+
+config LGE_QFPROM_INTERFACE
+	bool "Support qfprom interface"
+	default n
+	depends on MACH_LGE
+	help
+	  LGE QFPROM DRIVER.
+
+
+config LGE_DIAG_BYPASS
+	tristate "Support LGE diag bypass for factory"
+	default n
+	depends on MACH_LGE
+	help
+	  LGE diag bypass
+
+
+config LGE_LCD_OFF_DIMMING
+	tristate "Support LGE LCD off dimming reboot"
+	default n
+	depends on MACH_LGE
+	help
+	  Support lcd off or dimming reboot when reboot reason is "LCD off". lcd stay dimming until lcd is off and on again.
+
+config LGE_LIMIT_FREQ_TABLE
+    bool "Set limitation to cpu frquency for manufacturing"
+    default n
+    depends on MACH_LGE
+    help
+      set limitation to cpu frquency for manufacturing
+
+config LGE_GDSC_SWCONTROL
+	bool "Support to use controlling gdsc by sw for msm8974AA"
+	default n
+	depends on MACH_LGE
+	help
+	  When enable this, LGE's sw control code for gdsc enable and diasble
+	  are used. Normally, msm8974AA chipset based LGE model may use it.
+
+endmenu

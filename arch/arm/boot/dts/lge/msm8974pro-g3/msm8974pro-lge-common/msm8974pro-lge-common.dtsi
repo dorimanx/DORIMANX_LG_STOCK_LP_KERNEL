@@ -1,0 +1,218 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+/include/ "msm8974pro-lge-panel.dtsi"
+/include/ "msm8974pro-lge-input.dtsi"
+/include/ "msm8974pro-lge-hdmi.dtsi"
+/include/ "msm8974pro-lge-usb.dtsi"
+/include/ "msm8974pro-lge-misc.dtsi"
+/include/ "msm8974pro-lge-pm.dtsi"
+/include/ "msm8974pro-lge-sound.dtsi"
+
+/ {
+	qcom,mss@fc880000 {
+		status = "ok";
+	};
+
+	aliases {
+		serial0 = &blsp1_uart1;
+	};
+
+//CONFIG_LGE_BLUETOOTH (+) - Set UART5
+	aliases {
+		uart99 = &uart5;
+	};
+//CONFIG_LGE_BLUETOOTH (-) - Set UART5
+};
+
+&sdhc_1 {
+	qcom,clk-rates = <400000 20000000 25000000 50000000 100000000 192000000>;
+	qcom,bus-speed-mode = "HS200_1p8v", "DDR_1p8v";
+	qcom,nonremovable;
+	qcom,pad-drv-off = <0x0 0x0 0x0>;
+	qcom,pad-drv-on = <0x4 0x4 0x4>; /* 16mA, 10mA, 10mA -> 10mA, 10mA, 10mA */
+	qcom,pad-pull-off = <0x0 0x3 0x3>;
+	qcom,pad-pull-on = <0x0 0x3 0x3>;
+	qcom,vdd-always-on;
+	qcom,vdd-current-level = <0x320 0x7a120>;
+	qcom,vdd-io-always-on;
+	qcom,vdd-io-current-level = <0xfa 0x25990>;
+	qcom,vdd-io-voltage-level = <0x1b7740 0x1b7740>;
+	qcom,vdd-lpm-sup;
+	qcom,vdd-voltage-level = <0x2d0370 0x2d0370>;
+	status = "ok";
+	vdd-io-supply = <&pm8941_s3>;
+	vdd-supply = <&pm8941_l20>;
+};
+
+&sdhc_2 {
+	#address-cells = <0x0>;
+	#interrupt-cells = <0x1>;
+	cd-gpios = <&msmgpio 0x3e 0x1>;
+	interrupt-map = < 0x1 0x0 0x7d 0x0 0x1 0x1 0x0 0xdd 0x0 0x2 0x8 0x3e 0x3>;
+	interrupt-map-mask = <0xffffffff>;
+	interrupt-names = "hc_irq", "pwr_irq", "status_irq";
+	interrupt-parent = <&sdhc_2>;
+	interrupts = <0x0 0x1 0x2>;
+	qcom,pad-drv-off = <0x0 0x0 0x0>;
+	qcom,pad-drv-on = <0x7 0x4 0x4>;
+	qcom,pad-pull-off = <0x0 0x3 0x3>;
+	qcom,pad-pull-on = <0x0 0x3 0x3>;
+	qcom,vdd-current-level = <0x2328 0xc3500>;
+	qcom,vdd-io-current-level = <0x6 0x55f0>;
+	qcom,vdd-io-voltage-level = <0x1b7740 0x2d0370>;
+	qcom,vdd-voltage-level = <0x2d0370 0x2d0370>;
+	status = "disable";
+	vdd-io-supply = <&pm8941_l13>;
+	vdd-supply = <&pm8941_l21>;
+};
+
+&soc {
+	/delete-node/spi_eth_phy_vreg;
+
+	/* label: i2c_0 (label defined in msm8974.dtsi) */
+	i2c@f9967000 {
+		cell-index = <0>;
+		compatible = "qcom,i2c-qup";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0Xf9967000 0x1000>;
+		reg-names = "qup_phys_addr";
+		interrupts = <0 105 0>;
+		interrupt-names = "qup_err_intr";
+		qcom,i2c-bus-freq = <400000>;
+		qcom,i2c-src-freq = <50000000>;
+		qcom,scl-gpio = <&msmgpio 84 0>;
+		qcom,sda-gpio = <&msmgpio 83 0>;
+		qcom,active-only;
+		qcom,master-id = <84>;
+	};
+
+	/* common: core */
+	qcom,wdt@f9017000 {
+		qcom,bark-time = <16000>;
+		qcom,pet-time = <10000>;
+	};
+
+	serial@f991d000 {
+	        compatible = "qcom,msm-lsuart-v14";
+	        reg = <0xf991d000 0x1000>;
+	        interrupts = <0 107 0>;
+	        status = "disabled";
+
+                qcom,msm-bus,name = "serial_uart1";
+                qcom,msm-bus,num-cases = <2>;
+                qcom,msm-bus,num-paths = <1>;
+                qcom,msm-bus,vectors-KBps =
+                          <86 512 0 0>,
+                          <86 512 500 800>;
+	};
+
+	blsp1_uart1: serial@f991e000 {
+		status = "disabled";
+	};
+	//CONFIG_LGE_BLUETOOTH (+)
+	// BLSP5 (BLSP 1 UART 4), UART5 For Bluetooth
+	uart5: uart@f9921000  {
+		compatible = "qcom,msm-hsuart-v14";
+		status = "ok";
+		reg = <0xf9921000  0x1000>,
+			<0xf9904000 0x19000>;
+		reg-names = "core_mem", "bam_mem";
+		interrupts = <0 111 0>, <0 238 0>;
+		interrupt-names = "core_irq", "bam_irq";
+
+		qcom,tx-gpio = <&msmgpio 23 0>;
+		qcom,rx-gpio = <&msmgpio 24 0>;
+		qcom,cts-gpio = <&msmgpio 25 0>;
+		qcom,rfr-gpio = <&msmgpio 26 0>;
+
+		qcom,bam-tx-ep-pipe-index = <8>;
+		qcom,bam-rx-ep-pipe-index = <9>;
+
+		qcom,msm-bus,name = "serial_uart5";
+		qcom,msm-bus,num-cases = <2>;
+		qcom,msm-bus,active-only = <0>;
+		qcom,msm-bus,num-paths = <1>;
+		qcom,msm-bus,vectors-KBps =
+				<86 512 0 0>,
+				<86 512 500 800>;
+		// Disable Auto RFR (Ready For Receive) Function of msm_serial_hs
+		// Because of BT Sleep control error
+		qcom,msm-obs;
+	};
+
+	// IRRC (BLSP 2 UART 6). UART6 For IRRC
+	//  LGE_CHANGE_S, [IRRC][daegeun.yoon@lge.com], 2014-01-09, IRRC Bring up for B2
+
+        serial@f9962000 {
+                compatible = "qcom,msm-lsuart-v14";
+                reg = <0xf9962000 0x100>;
+                interrupts = <0 118 0>;
+                status = "disable";
+
+                qcom,msm-bus,name = "serial_uart12";
+                qcom,msm-bus,num-cases = <2>;
+                qcom,msm-bus,active-only = <0>;
+                qcom,msm-bus,num-paths = <1>;
+                qcom,msm-bus,vectors-KBps =
+                         <84 512 0 0>,
+                         <84 512 500 800>;
+        };
+
+
+	/delete-node/uart@f995d000;
+
+	/* To register A1 BT wake-up devices for BT sleep */
+	bt_sleep {
+		compatible = "lge,bcm_bluesleep";
+		host-wake-gpio = <&msmgpio 42 0>;
+		ext-wake-gpio = <&msmgpio 62 0>;
+		interrupt-parent = <&msmgpio>;
+		interrupts = <42 0>;
+		interrupt-names = "host_wake";
+	};
+	//CONFIG_LGE_BLUETOOTH (-)
+
+};
+&cci {
+	qcom,camera@20 {
+		status = "disable";
+	};
+};
+
+&pm8941_gpios {
+	gpio@c300 { /* GPIO 4 */
+		status = "ok";			/* CAMERA VCM */
+		qcom,mode = <1>;		/* QPNP_PIN_MODE_DIG_OUT */
+		qcom,output-type = <0>;		/* QPNP_PIN_OUT_BUF_CMOS */
+		qcom,pull = <5>;		/* QPNP_PIN_PULL_NO */
+		qcom,vin-sel = <2>;		/* QPNP_PIN_VIN2 */
+		qcom,out-strength = <2>;	/* QPNP_PIN_OUT_STRENGTH_MED */
+		qcom,src-sel = <0>;		/* QPNP_PIN_SEL_FUNC_CONSTANT */
+		qcom,master-en = <1>;
+	};
+
+	gpio@cf00 { /* GPIO 16 */
+		qcom,mode = <1>;
+		qcom,output-type = <0>;
+		qcom,pull = <5>;
+		qcom,vin-sel = <2>;
+		qcom,out-strength = <3>;
+		qcom,src-sel = <3>;       /* QPNP_PIN_SEL_FUNC_2  */
+		qcom,master-en = <1>;
+	};
+};
+
+&memory_hole {
+	qcom,memblock-remove = <0x05a00000 0x7d00000 0x0fa00000 0x500000>;
+};

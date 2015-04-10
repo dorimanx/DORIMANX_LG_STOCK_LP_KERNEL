@@ -1,0 +1,295 @@
+/* Copyright (c) 2013, LGE Electronics. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&mdss_fb0 {
+	qcom,memory-reservation-size = <0x1C20000>; // G2 : <0x1000000>;
+};
+
+&mdss_dsi0 {
+	
+	tpio-supply = <&pm8941_lvs3>;
+	
+    qcom,platform-enable-gpio = <&msmgpio 25 0>; // not use
+
+	qcom,platform-avdd-gpio = <&msmgpio 60 0>; // DSV_ENA
+	qcom,platform-avee-gpio = <&msmgpio 25 0>; // DSV_ENB
+				
+	qcom,dsi-pref-prim-pan = <&dsi_jdi_fhd_rsp_incell_video>;
+
+	lge,dsv_manufacturer = < // 1:TPS65132 2:SM5107 3:DW8768
+	3 3  // rev_0 = 3 ; rev_a = 3
+	3 3  // rev_b = 3 ; rev_c = 3
+	3 3  // rev_d = 3 ; rev_e = 3
+	3 3  // rev_f = 3 ; rev_g = 3
+	3 3  // rev_10 = 3 ; rev_11 = 3
+	3    // rev_12 = 3;
+	>;
+	
+	qcom,platform-supply-entry1 {
+		qcom,supply-name = "vdd";
+		qcom,supply-min-voltage = <3100000>;
+		qcom,supply-max-voltage = <3100000>;
+		qcom,supply-enable-load = <100000>;
+		qcom,supply-disable-load = <100>;
+		qcom,supply-pre-on-sleep = <0>;
+		qcom,supply-post-on-sleep = <20>;
+		qcom,supply-pre-off-sleep = <0>;
+		qcom,supply-post-off-sleep = <0>;
+		status = "ok";
+	};
+
+	qcom,platform-supply-entry2 {
+		qcom,supply-name = "vddio";
+		qcom,supply-min-voltage = <1800000>;
+		qcom,supply-max-voltage = <1800000>;
+		qcom,supply-enable-load = <100000>;
+		qcom,supply-disable-load = <100>;
+		qcom,supply-pre-on-sleep = <0>;
+		qcom,supply-post-on-sleep = <20>;
+		qcom,supply-pre-off-sleep = <0>;
+		qcom,supply-post-off-sleep = <0>;
+		status = "ok";
+	};
+
+	qcom,platform-supply-entry3 {
+		qcom,supply-name = "vdda";
+		qcom,supply-min-voltage = <1200000>;
+		qcom,supply-max-voltage = <1200000>;
+		qcom,supply-enable-load = <100000>;
+		qcom,supply-disable-load = <100>;
+		qcom,supply-pre-on-sleep = <0>;
+		qcom,supply-post-on-sleep = <20>;
+		qcom,supply-pre-off-sleep = <0>;
+		qcom,supply-post-off-sleep = <0>;
+		status = "ok";
+	};
+
+		qcom,platform-supply-entry4 {
+		qcom,supply-name = "tpio";
+		qcom,supply-min-voltage = <1800000>;
+		qcom,supply-max-voltage = <1800000>;
+		qcom,supply-enable-load = <100000>;
+		qcom,supply-disable-load = <100>;
+		qcom,supply-pre-on-sleep = <0>;
+		qcom,supply-post-on-sleep = <20>;
+		qcom,supply-pre-off-sleep = <0>;
+		qcom,supply-post-off-sleep = <0>;
+		status = "ok";
+	};
+	
+};
+
+&mdss_dsi1 {
+	status = "disable";
+};
+
+&mdss_mdp {
+
+	/delete-property/ qcom,mdss-ad-off;
+	qcom,mdss-pref-prim-intf = "dsi";
+	qcom,mdss-ab-factor-limit = <1 1>;	/*  cam tuning times  */
+
+	dsi_jdi_fhd_rsp_incell_video: qcom,mdss_dsi_jdi_fhd_rsp_incell_video {
+		compatible = "qcom,mdss-dsi-panel";
+		qcom,mdss-dsi-panel-name = "JDI 1080p RSP video mode dsi primary panel";
+		qcom,mdss-dsi-panel-controller = <&mdss_dsi0>;
+		qcom,mdss-dsi-panel-type = "dsi_video_mode";
+		qcom,mdss-dsi-panel-destination = "display_1";
+		qcom,mdss-dsi-panel-framerate = <60>;
+		qcom,mdss-dsi-virtual-channel-id = <0>;
+		qcom,mdss-dsi-stream = <0>;
+		qcom,mdss-dsi-panel-width = <1080>;        
+		qcom,mdss-dsi-panel-height = <1920>; 
+		     
+		qcom,mdss-dsi-h-front-porch = <96>;       
+		qcom,mdss-dsi-h-back-porch = <36>;
+		qcom,mdss-dsi-h-pulse-width = <12>;       
+		qcom,mdss-dsi-h-sync-skew = <0>;  
+		        
+		qcom,mdss-dsi-v-back-porch = <3>;        
+		qcom,mdss-dsi-v-front-porch = <4>;        
+		qcom,mdss-dsi-v-pulse-width = <1>;       
+		
+		qcom,mdss-dsi-h-left-border = <0>;         
+		qcom,mdss-dsi-h-right-border = <0>;
+		qcom,mdss-dsi-v-top-border = <0>;
+		qcom,mdss-dsi-v-bottom-border = <0>;
+		qcom,mdss-dsi-bpp = <24>;
+		qcom,mdss-dsi-color-order = "rgb_swap_rgb";
+		qcom,mdss-dsi-underflow-color = <0xff>;
+		qcom,mdss-dsi-border-color = <0>;
+		qcom,mdss-dsi-on-command = [               
+			39 01 00 00 00 00 02 /* display brightness */
+				51 FF
+			39 01 00 00 00 00 02 /* ctrl display */
+				53 0C
+			39 01 00 00 00 00 02 /* CABC OFF*/
+				55 00
+
+//			39 01 00 00 00 00 02 /* CABC SRE:OFF , CABC ON GUI mode */
+//				55 01
+
+			29 01 00 00 00 00 02 // Panel CMD
+				B0 04
+			29 01 00 00 00 00 14 // Gamma tunning
+				C8 01 00 00 FA
+				00 FC 00 00 00
+				FA 00 FC 00 00
+				00 00 00 FC 00
+			29 01 00 00 00 00 07   	     /*  Backlight Ctrl 1 */
+				B8 07 90 1E 10 1E 32
+			29 01 00 00 00 00 07      	 /*  Backlight Ctrl 2 */
+				B9 07 82 3C 10 3C 87
+			29 01 00 00 00 00 07 	     /*  Backlight Ctrl 3 */
+				BA 07 78 64 10 64 B4
+			29 01 00 00 00 00 19      	 /*  Backlight Ctrl 4 */
+				29 75 40 43 49 55 62 71 82 94
+				A8 B9 CB DB E9 F5 FC FF 07 25
+				04 04 44 00 00
+
+//			29 01 00 00 00 00 04      	/*  SRE Control 1 */
+//				BB 01 1E 14
+//			29 01 00 00 00 00 04      	/*  SRE Control 2 */
+//				BC 01 50 32
+//			29 01 00 00 00 00 04      	/*  SRE Control 3 */
+//				BD 01 B4 A0
+
+
+//			29 01 00 00 00 00 21 			/* CE setting */
+//				    CA 01 70 9A 95
+//					A2 98 95 8F 3F
+//					3F 80 80 08 80
+//					08 3F 08 90 0C
+//					0C 0A 06 04 04
+//					00 C8 10 10 3F
+//					3F 3F 3F
+
+			29 01 00 00 00 00 21 			/* CE JDI */
+				    CA 01 70 8E 80
+					80 B0 C0 85 08
+					3F 10 78 08 38
+					08 3F 08 90 0C
+					0C 0A 06 04 04
+					00 C0 10 10 3F
+					3F 3F 3F
+			29 01 00 00 00 00 02
+				D6 01
+			05 01 00 00 FA 00 01 /* exit sleep - wait 120ms */
+				11
+		    05 01 00 00 00 00 01 /* display on */
+				29
+		];
+
+		qcom,mdss-dsi-off-command = [
+				05 01 00 00 14 00 01 /* display off - wait 20ms*/		
+		        28		
+		        05 01 00 00 50 00 01 /* enter sleep - wait 80ms */
+		        10	
+		];
+	    qcom,mdss-pan-physical-width-dimension = <65>;
+		qcom,mdss-pan-physical-height-dimension = <115>;
+		qcom,mdss-dsi-on-command-state = "dsi_hs_mode";
+		qcom,mdss-dsi-off-command-state = "dsi_hs_mode";
+		qcom,mdss-dsi-h-sync-pulse = <0>;
+		qcom,mdss-dsi-traffic-mode = "non_burst_sync_event"; 
+		qcom,mdss-dsi-lane-map = "lane_map_0123";
+		// qcom,mdss-dsi-lane-hs = <1>;
+		// qcom,mdss-dsi-bllp-eof-power-mode;
+		qcom,mdss-dsi-bllp-power-mode;
+		qcom,mdss-dsi-lane-0-state;
+		qcom,mdss-dsi-lane-1-state;
+		qcom,mdss-dsi-lane-2-state;
+		qcom,mdss-dsi-lane-3-state;
+		/delete-property/ qcom,mdss-dsi-panel-broadcast-mode ;
+
+		qcom,mdss-dsi-panel-timings = [CD 42 35 00 5C 53 37 44 56 03 04 00]; // 36
+
+		qcom,mdss-dsi-t-clk-post = <0x1E>; 
+		qcom,mdss-dsi-t-clk-pre = <0x36>;
+
+		qcom,mdss-dsi-bl-min-level = <1>;
+		qcom,mdss-dsi-bl-max-level = <1511>;
+		qcom,mdss-dsi-dma-trigger = "trigger_sw";
+		qcom,mdss-dsi-mdp-trigger = "none";
+		qcom,mdss-dsi-bl-pmic-control-type = "bl_others";
+		qcom,mdss-dsi-pan-enable-dynamic-fps;
+		qcom,mdss-dsi-pan-fps-update = "dfps_immediate_porch_mode";
+		
+		qcom,mdss-dsi-reset-sequence = <1 5>;
+		qcom,mdss-dsi-lp11-init=<1>;            // JDI Power Seq..
+    	qcom,mdss-dsi-tx-eot-append;
+		qcom,cont-splash-enabled;
+	};
+	
+};
+
+&soc {
+	i2c@f9967000 {
+
+		lion_dsv@3e {
+		status = "ok";
+		compatible = "sm_dw,lion_dsv";
+ 		reg = <0x3e>;
+ 		};
+ 		
+		lm3697@36 {
+			compatible = "ti,lm3697";
+			status = "ok";
+			reg = <0x36>;
+
+			/* GPIO134 for HWEN pin */
+			ti,enable-gpio = <&msmgpio 58 0x00>;
+
+			lcd_bl {
+				backlight-name = "lm3697";
+				lge,hvled = <
+					12 12  // evb1  = hvled2, hvled3  ; evb2  = hvled1, hvled2
+					12 12  // rev_a = hvled1, hvled2 ; rev_b = hvled1, hvled2
+					12 12  // rev_c = hvled1, hvled2 ; rev_d = hvled1, hvled2
+					12 12  // rev_e = hvled1, hvled2 ; rev_f = hvled1, hvled2
+					12 12  // rev_g = hvled1, hvled2 ; rev_h = hvled1, hvled2
+					12 12  // rev_10 = hvled1, hvled2 ; rev_11 = hvled1, hvled2
+					12     // rev_12 = hvled1, hvled2
+					>;
+				max-current-milliamp = <18>; //20
+				initial-brightness = <157>;
+				/* mapping-mode, 0:exp, 1:linear */
+				mapping-mode = <1>;
+
+				blmap_size = <256>;
+				blmap = <
+					0 2 2 3 4 4 5 6 6 7 8 8 9 10 10 11 12 12 13 14 14 15 16 16
+					17 18 18 19 19 20 21 21 22 23 23 24 25 25 26 27 27 28 29 29
+					30 31 31 32 33 33 34 34 34 35 35 35 35 35 35 36 36 37 37 38
+					38 39 40 41 42 43 44 45 46 48 50 52 54 56 58 60 62 64 65 67
+					69 71 73 75 77 80 83 85 86 87 89 92 96 99 102 106 109 113
+					116 120 124 128 132 136 140 145 150 155 160 161 165 170 175
+					180 185 190 195 200 205 210 215 220 225 230 236 242 248 254
+					260 265 270 277 284 291 298 305 312 319 326 333 340 348 356
+					364 372 379 379 387 395 403 411 420 429 438 447 457 466 475
+					484 493 502 512 522 532 542 552 562 572 583 595 600 605 615
+					625 637 650 662 675 687 700 712 725 737 750 762 775 788 800
+					813 825 838 851 863 876 888 901 913 926 938 951 963 976 990
+					1004 1018 1032 1046 1060 1074 1088 1116 1124 1130 1146 1163
+					1179 1196 1212 1228 1245 1261 1278 1294 1312 1331 1349 1368
+					1386 1404 1423 1441 1460 1478 1498 1518 1539 1559 1579 1599
+					1619 1640 1660 1680 1704 1727 1751 1774 1798 1821 1845 1868
+					1892
+					>;
+
+				pwm-period = <0>;
+			};
+		};
+
+	};
+};
+

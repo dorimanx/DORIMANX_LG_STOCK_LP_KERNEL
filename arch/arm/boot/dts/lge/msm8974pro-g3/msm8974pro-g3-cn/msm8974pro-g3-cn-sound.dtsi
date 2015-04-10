@@ -1,0 +1,33 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	i2c@f9967000 {
+		maxim_max14688@15 {
+			status = "ok";
+			revision = "evb1...";
+		};
+		cs35l32@40 {
+			status = "ok";
+			revision = "evb1...";
+		};
+	};
+
+	qcom,msm-dai-q6 {
+		compatible = "qcom,msm-dai-q6";
+
+		qcom,msm-dai-q6-incall-music-2-rx {
+            compatible = "qcom,msm-dai-q6-dev";
+            qcom,msm-dai-q6-dev-id = <32770>;
+		};
+	};
+};

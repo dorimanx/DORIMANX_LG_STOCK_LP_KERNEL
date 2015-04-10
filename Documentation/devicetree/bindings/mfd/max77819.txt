@@ -1,0 +1,75 @@
+Maxim MAX77819 multi-functional device
+
+MAX77819 is a Mulitifunction device with Charger, SFO and etc.
+
+* PMIC *
+Required properties:
+ - compatible : Must be "maxim,max77819-pmic".
+ - interrupt-parent : The parent interrupt controller.
+ - interrupts : Interrupt number.
+ - interrupt-controller : Mark the device node as an interrupt controller.
+ - #interrupt-cells : Should be four.
+
+Nodes:
+- charger
+- sfo
+- flah
+
+* Peripheral *
+Required properties:
+ - compatible : Must be "maxim,max77819-periph".
+
+Nodes:
+- wled
+- vibrator
+
+
+Example:
+	max77819_0: max77819@66 {
+		compatible = "maxim,max77819-pmic";
+		#address-cells = <0>;
+		max77819,int-gpio = //TBD
+		interrupt-parent = //TBD
+		interrupts = //TBD
+		interrupt-controller;
+		#interrupt-cells = <1>;
+		reg = <0x66>;
+		status = "ok";
+
+		sfo {
+			//TBD
+		};
+
+		charger {
+			compatible = "maxim,max77819-charger";
+			status = "ok";
+			interrupt-parent = <&max77819_0>;
+			interrupts = <0>;
+			psy_name = "ac";
+			ext_psy_name = "usb";
+			supplied_to = "battery";
+			fast_charge_current = <1500000>;
+			charge_termination_voltage = <4350000>;
+			topoff_timer = <0>;
+			topoff_current = <200000>;
+			charge_restart_threshold = <150000>;
+			coop_psy_name = //TBD
+			enable_thermistor;
+			enable_aicl;
+			aicl_detection_voltage = <4500000>;
+			aicl_reset_threshold = <100000>;
+			current_limit_usb = <500000>;
+			current_limit_ac = <1500000>;
+		};
+
+		flash {
+			//TBD
+		};
+
+	max77819_1: max77819@48 {
+		//TBD
+
+		vibrator {
+			//TBD
+		};
+	};

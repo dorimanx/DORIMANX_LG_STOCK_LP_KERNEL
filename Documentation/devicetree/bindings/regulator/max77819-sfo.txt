@@ -1,0 +1,15 @@
+Device Tree regulator bindings for max77819 SFO
+
+Optional properties for regulator:
+ - active-discharge : bool: Turn ON Active Discharge
+ - Any optional property defined in bindings/regulator/regulator.txt
+
+The valid names for regulators are:
+	safeout
+
+Example:
+
+	safeout {
+		regulator-min-microvolt = <500000>;
+		regulator-max-microvolt = <500000>;
+	};

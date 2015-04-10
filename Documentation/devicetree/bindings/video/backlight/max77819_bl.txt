@@ -1,0 +1,23 @@
+max77819 backlight bindings
+
+Valid node name : backlight
+
+Optional properties :
+ - current_map_id : currently, don't care
+ - ramp_up_time_msec : ramp-up timer.
+ - ramp_dn_time_msec : ramp-down timer.
+ - pwm_input_use : It should be one of follow vaules
+		0 - MAX77819_WLED_PWM_INPUT_DISABLE  ignoring WLEDPWM input
+		1 - MAX77819_WLED_PWM_INPUT_CABC     CABC dimming signal
+		2 - MAX77819_WLED_PWM_INPUT_EXTRA    extra control signal for higher resolution in brightness levels
+ - pwm_id : PWM ID of AP.
+		It will be used when "pwm_input_use == MAX77819_WLED_PWM_INPUT_EXTRA"
+ - pwm_period_nsec : PWM period in nsec.
+		It will be used when "pwm_input_use == MAX77819_WLED_PWM_INPUT_EXTRA"
+Example:
+	backlight {
+		compatible = "maxim,max77819-wled";
+		pwm_input_use = 2;
+		pwm_id = 1;
+		pwm_period_nsec = 1024*20;
+	};

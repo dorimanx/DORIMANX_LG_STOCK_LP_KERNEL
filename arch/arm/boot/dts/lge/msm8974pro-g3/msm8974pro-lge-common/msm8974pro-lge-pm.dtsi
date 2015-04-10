@@ -1,0 +1,357 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&pm8941_bms {
+	status = "disabled";
+};
+
+&bif_ctrl {
+	status = "ok";
+};
+&spmi_bus {
+	qcom,pm8941@0 {
+		qcom,power-on@800 {
+			qcom,s3-debounce = <128>;
+			qcom,pon_1 {
+				status = "disable";
+			};
+			qcom,pon_2 {
+				status = "disable";
+			};
+			qcom,pon_3 {
+				status = "disable";
+			};
+		};
+		pm8941_chg: qcom,charger {
+			status = "disable";
+			qcom,vbatdet-delta-mv = <50>;
+			qcom,ibatterm-ma = <100>;
+			qcom,tchg-mins = <480>;
+			qcom,ibatmax-ma = <1500>;
+			qcom,ibatsafe-ma = <1500>;
+			qcom,vinmin-mv = <4450>;
+			qcom,vddmax-mv = <4350>;
+			qcom,vddsafe-mv = <4380>;
+			qcom,bpd-detection = "bpd_thm";
+			qcom,duty-cycle-100p = <1>;
+			otg-parent-supply = <&pm8941_boost>;
+
+			lge,no-init-cable = <0 0 0>;
+			lge,cable-mhl-1k = <5000 500 500>;
+			lge,cable-u-28p7k = <5500 1500 500>;
+			lge,cable-28p7k = <6000 1500 500>;
+			lge,cable-56k = <200000 1500 1500>;
+			lge,cable-100k = <239000 1500 500>;
+			lge,cable-130k = <340000 500 500>;
+			lge,cable-180k = <400000 1500 500>;
+			lge,cable-200k = <410000 1500 500>;
+			lge,cable-220k = <485000 1500 500>;
+			lge,cable-270k = <560000 1500 500>;
+			lge,cable-330k = <735000 1500 500>;
+			lge,cable-620k = <955000 1500 500>;
+			lge,cable-910k = <1140000 1500 1500>;
+			lge,cable-none = <1900000 1500  500>;
+
+			pm8941_chg_boost: qcom,boost@1500 {
+				regulator-min-microvolt = <5000000>;
+				regulator-max-microvolt = <5000000>;
+				regulator-name = "flash_boost";
+			};
+		};
+
+		vadc@3100 {
+			chan@14 {
+				status = "ok";
+				label = "lcd_maker_id";
+				reg = <0x14>;
+				qcom,decimation = <0>;
+				qcom,pre-div-channel-scaling = <0>;
+				qcom,calibration-type = "absolute";
+				qcom,scale-function = <0>;
+				qcom,hw-settle-time = <0>;
+				qcom,fast-avg-setup = <0>;
+			};
+			chan@15 {
+				status = "ok";
+				label="mpp6_adc";
+				reg = <0x15>;
+				qcom,decimation = <0>;
+				qcom,pre-div-channel-scaling = <0>;
+				qcom,calibration-type = "absolute";
+				qcom,scale-function = <0>;
+				qcom,hw-settle-time = <0>;
+				qcom,fast-avg-setup = <0>;
+			};
+			chan@33 {
+				status = "ok";
+				label = "max77819_vchg";
+				reg = <0x33>;
+				qcom,decimation = <0>;
+				qcom,pre-div-channel-scaling = <0>;
+				qcom,calibration-type = "absolute";
+				qcom,scale-function = <0>;
+				qcom,hw-settle-time = <0>;
+				qcom,fast-avg-setup = <0>;
+			};
+			chan@34 {
+				status = "ok";
+				label = "max8971_vchg";
+				reg = <0x34>;
+				qcom,decimation = <0>;
+				qcom,pre-div-channel-scaling = <0>;
+				qcom,calibration-type = "absolute";
+				qcom,scale-function = <0>;
+				qcom,hw-settle-time = <0>;
+				qcom,fast-avg-setup = <0>;
+			};
+
+			chan@39 {
+				label = "usb_id_lv";
+				reg = <0x39>;
+				qcom,decimation = <0>;
+				qcom,pre-div-channel-scaling = <0>;
+				qcom,calibration-type = "absolute";
+				qcom,scale-function = <0>;
+				qcom,hw-settle-time = <0>;
+				qcom,fast-avg-setup = <0>;
+			};
+		};
+
+		qcom,currentnow@3800 {
+			compatible ="lge,currentnow_device";
+			reg = <0x3800 0x100>;
+			status = "ok";
+		};
+	};
+
+	qcom,pm8941@1 {
+		qcom,leds@d000 {
+			status = "okay";
+		};
+
+		qcom,leds@d300 {
+			flash-boost-supply = <&pm8941_chg_boost>;
+		};
+
+	};
+};
+
+&pm8941_mpps {
+	mpp@a000 { /* MPP 1 */
+		status = "disable";
+	};
+};
+
+&soc {
+        qcom,msm-rng@f9bff000 {
+		qcom,msm-bus,vectors-KBps =
+				<88 618 0 0>,
+				<88 618 0 800>;
+        };
+	i2c@f9923000 {
+		status = "ok";
+		qcom,active-only;
+		qcom,i2c-src-freq = <50000000>;
+		qcom,master-id = <86>;
+
+		max77819_0: max77819@66 {
+			status = "disable";
+			compatible = "maxim,max77819-pmic";
+			#address-cells = <0>;
+			max77819,int-gpio = <&pm8941_gpios 22 0x0>;
+			interrupt-parent = <&pm8941_gpios>;
+			interrupts = <22 0>;
+			interrupt-controller;
+			#interrupt-cells = <1>;
+			reg = <0x66>;
+
+			sfo {
+				status = "disable";
+			};
+
+			charger {
+				compatible = "maxim,max77819-charger";
+				interrupt-parent = <&max77819_0>;
+				interrupts = <0>;
+				psy_name = "ac";
+				ext_psy_name = "usb";
+				coop_psy_name = "max8971";
+				supplied_to = "battery";
+				fast_charge_current = <800000>;
+				charge_termination_voltage = <4350000>;
+				topoff_timer = <0>;
+				topoff_current = <150000>;
+				charge_restart_threshold = <150000>;
+				/*enable_thermistor;*/
+				enable_aicl;
+				enable_coop;
+				aicl_detection_voltage = <4500000>;
+				aicl_reset_threshold = <200000>;
+				current_limit_usb = <500000>;
+				current_limit_ac = <1792000>;
+
+				lge,no-init-cable = <0 0 0>;
+				lge,cable-mhl-1k = <5000 500 500>;
+				lge,cable-u-28p7k = <5500 2000 500>;
+				lge,cable-28p7k = <6000 1200 500>;
+				lge,cable-56k = <178000 1500 1500>;
+				lge,cable-100k = <178500 2000 500>;
+				lge,cable-130k = <340000 500 500>;
+				lge,cable-180k = <400000 2000 500>;
+				lge,cable-200k = <410000 2000 500>;
+				lge,cable-220k = <485000 2000 500>;
+				lge,cable-270k = <560000 2000 500>;
+				lge,cable-330k = <735000 2000 500>;
+				lge,cable-620k = <955000 2000 500>;
+				lge,cable-910k = <1200000 1500 1500>;
+				lge,cable-none = <1900000 2000	500>;
+
+				maxim,otg-en-gpio = <&pm8941_gpios 35 0x0>;
+				qcom,max77819-vadc = <&pm8941_vadc>;
+			};
+
+			flash {
+				status = "disable";
+			};
+		};
+
+                max77819_1: max77819@48 {
+			status = "disable";
+			vibrator {
+				status = "disable";
+			};
+		};
+		max8971@35 {
+			status = "disable";
+			compatible = "maxim,max8971";
+			reg = <0x35>;
+			topoff_timer = <0>;
+			topoff_current = <150000>;
+			max8971,int-gpio = <&pm8941_gpios 24 0>;
+			interrupt-parent = <&pm8941_gpios>;
+			interrupts = <0x0 24 0>;
+			psy_name = "max8971";
+			fast_charge_current = <800000>;
+			charge_termination_voltage = <4350000>;
+			enable_aicl;
+			/*enable_coop;*/
+		};
+		max17048@36 {
+			status = "disable";
+			compatible = "maxim,max17048";
+			interrupt-parent = <&msmgpio>;
+			interrupts = <0x9 0x0>;
+			max17048,alert_gpio = <&msmgpio 0x9 0x0>;
+			max17048,rcomp_lgc = <103>;
+			max17048,temp_co_hot_lgc = <375>;
+			max17048,temp_co_cold_lgc = <6650>;
+			max17048,empty_lgc = <0>;
+			max17048,rcomp_tcd = <55>;
+			max17048,temp_co_hot_tcd = <637>;
+			max17048,temp_co_cold_tcd = <4255>;
+			max17048,empty_tcd = <0>;
+			max17048,alert_threshold = <0x2>;
+			max17048,full_design = <0xbb8>;
+			max17048,empty = <0>;
+			reg = <0x36>;
+		};
+		bq24192@6b {
+			status = "disable";
+			revision = "...";
+			ti,chg-current-ma = <1600>;
+			ti,term-current-ma = <128>;
+			ti,vbat-max-mv = <4352>;
+			ti,pre-chg-current-ma = <256>;
+			ti,sys-vmin-mv = <3500>;
+			ti,vin-limit-mv = <4600>;
+			ti,icl-vbus-mv = <4652>;
+
+			lge,no-init-cable = <0 0 0>;
+			lge,cable-mhl-1k = <5000 500 500>;
+			lge,cable-u-28p7k = <5500 1600 500>;
+			lge,cable-28p7k = <6000 1600 500>;
+			lge,cable-56k = <200000 1500 1500>;
+			lge,cable-100k = <239000 1600 500>;
+			lge,cable-130k = <340000 1500 1500>;
+			lge,cable-180k = <400000 1600 500>;
+			lge,cable-200k = <410000 1600 500>;
+			lge,cable-220k = <485000 1600 500>;
+			lge,cable-270k = <560000 1600 500>;
+			lge,cable-330k = <735000 1600 500>;
+			lge,cable-620k = <955000 1600 500>;
+			lge,cable-910k = <1140000 1500 1500>;
+			lge,cable-none = <1900000 1600	500>;
+		};
+		bq24296@6b {
+			status = "disable";
+			compatible = "ti,bq24296-charger";
+			reg = <0x6b>;
+			interrupt-parent = <&pm8941_gpios>;
+			interrupts = <22 0x2>;
+			ti,int-gpio = <&pm8941_gpios 22 0x0>;
+			ti,pg-gpio = <&pm8941_gpios 24 0x0>;
+			ti,stat-gpio = <&pm8941_gpios 30 0x02>;
+			ti,ext-chg-en-gpio = <&pm8941_gpios 33 0x0>;
+			ti,otg-en-gpio = <&pm8941_gpios 35 0x0>;
+			ti,chg-current-ma = <1500>;
+			ti,term-current-ma = <128>;
+			ti,vbat-max-mv = <4352>;
+			ti,pre-chg-current-ma = <512>;
+			ti,sys-vmin-mv = <3600>;
+			ti,vin-limit-mv = <4520>;
+			ti,icl-vbus-mv = <4400>;
+
+			lge,no-init-cable = <0 0 0>;
+			lge,cable-mhl-1k = <5000 500 500>;
+			lge,cable-u-28p7k = <5500 2000 500>;
+			lge,cable-28p7k = <6000 1200 500>;
+			lge,cable-56k = <178000 1500 1500>;
+			lge,cable-100k = <178500 2000 500>;
+			lge,cable-130k = <340000 500 500>;
+			lge,cable-180k = <400000 2000 500>;
+			lge,cable-200k = <410000 2000 500>;
+			lge,cable-220k = <485000 2000 500>;
+			lge,cable-270k = <560000 2000 500>;
+			lge,cable-330k = <735000 2000 500>;
+			lge,cable-620k = <955000 2000 500>;
+			lge,cable-910k = <1200000 1500 1500>;
+			lge,cable-none = <1900000 2000	500>;
+
+			qcom,bq24296-vadc = <&pm8941_vadc>;
+		};
+		idtp9025a@25 {
+			status = "disable";
+			compatible = "idt,idtp9025a";
+			reg = <0x25>;
+		};
+		bq5102x@6C {
+			status = "disable";
+			compatible = "ti,bq5102x";
+			reg = <0x6C>;
+		};
+	};
+
+	unified_wlc {
+		status = "disable";
+		compatible = "unified_wlc";
+		interrupt-parent = <&pm8941_gpios>;
+		interrupts = <34 0x2>;
+		wlc_int_gpio = <&pm8941_gpios 34 0x2>;
+		wlc_full_chg = <&pm8941_gpios 36 0x0>;
+	};
+
+	qcom,msm-thermal {
+		qcom,vdd-apps-rstr{
+			qcom,levels = <0>;
+		};
+	};
+};

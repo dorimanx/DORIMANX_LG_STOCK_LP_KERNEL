@@ -1,0 +1,42 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+
+	&soc {
+		 i2c@f9924000 {
+		       	rmi_s3528@20  {
+				status = "disable";
+			};
+
+			synaptics_s3528@20 {
+				status = "ok";
+				revision = "evb1...evb2";
+				fw_image_s3528_a0 = "synaptics/g3_vzw/PLG313-V1.06-PR1650170-DS5.5.1.0.1066_30055186_S3528A0.img";
+				fw_image_s3528_a1 = "synaptics/g3_vzw/PLG313-V1.26-PR1701943-DS5.5.1.0.1066_3005519A.img";
+				fw_image_s3528_a1_suntel = "synaptics/g3_vzw/PLG391-V1.08-PR1701943-DS5.5.1.0.1066_10055188.img";
+				fw_image_s3528_a1_factory = "synaptics/g3_vzw/PLG313-V1.22-PR1653201-DS5.5.1.0.1066_30055196_S3528A1.img";
+				fw_image_s3621 = "synaptics/g3_vzw/PLG298-F004.img";
+				panel_spec = "synaptics/g3_vzw/g3_vzw_limit.txt";
+			};
+			
+			synaptics_s3528_rev_a@20 {
+				status = "ok";
+				revision = "rev_a...";
+				fw_image_s3528_a0 = "synaptics/g3_vzw/PLG313-V1.06-PR1650170-DS5.5.1.0.1066_30055186_S3528A0.img";
+				fw_image_s3528_a1 = "synaptics/g3_vzw/PLG313-V1.26-PR1701943-DS5.5.1.0.1066_3005519A.img";
+				fw_image_s3528_a1_suntel = "synaptics/g3_vzw/PLG391-V1.08-PR1701943-DS5.5.1.0.1066_10055188.img";
+				fw_image_s3528_a1_factory = "synaptics/g3_vzw/PLG313-V1.22-PR1653201-DS5.5.1.0.1066_30055196_S3528A1.img";
+				fw_image_s3621 = "synaptics/g3_vzw/PLG298-F004.img";
+				panel_spec = "synaptics/g3_vzw/g3_vzw_limit.txt";
+		};
+	};
+};

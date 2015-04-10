@@ -1,0 +1,100 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+&soc {
+
+	i2c@f9967000 {
+		analogix_anx7816@72 {
+			compatible = "analogix,anx7816";
+			status = "ok";
+			revision = "rev_a...";
+			reg = <0x72>;
+			interrupt-parent = <&pm8941_gpios>;
+			interrupts = <13 0>; /* cbl-det-gpio is interrupt pin */
+			analogix,reset-gpio = <&pm8941_gpios 5 0x00>;
+			analogix,irq-gpio = <&msmgpio 28 0x00>;
+			analogix,p-dwn-gpio = <&pm8941_gpios 14 0x0>;
+			analogix,cbl-det-gpio = <&pm8941_gpios 13 0x0>;
+			analogix,v10-ctrl-gpio = <&pm8941_gpios 8 0x0>;
+			analogix,v33-ctrl-gpio = <&pm8941_gpios 26 0x0>;
+			analogix,i2c-pull-up = <1>;
+			qcom,hdmi-tx-map = <&mdss_hdmi_tx>;
+		};
+
+		analogix_anx7808@72 {
+			compatible = "analogix,anx7816";
+			status = "ok";
+			revision = "evb1...evb2";
+			reg = <0x72>;
+			interrupt-parent = <&pm8941_gpios>;
+			interrupts = <13 0>; /* cbl-det-gpio is interrupt pin */
+			analogix,reset-gpio = <&msmgpio 68 0x00>;
+			analogix,irq-gpio = <&msmgpio 28 0x00>;
+			analogix,p-dwn-gpio = <&pm8941_gpios 14 0x0>;
+			analogix,cbl-det-gpio = <&pm8941_gpios 13 0x0>;
+			analogix,v10-ctrl-gpio = <&pm8941_gpios 8 0x0>;
+			analogix,v33-ctrl-gpio = <&pm8941_gpios 26 0x0>;
+			analogix,i2c-pull-up = <1>;
+			qcom,hdmi-tx-map = <&mdss_hdmi_tx>;
+		};
+	};
+
+};
+&pm8941_gpios {
+	gpio@c400 { /* GPIO 5 */
+		status = "ok";
+		qcom,mode = <1>;
+		qcom,output-type = <0>;
+		qcom,pull = <4>;
+	};
+
+	gpio@c700 { /* GPIO 8 */
+		status = "ok";
+		qcom,mode = <1>;		/* QPNP_PIN_MODE_DIG_OUT */
+		qcom,output-type = <0>;		/* QPNP_PIN_OUT_BUF_CMOS */
+		qcom,pull = <5>;		/* QPNP_PIN_PULL_NO */
+		qcom,vin-sel = <2>;		/* QPNP_PIN_VIN2 */
+		qcom,out-strength = <2>;	/* QPNP_PIN_OUT_STRENGTH_MED */
+		qcom,src-sel = <0>;		/* QPNP_PIN_SEL_FUNC_CONSTANT */
+		qcom,master-en = <1>;
+	};
+
+	gpio@cc00 { /* GPIO 13 */ /* LGE_CHANGE, SlimPort Cable Det IRQ */
+		status = "ok";
+		qcom,mode = <0>;		/* QPNP_PIN_MODE_DIG_IN */
+		qcom,pull = <4>;		/* QPNP_PIN_PULL_DN */
+		qcom,vin-sel = <2>;		/* QPNP_PIN_VIN2 */
+		qcom,src-sel = <0>;		/* QPNP_PIN_SEL_FUNC_CONSTANT */
+		qcom,master-en = <1>;
+	};
+
+	gpio@cd00 { /* GPIO 14 */ /* LGE_CHANGE, SlimPort PWR Ctl Pin Setting */
+		status = "ok";
+		qcom,mode = <1>;		/* QPNP_PIN_MODE_DIG_OUT */
+		qcom,output-type = <0>;		/* QPNP_PIN_OUT_BUF_CMOS */
+		qcom,pull = <5>;		/* QPNP_PIN_PULL_NO */
+		qcom,vin-sel = <2>;		/* QPNP_PIN_VIN2 */
+		qcom,out-strength = <2>;	/* QPNP_PIN_OUT_STRENGTH_MED */
+		qcom,src-sel = <0>;		/* QPNP_PIN_SEL_FUNC_CONSTANT */
+		qcom,master-en = <1>;
+	};
+
+	gpio@d900 { /* GPIO 26 */
+		status = "ok";
+		qcom,mode = <1>;		/* QPNP_PIN_MODE_DIG_OUT */
+		qcom,output-type = <0>;		/* QPNP_PIN_OUT_BUF_CMOS */
+		qcom,pull = <5>;		/* QPNP_PIN_PULL_NO */
+		qcom,vin-sel = <2>;		/* QPNP_PIN_VIN2 */
+		qcom,out-strength = <2>;	/* QPNP_PIN_OUT_STRENGTH_MED */
+		qcom,src-sel = <0>;		/* QPNP_PIN_SEL_FUNC_CONSTANT */
+		qcom,master-en = <1>;
+	};
+};

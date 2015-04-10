@@ -1,0 +1,11 @@
+max77819 Vibrator bindings
+
+Valid node name : vibrator
+
+Optional properties :
+ - current : Integer. 1000uA to 140000uA.
+
+Example:
+	vibrator {
+		current = <30>;
+	};

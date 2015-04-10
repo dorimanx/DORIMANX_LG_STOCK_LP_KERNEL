@@ -1,0 +1,20 @@
+max17048 bindings
+
+Required properties :
+ - compatible : "maxim,max17048"
+ - model-data : Short Integer[32]
+
+Optional properties :
+ - rcomp : compensates the model for different lithium chemistries.
+ - empty-alert-threshold : the SOC threshold, where an interrupt is generated on the ALRT pin
+		and can be programmed from 1% up to 32%
+ - voltage-alert-threshold : Voltage alert maximum alerts.
+		It can be programmed from 0uV to 5120000uV.
+
+Example:
+	max17048@36 {
+		compatible = "maxim,max17048";
+		rcomp = <151>;
+		empty-alert-threshold = <4>;
+		model-data = <...>;
+	};

@@ -1,0 +1,120 @@
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	syncoam_sm100_evb {
+	        compatible = "syncoam,sm100";
+	        vdd_ana-supply = <&pm8941_l19>;
+	        syncoam,vpwr-on = <0>;
+	        syncoam,haptic-pwr-gpio = <&msmgpio 60 0x00>;
+	        syncoam,motor-pwm-gpio = <&msmgpio 27 0x00>;
+	        syncoam,clk-rate = <29813>;
+	        syncoam,n-value = <92>;
+	        status = "disable";
+	 };
+
+	syncoam_sm100_rev_a {
+	        compatible = "syncoam,sm100";
+	        vdd_ana-supply = <&pm8941_l19>;
+	        syncoam,vpwr-on = <0>;
+	        syncoam,haptic-pwr-gpio = <&msmgpio 53 0x00>;
+	        syncoam,motor-pwm-gpio = <&msmgpio 27 0x00>;
+	        syncoam,clk-rate = <29813>;
+	        syncoam,n-value = <92>;
+	        status = "disable";
+	 };
+
+	syncoam_sm100 {
+	        compatible = "syncoam,sm100";
+	        vdd_ana-supply = <&pm8941_l19>;
+	        syncoam,vpwr-on = <0>;
+	        syncoam,haptic-pwr-gpio = <&msmgpio 53 0x00>;
+	        syncoam,motor-pwm-gpio = <&msmgpio 27 0x00>;
+	        syncoam,clk-rate = <29813>;
+	        syncoam,n-value = <92>;
+	        status = "disable";
+	 };
+
+	hall-bu52031nvx {
+		compatible = "rohm,hall-bu52031nvx";
+		interrupt-parent = <&msmgpio>;
+		interrupts = <144 0x0>;
+		hallic-camera-irq-gpio = <&msmgpio 0 0x00>;
+		hallic-pouch-irq-gpio = <&msmgpio 144 0x00>;
+		status = "disable";
+	};
+	hall-bu52031-carkit {
+		compatible = "rohm,hall-bu52031nvx-carkit";
+		status = "disable";
+	};
+
+	uei_irrc {
+		status = "disable";
+		compatible = "uei,irrc";
+		uei,reset-gpio = <&msmgpio 78 0x00>;
+	};
+
+	i2c@f9967000 {
+		lp5521@32 {
+			compatible = "ti,lp5521";
+			status = "disable";
+			reg = <0x32>;
+			ti,led_en = <&pm8941_mpps 25 0x0>;
+		};
+	};
+};
+
+&pm8941_lsid1 {
+	qcom,leds@d800 {
+		status = "disabled";
+	};
+
+	qcom,leds@d900 {
+		status = "disabled";
+	};
+
+	qcom,leds@da00 {
+		status = "disabled";
+	};
+
+	qcom,leds@db00 {
+		status = "disabled";
+	};
+
+	qcom,leds@dc00 {
+		status = "disabled";
+	};
+
+	qcom,leds@dd00 {
+		status = "disabled";
+	};
+
+	qcom,leds@de00 {
+		status = "disabled";
+	};
+
+	qcom,leds@df00 {
+		status = "disabled";
+	};
+
+	qcom,leds@e000 {
+		status = "disabled";
+	};
+
+	qcom,leds@e100 {
+		status = "disabled";
+	};
+
+	qcom,leds@e200 {
+		status = "disabled";
+	};
+};

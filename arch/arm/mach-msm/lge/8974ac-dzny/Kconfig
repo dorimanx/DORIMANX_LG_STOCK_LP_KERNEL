@@ -1,0 +1,10 @@
+config MACH_MSM8974_DZNY
+	bool
+
+config MACH_MSM8974_DZNY_DCM
+	depends on ARCH_MSM8974
+	select MACH_LGE
+	select MACH_MSM8974_DZNY
+	bool "MSM8974 DZNY DCM"
+	help
+	  Support for the Qualcomm MSM8974 DZNY DCM device.
