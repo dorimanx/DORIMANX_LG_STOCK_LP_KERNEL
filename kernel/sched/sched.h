@@ -929,6 +929,7 @@ extern unsigned int sched_downmigrate;
 extern unsigned int sched_init_task_load_pelt;
 extern unsigned int sched_init_task_load_windows;
 extern unsigned int sched_heavy_task;
+extern unsigned int up_down_migrate_scale_factor;
 
 extern void reset_cpu_hmp_stats(int cpu, int reset_cra);
 extern void fixup_nr_big_small_task(int cpu, int reset_stats);
@@ -936,6 +937,7 @@ unsigned int max_task_load(void);
 extern void sched_account_irqtime(int cpu, struct task_struct *curr,
 				 u64 delta, u64 wallclock);
 extern unsigned int nr_eligible_big_tasks(int cpu);
+extern void update_up_down_migrate(void);
 extern int power_delta_exceeded(unsigned int cpu_cost, unsigned int base_cost);
 
 /*
