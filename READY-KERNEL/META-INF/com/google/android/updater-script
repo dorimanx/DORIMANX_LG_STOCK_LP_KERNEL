@@ -1,0 +1,36 @@
+ui_print("LG G2 Dorimanx Kernel installer");
+
+#mount system/data
+package_extract_file("mount.sh", "/tmp/mount.sh");
+package_extract_file("busybox_tiny", "/tmp/busybox");
+set_perm(0, 0, 0755, "/tmp/mount.sh");
+set_perm(0, 0, 0755, "/tmp/busybox");
+run_program("/tmp/mount.sh");
+
+#load system stuff
+package_extract_dir("system", "/system");
+package_extract_dir("data", "/data");
+
+#set system permissions
+set_metadata("/system/etc/thermal-engine-8974.conf", "uid", 0, "gid", 1000, "mode", 0755, "capabilities", 0x0, "selabel", "u:object_r:system_file:s0");
+set_metadata("/system/etc/thermal-engine-8974-default.conf", "uid", 0, "gid", 1000, "mode", 0755, "capabilities", 0x0, "selabel", "u:object_r:system_file:s0");
+set_metadata("/system/etc/thermal-engine-8974-ftm.conf", "uid", 0, "gid", 1000, "mode", 0755, "capabilities", 0x0, "selabel", "u:object_r:system_file:s0");
+set_metadata("/system/etc/audio_policy.conf", "uid", 0, "gid", 1000, "mode", 0755, "capabilities", 0x0, "selabel", "u:object_r:system_file:s0");
+set_metadata("/system/xbin/sqlite3", "uid", 0, "gid", 1000, "mode", 0755, "capabilities", 0x0, "selabel", "u:object_r:system_file:s0");
+set_metadata("/system/xbin/zip", "uid", 0, "gid", 1000, "mode", 0755, "capabilities", 0x0, "selabel", "u:object_r:system_file:s0");
+set_metadata("/system/wget/wget", "uid", 0, "gid", 1000, "mode", 0755, "capabilities", 0x0, "selabel", "u:object_r:system_file:s0");
+set_metadata("/system/app/re.codefi.savoca.kcal-v1.1.apk", "uid", 0, "gid", 1000, "mode", 0644, "capabilities", 0x0, "selabel", "u:object_r:system_file:s0");
+
+package_extract_file("boot.img", "/tmp/boot.img");
+package_extract_file("install.sh", "/tmp/install.sh");
+set_perm(0, 0, 0755, "/tmp/install.sh");
+
+ui_print("Installing kernel");
+ui_print("Detecting panel type and auto configuring!");
+assert(run_program("/tmp/install.sh") == 0);
+ui_print("Kernel Installed! enjoy :)");
+
+#cleanup
+unmount("/system");
+show_progress(0.100000, 0);
+
