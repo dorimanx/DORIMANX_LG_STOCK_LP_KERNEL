@@ -53,8 +53,6 @@
  * version 2.5 fixed broken mitigation set if USB is connected.
  */
 
-#define FAST_CHARGE_VERSION	"Version 2.5"
-
 int force_fast_charge;
 int force_fast_charge_temp;
 int fast_charge_level;
