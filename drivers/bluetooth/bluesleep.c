@@ -59,14 +59,26 @@
 #include <net/bluetooth/hci_core.h> /* event notifications */
 #include "hci_uart.h"
 
+static unsigned int bt_debug = 0;
+module_param_named(bt_debug_mask, bt_debug, uint, 0644);
+
 /* LGE_CHANGE_S, [BT][younghyun.kwon@lge.com], 2013-04-10, Configuration bluesleep for A1 LPM */
 #ifdef CONFIG_LGE_BLUESLEEP
-#undef BT_INFO
-#define BT_INFO(fmt, arg...) printk(KERN_INFO "*[bluesleep(%d)-%s()] " fmt "\n" , __LINE__, __FUNCTION__, ## arg)
 #undef BT_ERR
 #define BT_ERR(fmt, arg...)  printk(KERN_ERR "*[bluesleep(%d)-%s()] " fmt "\n" , __LINE__, __FUNCTION__, ## arg)
+#undef BT_INFO
+#define BT_INFO(fmt, arg...)										\
+do {													\
+	if (bt_debug)											\
+		printk(KERN_INFO "*[bluesleep(%d)-%s()] " fmt "\n" , __LINE__, __FUNCTION__, ## arg);	\
+} while (0)
+
 #undef BT_DBG
-#define BT_DBG(fmt, arg...)  printk(KERN_ERR "*[bluesleep(%d)-%s()] " fmt "\n" , __LINE__, __FUNCTION__, ## arg)
+#define BT_DBG(fmt, arg...)										\
+do {													\
+	if (bt_debug)											\
+		printk(KERN_ERR "*[bluesleep(%d)-%s()] " fmt "\n" , __LINE__, __FUNCTION__, ## arg);	\
+} while (0)
 
 #define BT_PORT_ID	99
 
