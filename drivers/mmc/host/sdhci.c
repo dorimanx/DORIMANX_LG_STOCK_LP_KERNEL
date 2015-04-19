@@ -1540,7 +1540,7 @@ static void sdhci_request(struct mmc_host *mmc, struct mmc_request *mrq)
 
 	/* If polling, assume that the card is always present. */
 	if (host->quirks & SDHCI_QUIRK_BROKEN_CARD_DETECTION)
-	#ifdef CONFIG_MACH_LGE
+#ifdef CONFIG_MACH_LGE
 	/* LGE_CHANGE
 	 * When sd doesn't exist physically, do finish tasklet-schedule.
 	 * Below checking is hard-coding, we have to consider 'mmc->index'.
@@ -1552,9 +1552,9 @@ static void sdhci_request(struct mmc_host *mmc, struct mmc_request *mrq)
 		else
 			present = true;
 	}
-	#else
+#else
 		present = true;
-	#endif
+#endif
 	else
 		present = sdhci_readl(host, SDHCI_PRESENT_STATE) &
 				SDHCI_CARD_PRESENT;

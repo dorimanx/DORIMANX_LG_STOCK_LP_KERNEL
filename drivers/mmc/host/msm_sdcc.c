@@ -2311,15 +2311,15 @@ msmsdcc_request(struct mmc_host *mmc, struct mmc_request *mrq)
 	if ((mmc->card) && (mmc->card->quirks & MMC_QUIRK_INAND_DATA_TIMEOUT))
 		host->curr.req_tout_ms = 20000;
 	else
-		#ifdef CONFIG_MACH_LGE
+#ifdef CONFIG_MACH_LGE
 		/* LGE_CHANGE
 		 * Increase Request-Timeout from 10sec to 15sec (because of 'CMD25: Request timeout')
 		 * 2014-01-16, B2-BSP-FS@lge.com
 		 */
 		host->curr.req_tout_ms = 15000;
-		#else
+#else
 		host->curr.req_tout_ms = MSM_MMC_REQ_TIMEOUT;
-		#endif
+#endif
 	/*
 	 * Kick the software request timeout timer here with the timeout
 	 * value identified above
@@ -3805,12 +3805,12 @@ static int msmsdcc_switch_io_voltage(struct mmc_host *mmc,
 		goto out;
 	default:
 		/* invalid selection. don't do anything */
-		#ifdef CONFIG_MACH_LGE
+#ifdef CONFIG_MACH_LGE
 		/* LGE_CHANGE, 2013-04-19, G2-FS@lge.com
 		* Adding Print, Requested by QMC-CASE-01158823
 		*/
 		pr_err("%s: %s: ios->signal_voltage = 0x%x\n", mmc_hostname(mmc), __func__, ios->signal_voltage);
-		#endif
+#endif
 		rc = -EINVAL;
 		goto out;
 	}
@@ -4342,30 +4342,28 @@ retry:
 		msmsdcc_dump_sdcc_state(host);
 		rc = -EAGAIN;
 
-	#if defined(CONFIG_BCMDHD) || defined (CONFIG_BCMDHD_MODULE)
+#if defined(CONFIG_BCMDHD) || defined (CONFIG_BCMDHD_MODULE)
 		/* LGE_CHANGE
 		 * testcode for sd error debugging
 		 * 2013-03-12, WiFi hayun.kim@lge.com
 		 */
 		{
-			int bcmdhd_id = MMC_SDCC_CONTROLLER_INDEX_SDCC2;
-			#if defined (CONFIG_MACH_MSM8974_G2_KR) || defined(CONFIG_MACH_MSM8974_G2_KDDI) \
-				|| defined(CONFIG_MACH_MSM8974_VU3_KR) || defined(CONFIG_MACH_MSM8974_TIGERS_KR)
+			int bcmdhd_id = MMC_SDCC_CONTROLLER_INDEX_SDCC2; /* sdcc 2 */
+#if defined (CONFIG_MACH_MSM8974_G2_KR) || defined(CONFIG_MACH_MSM8974_G2_KDDI) \
+			|| defined(CONFIG_MACH_MSM8974_VU3_KR) || defined(CONFIG_MACH_MSM8974_TIGERS_KR)
 			bcmdhd_id = MMC_SDCC_CONTROLLER_INDEX_SDCC3; /* sdcc 3 */
-			#elif defined(CONFIG_MACH_MSM8974_B1_KR) || defined(CONFIG_MACH_MSM8974_B1W)
+#elif defined(CONFIG_MACH_MSM8974_B1_KR) || defined(CONFIG_MACH_MSM8974_B1W)
 				if (HW_REV_B <= lge_get_board_revno() && HW_REV_D >= lge_get_board_revno()) {
 					bcmdhd_id = MMC_SDCC_CONTROLLER_INDEX_SDCC2; /* sdcc 2 */
 				} else {
 					bcmdhd_id = MMC_SDCC_CONTROLLER_INDEX_SDCC3;  /* sdcc 3 */
 				}
-			#endif
-
+#endif
 			if (host->pdev->id == bcmdhd_id) {
 				rc = 0;
-				/* panic("Failed to tune.\n"); please contact hayun.kim@lge.com */
 			}
 		}
-	#endif
+#endif
 	}
 
 kfree:
@@ -6212,16 +6210,16 @@ msmsdcc_probe(struct platform_device *pdev)
 	mmc->caps2 |= MMC_CAP2_STOP_REQUEST;
 	mmc->caps2 |= MMC_CAP2_ASYNC_SDIO_IRQ_4BIT_MODE;
 
-	#ifdef CONFIG_MACH_LGE
-	#if defined (CONFIG_LGE_MMC_BKOPS_ENABLE) && !defined(CONFIG_MMC_SDHCI_MSM)
+#ifdef CONFIG_MACH_LGE
+#if defined (CONFIG_LGE_MMC_BKOPS_ENABLE) && !defined(CONFIG_MMC_SDHCI_MSM)
 	/* LGE_CHANGE
 	 * Enable BKOPS feature since it has been disabled by default.
 	 * If you want to use bkops, you have to set Y in kernel/arch/arm/configs/XXXX_defconfig file.
 	 * 2014-01-16, B2-BSP-FS@lge.com
 	 */
 	mmc->caps2 |= MMC_CAP2_INIT_BKOPS;
-	#endif
-	#endif
+#endif
+#endif
 
 	if (plat->nonremovable)
 		mmc->caps |= MMC_CAP_NONREMOVABLE;
@@ -6304,32 +6302,30 @@ msmsdcc_probe(struct platform_device *pdev)
 	 * Setup card detect change
 	 */
 
-	#if defined(CONFIG_BCMDHD) || defined (CONFIG_BCMDHD_MODULE)
+#if defined(CONFIG_BCMDHD) || defined (CONFIG_BCMDHD_MODULE) /* joon For device tree. */
 	/* LGE_CHANGE
 	 * Wifi Bring Up
 	 * 2013-01-22, WiFi hayun.kim@lge.com
 	 */
 	{
 		int bcmdhd_id = MMC_SDCC_CONTROLLER_INDEX_SDCC2;
-	
-		#if defined (CONFIG_MACH_MSM8974_G2_KR) || defined(CONFIG_MACH_MSM8974_G2_KDDI) \
+#if defined (CONFIG_MACH_MSM8974_G2_KR) || defined(CONFIG_MACH_MSM8974_G2_KDDI) \
 		|| defined(CONFIG_MACH_MSM8974_VU3_KR) || defined(CONFIG_MACH_MSM8974_TIGERS_KR)
 		bcmdhd_id = MMC_SDCC_CONTROLLER_INDEX_SDCC3; /* sdcc 3 */
-		#elif defined(CONFIG_MACH_MSM8974_B1_KR) || defined(CONFIG_MACH_MSM8974_B1W)
+#elif defined(CONFIG_MACH_MSM8974_B1_KR) || defined(CONFIG_MACH_MSM8974_B1W)
 			if (HW_REV_B <= lge_get_board_revno() && HW_REV_D >= lge_get_board_revno()) {
 				bcmdhd_id = MMC_SDCC_CONTROLLER_INDEX_SDCC2; /* sdcc 2 */
 			} else {
 				bcmdhd_id = MMC_SDCC_CONTROLLER_INDEX_SDCC3;  /* sdcc 3 */
 			}
-		#endif
-
+#endif
 		printk("jaewoo :%s-%d> plat->nonremovable = %d\n", __FUNCTION__, host->pdev->id, plat->nonremovable );
 		if( host->pdev->id == bcmdhd_id ) {
 			plat->register_status_notify = wcf_status_register;
 			plat->status = wcf_status;
 		}
 	}
-	#endif
+#endif
 
 	if (!plat->status_gpio)
 		plat->status_gpio = -ENOENT;

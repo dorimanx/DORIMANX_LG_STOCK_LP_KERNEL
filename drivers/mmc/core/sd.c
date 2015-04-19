@@ -257,7 +257,7 @@ static int mmc_read_ssr(struct mmc_card *card)
 		et = UNSTUFF_BITS(ssr, 402 - 384, 6);
 		eo = UNSTUFF_BITS(ssr, 400 - 384, 2);
 
-		#ifdef CONFIG_MACH_LGE
+#ifdef CONFIG_MACH_LGE
 		/* LGE_CHANGE
 		 * Get SPEED_CLASS of SD-card.
 		 * 0:Class0, 1:Class2, 2:Class4, 3:Class6, 4:Class10
@@ -277,7 +277,7 @@ static int mmc_read_ssr(struct mmc_card *card)
 			} else
                 pr_info("[LGE][MMC][%-18s( )] mmc_hostname:%s, Unknown SPEED_CLASS\n", __func__, mmc_hostname(card->host));
 		}
-		#endif
+#endif
 
 		if (es && et) {
 			card->ssr.erase_timeout = (et * 1000) / es;
@@ -1037,7 +1037,7 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 	BUG_ON(!host);
 	WARN_ON(!host->claimed);
 
-	#ifdef CONFIG_MACH_LGE
+#ifdef CONFIG_MACH_LGE
 	/* LGE_UPDATE
 	 * When uSD is not inserted, return proper error-value.
 	 * 2014/01/16, B2-BSP-FS@lge.com
@@ -1047,7 +1047,7 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 		err = -ENOMEDIUM;
 		return err;
 	}
-	#endif
+#endif
 
 	/* The initialization should be done at 3.3 V I/O voltage. */
 	mmc_set_signal_voltage(host, MMC_SIGNAL_VOLTAGE_330, 0);
@@ -1292,7 +1292,7 @@ static int mmc_sd_resume(struct mmc_host *host)
 	while (retries) {
 		err = mmc_sd_init_card(host, host->ocr, host->card);
 
-		#ifdef CONFIG_MACH_LGE
+#ifdef CONFIG_MACH_LGE
 			/* LGE_CHANGE
 			* Skip below When ENOMEDIUM
 			* 2014-01-16, B2-BSP-FS@lge.com
@@ -1301,7 +1301,7 @@ static int mmc_sd_resume(struct mmc_host *host)
                 pr_info("[LGE][MMC][%-18s( )] error:ENOMEDIUM\n", __func__);
 				break;
 			}
-		#endif
+#endif
 
 		if (err) {
             printk(KERN_ERR "%s: Re-init card rc = %d (retries = %d)\n",
@@ -1460,7 +1460,7 @@ int mmc_attach_sd(struct mmc_host *host)
 	while (retries && !host->rescan_disable) {
 		err = mmc_sd_init_card(host, host->ocr, NULL);
 
-		#ifdef CONFIG_MACH_LGE
+#ifdef CONFIG_MACH_LGE
 		/* LGE_CHANGE
 		* Skip below When ENOMEDIUM
 		* 2014-01-16, B2-BSP-FS@lge.com
@@ -1470,7 +1470,7 @@ int mmc_attach_sd(struct mmc_host *host)
 			retries = 0;
 			break;
 		}
-		#endif
+#endif
 
 		if (err) {
 			retries--;

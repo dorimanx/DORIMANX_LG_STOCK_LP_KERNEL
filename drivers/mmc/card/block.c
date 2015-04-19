@@ -129,9 +129,6 @@ struct mmc_blk_data {
 #define MMC_BLK_WRITE		BIT(1)
 #define MMC_BLK_DISCARD		BIT(2)
 #define MMC_BLK_SECDISCARD	BIT(3)
-#if defined(CONFIG_LGE_MMC_RESET_IF_HANG)
-#define MMC_BLK_FLUSH		BIT(4)
-#endif
 
 	/*
 	 * Only set in main mmc_blk_data associated
@@ -1307,19 +1304,6 @@ static int mmc_blk_reset(struct mmc_blk_data *md, struct mmc_host *host,
 
 	md->reset_done |= type;
 	err = mmc_hw_reset(host);
-/* LGE_CHANGE_S
- * Author : D3-5T-FS@lge.com
- * Change : eMMC can recover itself, but if it fails during re-init, recover routine does not activated. (eMMC is not accessible)
- */
-#if defined (CONFIG_LGE_MMC_RESET_IF_HANG)
-    /* in case that eMMC failed to re-initialize, retry five times and crash if it is eMMC. */
-    if (err == -ETIMEDOUT && host->caps & MMC_CAP_NONREMOVABLE) /* Only for eMMC (NONREMOVABLE) */
-    {
-        err = mmc_hw_reset(host);
-        pr_info("%s:%s: retry mmc_blk_reset() %d\n",
-                mmc_hostname(host), __func__, err);
-    }
-#endif
 	/* Ensure we switch back to the correct partition */
 	if (err != -EOPNOTSUPP) {
 		struct mmc_blk_data *main_md = mmc_get_drvdata(host->card);
@@ -1502,23 +1486,7 @@ static int mmc_blk_issue_flush(struct mmc_queue *mq, struct request *req)
 	int ret = 0;
 
 	ret = mmc_flush_cache(card);
-    /* LGE_CHANGE_S
-     * Author : D3-5T-FS@lge.com
-	 * Change : eMMC can recover itself, but if it fails during re-init/flush, recover routine does not activated. (eMMC is not accessible)
-	 * 			try emmc_reset and panic if it continously fails.
-	 */
-#if defined (CONFIG_LGE_MMC_RESET_IF_HANG)
-    if (ret == -ENODEV) {
-        pr_err("%s: %s: restart mmc card.\n",
-                req->rq_disk->disk_name, __func__);
-        if (mmc_blk_reset(md, card->host, MMC_BLK_FLUSH))
-            pr_err("%s: %s: fail to restart mmc.\n",
-                req->rq_disk->disk_name, __func__);
-        else
-            mmc_blk_reset_success(md, MMC_BLK_FLUSH);
-    }
-#endif
-    if (ret == -ETIMEDOUT) {
+	if (ret == -ETIMEDOUT) {
         pr_info("%s: %s: requeue flush request after timeout.\n",
                 req->rq_disk->disk_name, __func__);
 
@@ -2785,9 +2753,8 @@ static int mmc_blk_issue_rq(struct mmc_queue *mq, struct request *req)
 	if (req && !mq->mqrq_prev->req) {
 		mmc_rpm_hold(host, &card->dev);
 #ifdef CONFIG_MMC_BLOCK_DEFERRED_RESUME
-	if (mmc_bus_needs_resume(card->host)) {
-		mmc_resume_bus(card->host);
-	}
+		if (mmc_bus_needs_resume(card->host))
+			mmc_resume_bus(card->host);
 #endif
 		/* claim host only for the first request */
 		mmc_claim_host(card->host);

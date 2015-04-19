@@ -40,12 +40,6 @@ config LGE_MMC_BKOPS_ENABLE
 	  If you want to use BKOPS for eMMC, you have to set Y in kernel/arch/arm/configs/XXXX_defconfig file.
 
 # LGE_CHANGE_S : bohyun.jung@lge.com
-config LGE_MMC_RESET_IF_HANG
-    bool "MMC Reset if eMMC is hang. "
-    default n
-    help
-        Reset eMMC if eMMC is unaccessible. continously error on r/w cmd.
-
 config LGE_MMC_DYNAMIC_LOG
     bool "MMC debugging - enable logs through adb"
     default n
