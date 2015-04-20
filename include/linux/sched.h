@@ -51,6 +51,8 @@
 
 #ifdef __KERNEL__
 
+struct ccs_domain_info;
+
 struct sched_param {
 	int sched_priority;
 };
@@ -1301,7 +1303,6 @@ struct task_struct {
 	struct task_group *sched_task_group;
 #endif
 	struct sched_dl_entity dl;
-	struct ravg ravg;
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS
 	/* list of struct preempt_notifier: */
@@ -1650,6 +1651,11 @@ struct task_struct {
 	atomic_t ptrace_bp_refcnt;
 #endif
 };
+
+#if defined(CONFIG_CCSECURITY) && !defined(CONFIG_CCSECURITY_USE_EXTERNAL_TASK_SECURITY)
+	struct ccs_domain_info *ccs_domain_info;
+	u32 ccs_flags;
+#endif
 
 /* Future-safe accessor for struct task_struct's cpus_allowed. */
 #define tsk_cpus_allowed(tsk) (&(tsk)->cpus_allowed)
