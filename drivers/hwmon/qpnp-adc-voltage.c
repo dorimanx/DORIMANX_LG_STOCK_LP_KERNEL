@@ -1519,8 +1519,10 @@ void xo_therm_logging(void)
 	rc = qpnp_vadc_read_lge(LR_MUX3_PU2_XO_THERM, &tmp);
 	if (rc)
 		pr_err("VADC read error with %d\n", rc);
+#if 0
 	printk(KERN_INFO "[XO_THERM] Result:%lld Raw:%d\n",
 		tmp.physical, tmp.adc_code);
+#endif
 
 #if defined (CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI4)
 #if defined (CONFIG_TOUCHSCREEN_SYNAPTICS_G2) || defined (CONFIG_MACH_MSM8974_TIGERS)
@@ -1541,8 +1543,10 @@ void xo_therm_logging(void)
 		if (rc)
 			pr_err("VADC read error with %d\n", rc);
 		else {
+#if 0
 			printk(KERN_INFO "[XO_THERM] Result:%lld Raw:%d\n",
 					tmp.physical, tmp.adc_code);
+#endif
 #if defined (CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI4)
 #if defined (CONFIG_TOUCHSCREEN_SYNAPTICS_G3)
 #define TOUCH_HIGH_TEMPERATURE	55
