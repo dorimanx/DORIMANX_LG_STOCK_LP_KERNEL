@@ -231,7 +231,7 @@ ext4_xattr_check_block(struct inode *inode, struct buffer_head *bh)
 		return -EIO;
 	if (!ext4_xattr_block_csum_verify(inode, bh->b_blocknr, BHDR(bh)))
 		return -EIO;
-	error = ext4_xattr_check_names(BFIRST(bh), bh->b_data + bh->b_size
+	error = ext4_xattr_check_names(BFIRST(bh), bh->b_data + bh->b_size,
 					bh->b_data);
 	if (!error)
 		set_buffer_verified(bh);
