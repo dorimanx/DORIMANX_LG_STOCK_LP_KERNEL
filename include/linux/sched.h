@@ -51,8 +51,6 @@
 
 #ifdef __KERNEL__
 
-struct ccs_domain_info;
-
 struct sched_param {
 	int sched_priority;
 };
@@ -1652,11 +1650,6 @@ struct task_struct {
 #endif
 };
 
-#if defined(CONFIG_CCSECURITY) && !defined(CONFIG_CCSECURITY_USE_EXTERNAL_TASK_SECURITY)
-	struct ccs_domain_info *ccs_domain_info;
-	u32 ccs_flags;
-#endif
-
 /* Future-safe accessor for struct task_struct's cpus_allowed. */
 #define tsk_cpus_allowed(tsk) (&(tsk)->cpus_allowed)
 
@@ -1838,6 +1831,7 @@ extern void thread_group_cputime_adjusted(struct task_struct *p, cputime_t *ut, 
 extern int task_free_register(struct notifier_block *n);
 extern int task_free_unregister(struct notifier_block *n);
 extern int sched_set_window(u64 window_start, unsigned int window_size);
+static inline void sched_set_io_is_busy(int val) {};
 extern unsigned long sched_get_busy(int cpu);
 
 /*
