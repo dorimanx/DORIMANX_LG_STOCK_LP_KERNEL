@@ -88,7 +88,7 @@ static struct delayed_work check_temp_work;
 bool core_control;
 
 /* dummy parameter for rom thermal and apps */
-static bool enabled = 1;
+static int enabled = 1;
 
 static unsigned int debug_mode = 0;
 static uint32_t cpus_offlined;
@@ -101,8 +101,7 @@ static struct completion hotplug_notify_complete;
 static struct completion freq_mitigation_complete;
 static struct completion thermal_monitor_complete;
 
-/* Always enable Intelli Thermal on boot */
-static int intelli_enabled = 1;
+static int intelli_enabled;
 
 static int rails_cnt;
 static int psm_rails_cnt;
@@ -1152,10 +1151,9 @@ static int __ref update_offline_cores(int val)
 	uint32_t cpu = 0;
 	int ret = 0;
 
+	cpus_offlined = msm_thermal_info_local.core_control_mask & val;
 	if (!core_control)
 		return 0;
-
-	cpus_offlined = msm_thermal_info_local.core_control_mask & val;
 
 	for_each_possible_cpu(cpu) {
 		if (!(cpus_offlined & BIT(cpu)))
@@ -1179,7 +1177,7 @@ static __ref int do_hotplug(void *data)
 
 	if (!core_control) {
 		pr_debug("Core control disabled\n");
-		return -EINVAL;
+		return 0;
 	}
 
 	while (!kthread_should_stop()) {
@@ -2027,8 +2025,10 @@ static void __ref disable_msm_thermal(void)
 			continue;
 		cpus[cpu].limited_max_freq = UINT_MAX;
 		cpus[cpu].limited_min_freq = 0;
-		if (cpufreq_update_policy(cpu))
-			pr_info("Unable to update policy for cpu:%d\n", cpu);
+		if (cpu_online(cpu)) {
+			if (cpufreq_update_policy(cpu))
+				pr_info("Unable to update policy for cpu:%d\n", cpu);
+		}
 	}
 	put_online_cpus();
 }
@@ -2059,14 +2059,16 @@ static int __ref set_enabled(const char *val, const struct kernel_param *kp)
 	} else {
 		if (!intelli_enabled) {
 			intelli_enabled = 1;
-			interrupt_mode_init();
+			schedule_delayed_work(&check_temp_work,
+					msecs_to_jiffies(1000));
+			pr_info("%s: rescheduling...\n", KBUILD_MODNAME);
 		} else
 			pr_info("%s: already running...\n \
 				if you wish to disable echo N > \
 				intelli_enabled\n", KBUILD_MODNAME);
 	}
-	pr_info("%s: enabled = %d\n", KBUILD_MODNAME, intelli_enabled);
 	ret = param_set_bool(val, kp);
+	pr_info("%s: intelli_enabled = %d\n", KBUILD_MODNAME, intelli_enabled);
 
 	return ret;
 }
@@ -2287,7 +2289,6 @@ static __refdata struct attribute_group cc_attr_group = {
 static __init int msm_thermal_add_cc_nodes(void)
 {
 	struct kobject *module_kobj = NULL;
-	struct kobject *cc_kobj = NULL;
 	int ret = 0;
 
 	module_kobj = kset_find_obj(module_kset, KBUILD_MODNAME);
@@ -2373,18 +2374,17 @@ int msm_thermal_init(struct msm_thermal_data *pdata)
 
 	pr_info("%s: polling enabled!\n", KBUILD_MODNAME);
 
-	if (num_possible_cpus() > 1)
-		core_control = 1;
-
+	core_control = 1;
+	enabled = 1;
+	intelli_enabled = 1;
 	ret = cpufreq_register_notifier(&msm_thermal_cpufreq_notifier,
 			CPUFREQ_POLICY_NOTIFIER);
 	if (ret)
 		pr_err("cannot register cpufreq notifier. err:%d\n", ret);
 
 	INIT_DELAYED_WORK(&check_temp_work, check_temp);
-	if (intelli_enabled)
-		schedule_delayed_work(&check_temp_work,
-				msecs_to_jiffies(10000));
+	schedule_delayed_work(&check_temp_work,
+			msecs_to_jiffies(5000));
 
 	if (num_possible_cpus() > 1)
 		register_cpu_notifier(&msm_thermal_cpu_notifier);
@@ -3201,21 +3201,6 @@ static int probe_cc(struct device_node *node, struct msm_thermal_data *data,
 		hotplug_enabled = 1;
 	}
 
-	key = "qcom,core-limit-temp";
-	ret = of_property_read_u32(node, key, &data->core_limit_temp_degC);
-	if (ret)
-		goto read_node_fail;
-
-	key = "qcom,core-temp-hysteresis";
-	ret = of_property_read_u32(node, key, &data->core_temp_hysteresis_degC);
-	if (ret)
-		goto read_node_fail;
-
-	key = "qcom,core-control-mask";
-	ret = of_property_read_u32(node, key, &data->core_control_mask);
-	if (ret)
-		goto read_node_fail;
-
 	key = "qcom,hotplug-temp";
 	ret = of_property_read_u32(node, key, &data->hotplug_temp_degC);
 	if (ret)
@@ -3241,16 +3226,6 @@ static int probe_cc(struct device_node *node, struct msm_thermal_data *data,
 		if (ret)
 			goto hotplug_node_fail;
 	}
-
-read_node_fail:
-	if (ret) {
-		dev_info(&pdev->dev,
-		"%s:Failed reading node=%s, key=%s. err=%d. KTM continues\n",
-			KBUILD_MODNAME, node->full_name, key, ret);
-		core_control = 0;
-	}
-
-	return ret;
 
 hotplug_node_fail:
 	if (ret) {
