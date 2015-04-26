@@ -17,8 +17,6 @@ config CPU_FREQ
 
 if CPU_FREQ
 
-source "drivers/cpufreq/Kconfig.cpumods"
-
 config CPU_FREQ_TABLE
 	tristate
 
