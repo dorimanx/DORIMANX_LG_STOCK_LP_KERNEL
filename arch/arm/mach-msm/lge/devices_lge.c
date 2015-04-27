@@ -46,16 +46,6 @@
 #include <linux/memblock.h>
 #endif
 
-#if defined(CONFIG_LCD_KCAL)
-/* LGE_CHANGE_S
-   * change code for LCD KCAL
-   * 2013-05-08, seojin.lee@lge.com
-   */
-#include <linux/module.h>
-#include "../../../../drivers/video/msm/mdss/mdss_fb.h"
-extern int update_preset_lcdc_lut(void);
-#endif /* CONFIG_LCD_KCAL */
-
 static int cn_arr_len = 3;
 
 struct cn_prop {
@@ -744,93 +734,6 @@ static struct platform_device lcd_misc_device = {
 void __init lge_add_lcd_misc_devices(void)
 {
 	platform_device_register(&lcd_misc_device);
-}
-#endif
-
-#ifdef CONFIG_LCD_KCAL
-/* LGE_CHANGE_S
-* change code for LCD KCAL
-* 2013-05-08, seojin.lee@lge.com
-*/
-int g_kcal_r = 255;
-int g_kcal_g = 255;
-int g_kcal_b = 255;
-
-int kcal_set_values(int kcal_r, int kcal_g, int kcal_b)
-{
-#if 0
-	int is_update = 0;
-
-	int kcal_r_limit = 250;
-	int kcal_g_limit = 250;
-	int kcal_b_limit = 253;
-
-	g_kcal_r = kcal_r < kcal_r_limit ? kcal_r_limit : kcal_r;
-	g_kcal_g = kcal_g < kcal_g_limit ? kcal_g_limit : kcal_g;
-	g_kcal_b = kcal_b < kcal_b_limit ? kcal_b_limit : kcal_b;
-
-	if (kcal_r < kcal_r_limit || kcal_g < kcal_g_limit || kcal_b < kcal_b_limit)
-		is_update = 1;
-	if (is_update)
-		update_preset_lcdc_lut();
-#else
-	g_kcal_r = kcal_r;
-	g_kcal_g = kcal_g;
-	g_kcal_b = kcal_b;
-#endif
-	return 0;
-}
-
-static int kcal_get_values(int *kcal_r, int *kcal_g, int *kcal_b)
-{
-	*kcal_r = g_kcal_r;
-	*kcal_g = g_kcal_g;
-	*kcal_b = g_kcal_b;
-	return 0;
-}
-
-static int kcal_refresh_values(void)
-{
-	return update_preset_lcdc_lut();
-}
-
-static struct kcal_platform_data kcal_pdata = {
-	.set_values = kcal_set_values,
-	.get_values = kcal_get_values,
-	.refresh_display = kcal_refresh_values
-};
-
-static struct platform_device kcal_platrom_device = {
-	.name   = "kcal_ctrl",
-	.dev = {
-		.platform_data = &kcal_pdata,
-	}
-};
-
-static int __init display_kcal_setup(char *kcal)
-{
-	char vaild_k = 0;
-	int kcal_r = 255;
-	int kcal_g = 255;
-	int kcal_b = 255;
-
-	sscanf(kcal, "%d|%d|%d|%c", &kcal_r, &kcal_g, &kcal_b, &vaild_k);
-	pr_info("kcal is %d|%d|%d|%c\n", kcal_r, kcal_g, kcal_b, vaild_k);
-
-	if (vaild_k != 'K') {
-		pr_info("kcal not calibrated yet : %d\n", vaild_k);
-		kcal_r = kcal_g = kcal_b = 255;
-	}
-
-	kcal_set_values(kcal_r, kcal_g, kcal_b);
-	return 1;
-}
-__setup("lge.kcal=", display_kcal_setup);
-
-void __init lge_add_lcd_kcal_devices(void)
-{
-	pr_info(" KCAL_DEBUG : %s\n", __func__);
-	platform_device_register(&kcal_platrom_device);
 }
 #endif
 

@@ -70,11 +70,6 @@ config LGE_KSWITCH
     help
       LGE Kill Switch
 
-config LCD_KCAL
-	depends on MACH_LGE
-	bool "Enable sysfs for LCD KCAL"
-	default n
-
 config LGE_QSDL_SUPPORT
     tristate "Support for Quality Statistics Data Logging"
     default n
