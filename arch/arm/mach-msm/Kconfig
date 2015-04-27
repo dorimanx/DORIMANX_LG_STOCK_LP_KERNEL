@@ -1926,13 +1926,6 @@ config MSM_DEVFREQ_CPUBW
 	  agnostic interface to so that some of the devfreq governors can be
 	  shared across SoCs.
 
-config ALUCARD_HOTPLUG_USE_CPU_UTIL
-	bool "Enable alucard-hotplug cpu statistics utilization"
-	depends on (ALUCARD_HOTPLUG)
-	default n
-	help
-	  Alucard-hotplug cpu statistics utilization
-
 config MSM_AVS_HW
 	bool "Enable Adaptive Voltage Scaling (AVS)"
 	default n
