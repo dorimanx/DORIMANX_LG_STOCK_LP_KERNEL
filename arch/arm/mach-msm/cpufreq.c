@@ -81,8 +81,9 @@ struct cpufreq_suspend_t {
 static DEFINE_PER_CPU(struct cpufreq_suspend_t, cpufreq_suspend);
 
 #ifdef CONFIG_MSM_CPUFREQ_LIMITER
-static unsigned int upper_limit_freq[NR_CPUS] = {0, 0, 0, 0};
-static unsigned int lower_limit_freq[NR_CPUS];
+static unsigned int upper_limit_freq[NR_CPUS] = {2265600, 2265600,
+						2265600, 2265600};
+static unsigned int lower_limit_freq[NR_CPUS] = {0, 0, 0, 0};
 
 unsigned int get_cpu_min_lock(unsigned int cpu)
 {
