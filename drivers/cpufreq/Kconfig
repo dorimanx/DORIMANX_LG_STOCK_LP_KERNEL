@@ -52,6 +52,12 @@ config CPU_FREQ_STAT_DETAILS
 
 	  If in doubt, say N.
 
+config UNI_CPU_POLICY_LIMIT
+	bool "Enable Policy limit changing on CPU0, reflecting modifications on all other cpus"
+	default y
+	help
+	  Policy limits changed on CPU0 reflects modifications on all other cpus
+
 choice
 	prompt "Default CPUFreq governor"
 	default CPU_FREQ_DEFAULT_GOV_USERSPACE if CPU_FREQ_SA1100 || CPU_FREQ_SA1110
