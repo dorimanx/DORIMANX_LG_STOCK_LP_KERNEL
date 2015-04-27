@@ -145,24 +145,24 @@ static DEFINE_MUTEX(cpufreq_governor_mutex);
 
 static inline u64 get_cpu_idle_time_jiffy(unsigned int cpu, u64 *wall)
 {
-        u64 idle_time;
-        u64 cur_wall_time;
-        u64 busy_time;
+	u64 idle_time;
+	u64 cur_wall_time;
+	u64 busy_time;
 
-        cur_wall_time = jiffies64_to_cputime64(get_jiffies_64());
+	cur_wall_time = jiffies64_to_cputime64(get_jiffies_64());
 
-        busy_time = kcpustat_cpu(cpu).cpustat[CPUTIME_USER];
-        busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_SYSTEM];
-        busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_IRQ];
-        busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_SOFTIRQ];
-        busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_STEAL];
-        busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_NICE];
+	busy_time = kcpustat_cpu(cpu).cpustat[CPUTIME_USER];
+	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_SYSTEM];
+	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_IRQ];
+	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_SOFTIRQ];
+	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_STEAL];
+	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_NICE];
 
-        idle_time = cur_wall_time - busy_time;
-        if (wall)
-                *wall = cputime_to_usecs(cur_wall_time);
+	idle_time = cur_wall_time - busy_time;
+	if (wall)
+		*wall = cputime_to_usecs(cur_wall_time);
 
-        return cputime_to_usecs(idle_time);
+	return cputime_to_usecs(idle_time);
 }
 
 u64 get_cpu_idle_time(unsigned int cpu, u64 *wall, int io_busy)
@@ -534,10 +534,10 @@ static int apply_max_freq_cpus_limit(unsigned int src_freq)
 static ssize_t store_scaling_max_freq
 (struct cpufreq_policy *policy, const char *buf, size_t count)
 {
-	unsigned int ret, cpu;
+	unsigned int ret;
 #if defined(CONFIG_MULTI_CPU_POLICY_LIMIT) && \
 		defined(CONFIG_MSM_CPUFREQ_LIMITER)
-	unsigned int limited_cpu_freq;
+	unsigned int limited_cpu_freq, cpu;
 	unsigned int old_max_freq = 0;
 	bool apply_limit = false;
 #endif
@@ -2518,7 +2518,7 @@ static int __cpufreq_set_policy(struct cpufreq_policy *data,
 			} else {
 				data->governor = policy->governor;
 			}
-#endif
+#else
 			data->governor = policy->governor;
 #endif
 
@@ -2850,10 +2850,10 @@ static int __init cpufreq_core_init(void)
 
 	cpufreq_global_kobject = kobject_create_and_add("cpufreq", &cpu_subsys.dev_root->kobj);
 	BUG_ON(!cpufreq_global_kobject);
+	register_syscore_ops(&cpufreq_syscore_ops);
 #if defined(CONFIG_LGE_LOW_BATT_LIMIT)
 	parse_batt_soc_bootarg();
 #endif
-	register_syscore_ops(&cpufreq_syscore_ops);
 	rc = pm_qos_add_notifier(PM_QOS_CPU_FREQ_MIN,
 				 &min_freq_notifier);
 	BUG_ON(rc);

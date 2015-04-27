@@ -56,6 +56,7 @@ static int cpufreq_stats_update(unsigned int cpu)
 	if (stat->time_in_state)
 		stat->time_in_state[stat->last_index] +=
 			cur_time - stat->last_time;
+
 	stat->last_time = cur_time;
 	spin_unlock(&cpufreq_stats_lock);
 	return 0;
@@ -274,6 +275,7 @@ static int cpufreq_stat_notifier_policy(struct notifier_block *nb,
 	table = cpufreq_frequency_get_table(cpu);
 	if (!table)
 		return 0;
+
 	ret = cpufreq_stats_create_table(policy, table);
 	if (ret)
 		return ret;
