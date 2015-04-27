@@ -168,14 +168,14 @@ static inline u64 get_cpu_idle_time_jiffy(unsigned int cpu, u64 *wall)
 
 u64 get_cpu_idle_time(unsigned int cpu, u64 *wall, int io_busy)
 {
-        u64 idle_time = get_cpu_idle_time_us(cpu, io_busy ? wall : NULL);
+	u64 idle_time = get_cpu_idle_time_us(cpu, io_busy ? wall : NULL);
 
-        if (idle_time == -1ULL)
-                return get_cpu_idle_time_jiffy(cpu, wall);
-        else if (!io_busy)
-                idle_time += get_cpu_iowait_time_us(cpu, wall);
+	if (idle_time == -1ULL)
+		return get_cpu_idle_time_jiffy(cpu, wall);
+	else if (!io_busy)
+		idle_time += get_cpu_iowait_time_us(cpu, wall);
 
-        return idle_time;
+	return idle_time;
 }
 EXPORT_SYMBOL_GPL(get_cpu_idle_time);
 
@@ -550,13 +550,8 @@ static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
 	   will be wrongly overridden */
 	ret = __cpufreq_set_policy(policy, &new_policy);
 
-#ifdef CONFIG_ARCH_MSM8974
-#ifdef CONFIG_CPU_OVERCLOCK
-	if (policy->max > 2496000) policy->max = 2496000;
-#else
-	if (policy->max > 2265600) policy->max = 2265600;
-#endif
-#endif
+	if (policy->max > 2803200)
+		policy->max = 2803200;
 
 	policy->user_policy.policy = policy->policy;
 	policy->user_policy.governor = policy->governor;
