@@ -29,11 +29,7 @@
 #include <linux/fb.h>
 #endif
 
-<<<<<<< HEAD
 #define MSM_CPUFREQ_LIMIT_MAJOR		5
-=======
-#define MSM_CPUFREQ_LIMIT_MAJOR		4
->>>>>>> 154e2f4... New Touch Boost driver by @Alucard24 and New CPUFREQ_LIMIT V4.0
 #define MSM_CPUFREQ_LIMIT_MINOR		0
 
 #define MSM_LIMIT			"msm_cpufreq_limit"
