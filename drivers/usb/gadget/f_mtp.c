@@ -1090,11 +1090,6 @@ static ssize_t mtp_read(struct file *fp, char __user *buf,
 	if (!dev->ep_out)
 		return -EINVAL;
 #endif
-	len = ALIGN(count, dev->ep_out->maxpacket);
-
-	if (len > mtp_rx_req_len)
-		return -EINVAL;
-
 	/* we will block until we're online */
 	DBG(cdev, "mtp_read: waiting for online state\n");
 	ret = wait_event_interruptible(dev->read_wq,
@@ -1103,6 +1098,11 @@ static ssize_t mtp_read(struct file *fp, char __user *buf,
 		r = ret;
 		goto done;
 	}
+	len = ALIGN(count, dev->ep_out->maxpacket);
+
+	if (len > mtp_rx_req_len)
+		return -EINVAL;
+
 	spin_lock_irq(&dev->lock);
 	if (dev->state == STATE_CANCELED) {
 		/* report cancelation to userspace */
