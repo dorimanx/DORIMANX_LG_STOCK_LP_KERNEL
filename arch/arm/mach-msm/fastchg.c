@@ -51,6 +51,8 @@
  * removed updating charging scenario when no charger connected. no point to do so.
  * version 2.4 allowed full 2000ma to be set in charger driver.
  * version 2.5 fixed broken mitigation set if USB is connected.
+ * version 2.6 adapted force fast charge to LP kernel source.
+ * version 2.7 fixed activation of force fast charge when no power connected. and rom set thermal mitigation.
  */
 
 int force_fast_charge;
