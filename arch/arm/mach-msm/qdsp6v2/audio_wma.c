@@ -58,7 +58,8 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		wma_cfg.ch_mask =  wma_config->channelmask;
 		wma_cfg.encode_opt = wma_config->encodeopt;
 		/* Configure Media format block */
-		rc = q6asm_media_format_block_wma(audio->ac, &wma_cfg);
+		rc = q6asm_media_format_block_wma(audio->ac, &wma_cfg,
+				audio->ac->stream_id);
 		if (rc < 0) {
 			pr_err("cmd media format block failed\n");
 			break;
