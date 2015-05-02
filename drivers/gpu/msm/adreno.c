@@ -2112,7 +2112,7 @@ error_clk_off:
  * @priority:  Boolean flag to specify of the start should be scheduled in a low
  * latency work queue
  *
- * Power up the GPU and initialize it.  If priority is specified then elevate
+ * Power up the GPU and initialize it. If priority is specified then elevate
  * the thread priority for the duration of the start operation
  */
 static int adreno_start(struct kgsl_device *device, int priority)
