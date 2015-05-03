@@ -34,6 +34,10 @@
 #include <linux/err.h>
 #endif
 
+#ifdef CONFIG_POWERSUSPEND
+#include <linux/powersuspend.h>
+#endif
+
 #define DT_CMD_HDR 6
 
 #ifdef CONFIG_MACH_LGE
@@ -742,6 +746,11 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 		return -EINVAL;
 	}
 
+#ifdef CONFIG_POWERSUSPEND
+	/* Yank555.lu : hook to handle powersuspend tasks (wakeup) */
+	set_power_suspend_state_autosleep_hook(POWER_SUSPEND_INACTIVE);
+#endif
+
 	ctrl = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
 	mipi  = &pdata->panel_info.mipi;
@@ -764,6 +773,11 @@ static int mdss_dsi_panel_off(struct mdss_panel_data *pdata)
 		pr_err("%s: Invalid input data\n", __func__);
 		return -EINVAL;
 	}
+
+#ifdef CONFIG_POWERSUSPEND
+	/* Yank555.lu : hook to handle powersuspend tasks (sleep) */
+	set_power_suspend_state_autosleep_hook(POWER_SUSPEND_ACTIVE);
+#endif
 
 	ctrl = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);

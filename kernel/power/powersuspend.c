@@ -34,13 +34,16 @@
 #include <linux/workqueue.h>
 
 #define MAJOR_VERSION	1
-#define MINOR_VERSION	5
+#define MINOR_VERSION	6
 
 /*
  * debug = 1 will print all
  */
 static unsigned int debug = 1;
 module_param_named(debug_mask, debug, uint, 0644);
+
+static unsigned int sleep_state = 0;
+module_param_named(sleep_state, sleep_state, uint, 0644);
 
 #define dprintk(msg...)		\
 do { 				\
@@ -108,6 +111,7 @@ static void power_suspend(struct work_struct *work)
 		}
 	}
 	dprintk("[POWERSUSPEND] suspend completed.\n");
+	sleep_state = 1;
 abort_suspend:
 	mutex_unlock(&power_suspend_lock);
 }
@@ -129,6 +133,7 @@ static void power_resume(struct work_struct *work)
 		goto abort_resume;
 
 	dprintk("[POWERSUSPEND] resuming...\n");
+	sleep_state = 0;
 	list_for_each_entry_reverse(pos, &power_suspend_handlers, link) {
 		if (pos->resume != NULL) {
 			pos->resume(pos);
