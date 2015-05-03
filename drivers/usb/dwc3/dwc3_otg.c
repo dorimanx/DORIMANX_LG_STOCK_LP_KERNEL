@@ -1024,10 +1024,10 @@ static void dwc3_otg_sm_work(struct work_struct *w)
 							DWC3_IDEV_CHG_MAX);
 					else
 						dwc3_otg_set_power(phy,
-								IUNIT);
+								DWC3_IDEV_CHG_MIN);
 #else
 					dwc3_otg_set_power(phy,
-								IUNIT);
+								DWC3_IDEV_CHG_MIN);
 #endif
 					dwc3_otg_start_peripheral(&dotg->otg,
 									1);
