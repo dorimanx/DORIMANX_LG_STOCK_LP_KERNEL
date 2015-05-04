@@ -253,7 +253,7 @@ int ping_init_sock(struct sock *sk)
 	gid_t range[2];
 	struct group_info *group_info;
 	int i, j, count;
-        int ret = 0;
+	int ret = 0;
 
 	if (sk->sk_family == AF_INET6)
 		inet6_sk(sk)->ipv6only = 1;
@@ -795,7 +795,7 @@ int ping_v4_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		err = PTR_ERR(rt);
 		rt = NULL;
 		if (err == -ENETUNREACH)
-			IP_INC_STATS(net, IPSTATS_MIB_OUTNOROUTES);
+			IP_INC_STATS_BH(net, IPSTATS_MIB_OUTNOROUTES);
 		goto out;
 	}
 
@@ -853,7 +853,6 @@ int ping_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 {
 	struct inet_sock *isk = inet_sk(sk);
 	int family = sk->sk_family;
-	struct sockaddr_in6 *sin6;
 	struct sk_buff *skb;
 	int copied, err;
 
@@ -907,9 +906,8 @@ int ping_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 	} else if (family == AF_INET6) {
 		struct ipv6_pinfo *np = inet6_sk(sk);
 		struct ipv6hdr *ip6 = ipv6_hdr(skb);
-		sin6 = (struct sockaddr_in6 *) msg->msg_name;
-
-		/* 2014-03-25, jk.soh@lge.com, LGP_DATA_QC_CR_SECURITY_PATCH_PING start */
+		struct sockaddr_in6 *sin6 =
+				(struct sockaddr_in6 *)msg->msg_name;
 		if (sin6) {
 			sin6->sin6_family = AF_INET6;
 			sin6->sin6_port = 0;
@@ -921,10 +919,10 @@ int ping_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 				sin6->sin6_flowinfo =
 					*(__be32 *)ip6 & IPV6_FLOWINFO_MASK;
 
-			sin6->sin6_scope_id = ipv6_iface_scope_id(&sin6->sin6_addr,
-								  IP6CB(skb)->iif);
+			sin6->sin6_scope_id =
+					ipv6_iface_scope_id(&sin6->sin6_addr,
+					IP6CB(skb)->iif);
 		}
-		/* 2014-03-25, jk.soh@lge.com, LGP_DATA_QC_CR_SECURITY_PATCH_PING end */
 
 		if (inet6_sk(sk)->rxopt.all)
 			pingv6_ops.datagram_recv_ctl(sk, msg, skb);
