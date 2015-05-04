@@ -30,7 +30,7 @@ AFLAGS_decompress.o += -Wa,-march=armv7-a$(plus_sec)
 AFLAGS_decompress.o += -Wa,-mcpu=cortex-a15
 
 HEAD	= head.o
-OBJS	+= misc.o
+MISC	+= misc.o
 DECOMPRESS = decompress.o
 ifeq ($(CONFIG_KERNEL_LZ4),y)
 	CFLAGS_decompress.o := -Os
