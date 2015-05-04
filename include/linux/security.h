@@ -2291,36 +2291,6 @@ static inline bool security_allow_merge_bio(struct bio *bio1, struct bio *bio2)
 	return true; /* The default is to allow it for performance */
 }
 
-static inline int security_file_close(struct file *file)
-{
-	return 0;
-}
-
-static inline bool security_allow_merge_bio(struct bio *bio1, struct bio *bio2)
-{
-	return true; /* The default is to allow it for performance */
-}
-
-static inline int security_file_close(struct file *file)
-{
-	return 0;
-}
-
-static inline bool security_allow_merge_bio(struct bio *bio1, struct bio *bio2)
-{
-	return true; /* The default is to allow it for performance */
-}
-
-static inline int security_file_close(struct file *file)
-{
-	return 0;
-}
-
-static inline bool security_allow_merge_bio(struct bio *bio1, struct bio *bio2)
-{
-	return true; /* The default is to allow it for performance */
-}
-
 static inline int security_task_create(unsigned long clone_flags)
 {
 	return 0;
