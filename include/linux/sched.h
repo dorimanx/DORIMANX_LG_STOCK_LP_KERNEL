@@ -2122,8 +2122,6 @@ static inline void wake_up_nohz_cpu(int cpu) { }
 #endif
 
 extern unsigned int sysctl_sched_wakeup_load_threshold;
-extern unsigned int sysctl_sched_yield_sleep_duration;
-extern int sysctl_sched_yield_sleep_threshold;
 
 #ifdef CONFIG_NO_HZ_FULL
 extern bool sched_can_stop_tick(void);
