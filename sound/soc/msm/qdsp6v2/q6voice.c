@@ -3205,6 +3205,7 @@ static int voice_setup_vocproc(struct voice_data *v)
 		voice_send_netid_timing_cmd(v);
 	}
 
+	/* enable slowtalk if st_enable is set and tty_mode is 0 */
 	if (v->st_enable && !v->tty_mode)
 		voice_send_set_pp_enable_cmd(v,
 					     MODULE_ID_VOICE_MODULE_ST,
@@ -4587,6 +4588,7 @@ static int voc_enable_cvp(uint32_t session_id)
 		}
 
 		voice_send_tty_mode_cmd(v);
+		/* enable slowtalk if st_enable is set and tty_mode is 0 */
 		if (v->st_enable && !v->tty_mode)
 			voice_send_set_pp_enable_cmd(v,
 					     MODULE_ID_VOICE_MODULE_ST,
@@ -4671,27 +4673,27 @@ int voc_set_tx_mute(uint32_t session_id, uint32_t dir, uint32_t mute,
 //[Audio][BSP] sehwan.lee@lge.com phonememo initial code [START]
 int voc_set_phonememo_tx_mute(uint32_t session_id, uint32_t dir, uint32_t mute)
 {
-        struct voice_data *v = voice_get_session(session_id);
-        int ret = 0;
+	struct voice_data *v = voice_get_session(session_id);
+	int ret = 0;
 
-        if (v == NULL) {
-                pr_err("%s: invalid session_id 0x%x\n", __func__, session_id);
+	if (v == NULL) {
+		pr_err("%s: invalid session_id 0x%x\n", __func__, session_id);
 
-                return -EINVAL;
-        }
+		return -EINVAL;
+	}
 
-        mutex_lock(&v->lock);
+	mutex_lock(&v->lock);
 
-        v->stream_tx.stream_mute = mute;
+	v->stream_tx.stream_mute = mute;
 
-        if ((v->voc_state == VOC_RUN) ||
-            (v->voc_state == VOC_CHANGE) ||
-            (v->voc_state == VOC_STANDBY))
-                ret = voice_send_phonememo_mute_cmd(v);
+	if ((v->voc_state == VOC_RUN) ||
+	    (v->voc_state == VOC_CHANGE) ||
+	    (v->voc_state == VOC_STANDBY))
+		ret = voice_send_phonememo_mute_cmd(v);
 
-        mutex_unlock(&v->lock);
+	mutex_unlock(&v->lock);
 
-        return ret;
+	return ret;
 }
 //[Audio][BSP] sehwan.lee@lge.com phonememo initial code [END]
 

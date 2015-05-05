@@ -89,6 +89,7 @@ int lgesoundmabl_allparam;
 
 /* Default values used if user space does not set */
 #define COMPR_PLAYBACK_MIN_FRAGMENT_SIZE (8 * 1024)
+
 #ifdef CONFIG_HIFI_SOUND
 #define COMPR_PLAYBACK_MAX_FRAGMENT_SIZE (256 * 1024)
 #define COMPR_PLAYBACK_MAX_NUM_FRAGMENTS (16 * 8)
@@ -96,8 +97,8 @@ int lgesoundmabl_allparam;
 #define COMPR_PLAYBACK_MAX_FRAGMENT_SIZE (128 * 1024)
 #define COMPR_PLAYBACK_MAX_NUM_FRAGMENTS (16 * 4)
 #endif
-#define COMPR_PLAYBACK_MIN_NUM_FRAGMENTS (4)
 
+#define COMPR_PLAYBACK_MIN_NUM_FRAGMENTS (4)
 
 #define COMPRESSED_LR_VOL_MAX_STEPS	0x2000
 const DECLARE_TLV_DB_LINEAR(msm_compr_vol_gain, 0,
@@ -620,7 +621,7 @@ static int msm_compr_send_media_format_block(struct snd_compr_stream *cstream,
 			prtd->num_channels, prtd->bits_per_sample,
 			stream_id);
 		if (ret < 0)
-		    pr_info("%s: CMD Format block failed %d \n", __func__, ret);
+		    pr_debug("%s: CMD Format block failed %d \n", __func__, ret);
 		 break;
 #else
 	case FORMAT_LINEAR_PCM:
@@ -786,7 +787,6 @@ static int msm_compr_configure_dsp(struct snd_compr_stream *cstream)
 	pr_debug("%s: stream_id %d bits_per_sample %d\n",
 			__func__, ac->stream_id, bits_per_sample);
 #endif
-
 #ifdef CONFIG_HIFI_SOUND
 	ret = q6asm_open_write_v2(prtd->audio_client,
 				prtd->codec, prtd->bits_per_sample);
@@ -3550,7 +3550,7 @@ static struct snd_compr_ops msm_compr_ops = {
 static struct snd_soc_platform_driver msm_soc_platform = {
 	.probe		= msm_compr_probe,
 	.compr_ops	= &msm_compr_ops,
-	.pcm_new = msm_compr_new,
+	.pcm_new	= msm_compr_new,
 #if defined(CONFIG_SND_LGE_EFFECT) || defined(CONFIG_SND_LGE_NORMALIZER) || defined(CONFIG_SND_LGE_MABL)
 	.controls = msm_compr_lge_effect_controls,
 	.num_controls = ARRAY_SIZE(msm_compr_lge_effect_controls),

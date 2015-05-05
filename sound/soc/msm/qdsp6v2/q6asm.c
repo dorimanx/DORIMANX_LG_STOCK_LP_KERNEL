@@ -115,7 +115,6 @@ static int out_cold_index;
 static char *out_buffer;
 static char *in_buffer;
 
-
 int q6asm_mmap_apr_dereg(void)
 {
 	int c;

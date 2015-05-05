@@ -33,7 +33,6 @@ enum {
 	MAX_AFE_CAL_TYPES
 };
 
-
 struct afe_ctl {
 	void *apr;
 	atomic_t state;
@@ -225,7 +224,6 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 	}
 	return 0;
 }
-
 
 int afe_get_port_type(u16 port_id)
 {
