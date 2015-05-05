@@ -161,13 +161,6 @@ static struct afe_clk_cfg lpass_mi2s_disable = {
 	0,
 };
 
-static int mbhc_disabled = 0;
-
-int is_mbhc_disabled(void)
-{
-	return mbhc_disabled;
-}
-
 /* MI2S clock */
 struct mi2s_clk {
        struct clk *core_clk;
@@ -177,6 +170,13 @@ struct mi2s_clk {
 };
 static struct mi2s_clk quat_mi2s_clk;
 #endif /*CONFIG_SND_SOC_CS35L32*/
+
+static int mbhc_disabled = 0;
+
+int is_mbhc_disabled(void)
+{
+	return mbhc_disabled;
+}
 
 static inline int param_is_mask(int p)
 {
