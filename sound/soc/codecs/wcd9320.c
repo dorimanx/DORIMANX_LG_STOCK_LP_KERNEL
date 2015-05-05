@@ -471,7 +471,9 @@ struct taiko_priv {
 	 * end of impedance measurement
 	 */
 	struct list_head reg_save_restore;
+
 	struct pm_qos_request pm_qos_req;
+
 	/* cal info for codec */
 	struct fw_info *fw_data;
 };
@@ -1078,7 +1080,6 @@ static int taiko_config_compander(struct snd_soc_dapm_widget *w,
 	}
 	return 0;
 }
-
 
 
 static const char *const taiko_anc_func_text[] = {"OFF", "ON"};
@@ -3650,7 +3651,7 @@ static int taiko_codec_enable_anc(struct snd_soc_dapm_widget *w,
 	const char *filename;
 	const struct firmware *fw;
 	int i;
-	int ret =0;
+	int ret = 0;
 	int num_anc_slots;
 	struct wcd9xxx_anc_header *anc_head;
 	struct taiko_priv *taiko = snd_soc_codec_get_drvdata(codec);
