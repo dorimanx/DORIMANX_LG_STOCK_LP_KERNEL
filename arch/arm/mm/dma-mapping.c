@@ -1179,7 +1179,7 @@ static struct page **__iommu_alloc_buffer(struct device *dev, size_t size,
 
 		page = pfn_to_page(pfn);
 
-		__dma_clear_buffer(page, size);
+		__dma_clear_buffer(page, size, NULL);
 
 		for (i = 0; i < count; i++)
 			pages[i] = page + i;
