@@ -102,7 +102,7 @@ BUILD_NOW()
 	fi;
 
 	# build zImage
-	time make ARCH=arm CROSS_COMPILE=/android-kernel/android_source/GOOGLE/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin/arm-eabi- zImage-dtb -j ${NR_CPUS}
+	time make ARCH=arm CROSS_COMPILE=android-toolchain/bin/arm-eabi- zImage-dtb -j ${NR_CPUS}
 
 	cp .config arch/arm/configs/d802_defconfig
 
@@ -110,7 +110,7 @@ BUILD_NOW()
 
 	# compile the modules, and depmod to create the final zImage
 	echo "Compiling Modules............"
-	time make ARCH=arm CROSS_COMPILE=/android-kernel/android_source/GOOGLE/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin/arm-eabi- modules -j ${NR_CPUS} || exit 1
+	time make ARCH=arm CROSS_COMPILE=android-toolchain/bin/arm-eabi- modules -j ${NR_CPUS} || exit 1
 
 	# move the compiled zImage and modules into the READY-KERNEL working directory
 	echo "Move compiled objects........"
@@ -140,8 +140,8 @@ BUILD_NOW()
 		cp arch/arm/boot/zImage READY-KERNEL/boot/
 
 		# strip not needed debugs from modules.
-		/android-kernel/android_source/GOOGLE/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin/arm-eabi-strip --strip-unneeded ../ramdisk-lp-tmp/lib/modules/* 2>/dev/null
-		/android-kernel/android_source/GOOGLE/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin/arm-eabi-strip --strip-debug ../ramdisk-lp-tmp/lib/modules/* 2>/dev/null
+		android-toolchain/bin/arm-eabi-strip --strip-unneeded ../ramdisk-lp-tmp/lib/modules/* 2>/dev/null
+		android-toolchain/bin/arm-eabi-strip --strip-debug ../ramdisk-lp-tmp/lib/modules/* 2>/dev/null
 
 		# create the ramdisk and move it to the output working directory
 		echo "Create ramdisk..............."
