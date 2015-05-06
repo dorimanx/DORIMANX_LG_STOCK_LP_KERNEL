@@ -26,7 +26,6 @@ package_extract_file("install.sh", "/tmp/install.sh");
 set_perm(0, 0, 0755, "/tmp/install.sh");
 
 ui_print("Installing kernel");
-ui_print("Detecting panel type and auto configuring!");
 assert(run_program("/tmp/install.sh") == 0);
 ui_print("Kernel Installed! enjoy :)");
 
