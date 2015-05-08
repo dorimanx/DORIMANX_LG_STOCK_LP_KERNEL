@@ -41,19 +41,19 @@
 #define FREQ_RESPONSIVENESS		1134000
 #endif
 
-#define CPUS_DOWN_RATE			2
-#define CPUS_UP_RATE			2
+#define CPUS_DOWN_RATE			1
+#define CPUS_UP_RATE			1
 
-#define DEC_CPU_LOAD			70
-#define DEC_CPU_LOAD_AT_MIN_FREQ	70
+#define DEC_CPU_LOAD			40
+#define DEC_CPU_LOAD_AT_MIN_FREQ	40
 
-#define INC_CPU_LOAD			70
-#define INC_CPU_LOAD_AT_MIN_FREQ	70
+#define INC_CPU_LOAD			50
+#define INC_CPU_LOAD_AT_MIN_FREQ	50
 
 /* Pump Inc/Dec for all cores */
-#define PUMP_INC_STEP_AT_MIN_FREQ	4
-#define PUMP_INC_STEP			1
-#define PUMP_DEC_STEP			2
+#define PUMP_INC_STEP_AT_MIN_FREQ	6
+#define PUMP_INC_STEP			3
+#define PUMP_DEC_STEP			1
 
 /* sample rate */
 #define MIN_SAMPLING_RATE		10000
