@@ -185,7 +185,7 @@ BUILD_NOW()
 
 		# create the flashable zip file from the contents of the output directory
 		echo "Make flashable zip..........."
-		zip -r Kernel-"${GETVER}"-KK-"$(date +"[%H-%M]-[%d-%m]-LG-${GETBRANCH}-PWR-CORE")".zip * >/dev/null
+		zip -r Kernel-"${GETVER}"-LP-"$(date +"[%H-%M]-[%d-%m]-LG-${GETBRANCH}-PWR-CORE")".zip * >/dev/null
 		stat boot.img
 		rm -f ./*.img
 		cd ..
