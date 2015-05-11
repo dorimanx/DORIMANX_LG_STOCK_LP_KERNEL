@@ -13278,6 +13278,11 @@ int wl_cfg80211_hang(struct net_device *dev, u16 reason)
 	if (cfg != NULL) {
 		wl_link_down(cfg);
 	}
+	
+	dev->netdev_ops->ndo_stop(dev);
+	msleep(1000);
+	dev->netdev_ops->ndo_open(dev);
+
 	return 0;
 }
 
