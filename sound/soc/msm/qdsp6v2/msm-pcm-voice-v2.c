@@ -18,7 +18,6 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/dma-mapping.h>
-#include <linux/workqueue.h>
 #include <sound/core.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
@@ -532,59 +531,11 @@ static int msm_voice_slowtalk_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-#ifdef CONFIG_MACH_LGE
-static void msm_voice_unmute_work (struct work_struct *work)
-{
-	pr_debug("%s: unmute by timeout\n", __func__);
-	voc_set_device_mute_lge(voc_get_session_id(VOICE_SESSION_NAME),
-							VSS_IVOLUME_DIRECTION_RX, 0, 500);
-	return;
-}
-
-static int msm_voice_rx_mute_timeout_put(struct snd_kcontrol *kcontrol,
-					struct snd_ctl_elem_value *ucontrol)
-{
-	static struct delayed_work *unmute_work = NULL;
-	int ret = 0;
-	int mute = ucontrol->value.integer.value[0];
-	uint32_t session_id = ucontrol->value.integer.value[1];
-	int timeout = ucontrol->value.integer.value[2];
-
-	if (unmute_work == NULL) {
-		unmute_work = kzalloc(sizeof(struct delayed_work), GFP_KERNEL);
-		INIT_DELAYED_WORK(unmute_work, msm_voice_unmute_work);
-	}
-
-	if ((mute != 1) || (timeout <= 0)) {
-		pr_err(" %s Invalid arguments", __func__);
-
-		ret = -EINVAL;
-		goto done;
-	}
-
-	pr_debug("%s: mute=%d session_id=%#x timeout=%d\n", __func__,
-		 mute, session_id, timeout);
-
-	voc_set_device_mute_lge(voc_get_session_id(VOICE_SESSION_NAME),
-							VSS_IVOLUME_DIRECTION_RX, 1, 500);
-
-	if (unlikely(delayed_work_pending(unmute_work)))
-		cancel_delayed_work_sync(unmute_work);
-	schedule_delayed_work(unmute_work, msecs_to_jiffies(timeout));
-done:
-	return ret;
-}
-#endif
-
 static struct snd_kcontrol_new msm_voice_controls[] = {
     SOC_SINGLE_MULTI_EXT("Voice Tx Mute Phonememo", SND_SOC_NOPM, 0, VSID_MAX,
                 0, 3, NULL, msm_phonememo_voice_mute_put),
 	SOC_SINGLE_MULTI_EXT("Voice Rx Device Mute", SND_SOC_NOPM, 0, VSID_MAX,
 				0, 3, NULL, msm_voice_rx_device_mute_put),
-#ifdef CONFIG_MACH_LGE
-	SOC_SINGLE_MULTI_EXT("Voice Rx Mute Timeout", SND_SOC_NOPM, 0, VSID_MAX,
-				0, 3, NULL, msm_voice_rx_mute_timeout_put),
-#endif
 	SOC_SINGLE_MULTI_EXT("Voice Tx Device Mute", SND_SOC_NOPM, 0, VSID_MAX,
 				0, 3, NULL, msm_voice_tx_device_mute_put),
 	SOC_SINGLE_MULTI_EXT("Voice Tx Mute", SND_SOC_NOPM, 0, VSID_MAX,

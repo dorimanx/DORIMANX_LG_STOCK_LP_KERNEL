@@ -788,8 +788,7 @@ static void mdss_mdp_perf_calc_ctl(struct mdss_mdp_ctl *ctl,
 					apply_fudge_factor(perf->bw_prefill, &mdss_res->ib_factor));
 		}
 #else
-	if (ctl->is_video_mode || ((ctl->intf_type != MDSS_MDP_NO_INTF) &&
-		mdss_mdp_video_mode_intf_connected(ctl))) {
+	if (ctl->is_video_mode || mdss_mdp_video_mode_intf_connected(ctl)) {
 		perf->bw_ctl =
 			max(apply_fudge_factor(perf->bw_overlap,
 				&mdss_res->ib_factor_overlap),

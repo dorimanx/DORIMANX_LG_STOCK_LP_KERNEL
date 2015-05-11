@@ -19,7 +19,7 @@
 #undef TRACE_INCLUDE_PATH
 #define TRACE_INCLUDE_PATH .
 #undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_FILE mdss_mdp_trace
+#define TRACE_INCLUDE_FILE ../../drivers/video/msm/mdss/mdss_mdp_trace
 
 #include <linux/tracepoint.h>
 #include "mdss_mdp.h"

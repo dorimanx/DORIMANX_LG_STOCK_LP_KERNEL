@@ -26,7 +26,7 @@
 #include <linux/thermal.h>
 #include <linux/qpnp/qpnp-adc.h>
 
-#ifdef CONFIG_MACH_MSM8974_G2
+#ifdef CONFIG_LGE_PM
 #include <linux/wakelock.h>
 #include <linux/workqueue.h>
 #endif
@@ -72,7 +72,7 @@ enum qpnp_tm_registers {
 #define TRIP_STAGE1			2
 #define TRIP_NUM			3
 
-#ifdef CONFIG_MACH_MSM8974_G2
+#ifdef CONFIG_LGE_PM
 #define BATT_IF_PRES_RT_STATUS		BIT(0)
 #define BATT_PRES_EN_BIT		BIT(0)
 #endif
@@ -104,7 +104,7 @@ struct qpnp_tm_chip {
 	u16				base_addr;
 	bool				allow_software_override;
 	struct qpnp_vadc_chip		*vadc_dev;
-#ifdef CONFIG_MACH_MSM8974_G2
+#ifdef CONFIG_LGE_PM
 	u16				bat_if_base;
 	unsigned int			batt_present_irq;
 	struct work_struct		batt_insert_remove_worker;
@@ -481,7 +481,7 @@ static int qpnp_tm_init_reg(struct qpnp_tm_chip *chip)
 	return rc;
 }
 
-#ifdef CONFIG_MACH_MSM8974_G2
+#ifdef CONFIG_LGE_PM
 #define INT_RT_STS(base)			(base + 0x10)
 #define INT_EN_SET(base)			(base + 0x15)
 #define SMBB_BAT_IF_SUBTYPE			0x03
@@ -701,7 +701,7 @@ static int __devinit qpnp_tm_probe(struct spmi_device *spmi)
 	u32 default_temperature;
 	int rc = 0;
 	u8 raw_type[2], type, subtype;
-#ifdef CONFIG_MACH_MSM8974_G2
+#ifdef CONFIG_LGE_PM
 	struct spmi_resource *spmi_resource;
 	u8 batt_pres_rt_sts;
 #endif
@@ -856,7 +856,7 @@ static int __devinit qpnp_tm_probe(struct spmi_device *spmi)
 		goto err_free_tz;
 	}
 
-#ifdef CONFIG_MACH_MSM8974_G2
+#ifdef CONFIG_LGE_PM
 	spmi_for_each_container_dev(spmi_resource, spmi) {
 		if (!spmi_resource) {
 			pr_err("qpnp temp alarm : spmi resource absent\n");
@@ -952,7 +952,7 @@ free_chip:
 	dev_set_drvdata(&spmi->dev, NULL);
 	kfree(chip);
 	return rc;
-#ifdef CONFIG_MACH_MSM8974_G2
+#ifdef CONFIG_LGE_PM
 fail_bat_if:
 	pr_err("Cannot enable qpnp bat_if block.\n");
 	return 0;

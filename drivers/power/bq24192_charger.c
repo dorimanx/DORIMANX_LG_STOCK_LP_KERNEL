@@ -52,8 +52,10 @@
 #endif
 #define MONITOR_BATTEMP_POLLING_PERIOD          (60*HZ)
 #endif
+#ifdef B1_BRINGUP
 #ifdef CONFIG_LGE_PM
 #include <linux/qpnp/qpnp-temp-alarm.h>
+#endif
 #endif
 #ifdef CONFIG_ZERO_WAIT
 #include <linux/zwait.h>
@@ -887,6 +889,7 @@ bq24192_set_bootcompleted(const char *val, struct kernel_param *kp)
 }
 module_param_call(bootcompleted, bq24192_set_bootcompleted,
 	param_get_uint, &bootcompleted, 0644);
+#ifdef B1_BRINGUP
 #if defined(CONFIG_MACH_MSM8974_B1_KR) || defined(CONFIG_MACH_MSM8974_B1W)
 static void bq24192_batt_remove_insert_cb(int batt_present)
 {
@@ -920,6 +923,7 @@ static void bq24192_batt_remove_insert_cb(int batt_present)
 		wake_unlock(&the_chip->battgone_wake_lock);
 	}
 }
+#endif
 #endif
 struct current_limit_entry {
 	int input_limit;
@@ -1464,7 +1468,7 @@ static int bq24192_get_prop_batt_current_now(struct bq24192_chip *chip)
 		return DEFAULT_CURRENT;
 
 	chip->cn_psy = power_supply_get_by_name("cn");
-	if (!chip->cn_psy) {
+	if (!chip->cn_psy) {		
 		return DEFAULT_CURRENT;
 	} else {
 		chip->cn_psy->get_property(chip->cn_psy,
@@ -1501,6 +1505,7 @@ static int bq24192_get_prop_batt_current_now(struct bq24192_chip *chip)
 		pr_info("charging done!\n");
 		return last_batt_current;
 	}
+#ifdef B1_BRINGUP
 	if (qpnp_iadc_is_ready()) {
 		pr_err("qpnp_iadc is not ready!\n");
 		return DEFAULT_CURRENT;
@@ -1511,6 +1516,7 @@ static int bq24192_get_prop_batt_current_now(struct bq24192_chip *chip)
 		pr_err("failed to read qpnp_iadc\n");
 		return DEFAULT_CURRENT;
 	}
+#endif
 	batt_current = result.result_ua;
 	last_batt_current = batt_current;
 	pr_info("battery_current= %d\n", batt_current);
@@ -1518,9 +1524,9 @@ static int bq24192_get_prop_batt_current_now(struct bq24192_chip *chip)
 #else /* CONFIG_ADC_READY_CHECK_JB */
 	return DEFAULT_CURRENT;
 #endif /* CONFIG_ADC_READY_CHECK_JB */
-#else /* CONFIG_LGE_CURRENTNOW */
+#else /*                       */
 	return DEFAULT_CURRENT;
-#endif /* CONFIG_LGE_CURRENTNOW */
+#endif /*                       */
 }
 
 #define DEFAULT_FULL_DESIGN	2500
@@ -1641,11 +1647,11 @@ static int bq24192_batt_power_get_property(struct power_supply *psy,
 #endif
 		break;
 	case POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL:
-		/* it makes ibat max set following themral mitigation.
-		 * But, SMB349 cannot control ibat current like PMIC.
-		 * if LGE charging scenario make charging thermal control,
-		 * it is good interface to use LG mitigation level.
-		 */
+		/*                                                    
+                                                       
+                                                            
+                                                     
+   */
 		val->intval = 0;
 		break;
 	case POWER_SUPPLY_PROP_PSEUDO_BATT:
@@ -1747,11 +1753,11 @@ static int bq24192_batt_power_set_property(struct power_supply *psy,
 		bq24192_enable_charging(chip, val->intval);
 		break;
 	case POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL:
-		/* it makes ibat max set following themral mitigation.
-		 * But, SMB349 cannot control ibat current like PMIC.
-		 * if LGE charging scenario make charging thermal control,
-		 * it is good interface to use LG mitigation level.
-		 */
+		/*                                                    
+                                                       
+                                                            
+                                                     
+   */
 		break;
 	default:
 		return -EINVAL;
@@ -2874,8 +2880,10 @@ static int bq24192_probe(struct i2c_client *client,
 	if (ret < 0)
 		goto err_zw_ws_register;
 #endif
+#ifdef B1_BRINGUP
 #if defined(CONFIG_MACH_MSM8974_B1_KR) || defined(CONFIG_MACH_MSM8974_B1W)
 	qpnp_batif_regist_batt_present(&bq24192_batt_remove_insert_cb);
+#endif
 #endif
 	pr_info("probe success\n");
 
@@ -2934,8 +2942,10 @@ static int bq24192_remove(struct i2c_client *client)
 	wake_lock_destroy(&chip->lcs_wake_lock);
 #endif
 	wake_lock_destroy(&chip->battgone_wake_lock);
+#ifdef B1_BRINGUP
 #if defined(CONFIG_MACH_MSM8974_B1_KR) || defined(CONFIG_MACH_MSM8974_B1W)
 	qpnp_batif_unregist_batt_present(0);
+#endif
 #endif
 	wake_lock_destroy(&chip->icl_wake_lock);
 

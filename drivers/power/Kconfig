@@ -541,12 +541,6 @@ config LGE_WLC_CHARGER_TEMP_SCENARIO
 	  LGE Wireless CHARGER TEMP SCENARIO Configuration
 	  only use the VZW model.
 
-config LGE_PM_PWR_KEY_FOR_CHG_LOGO
-	bool "Control the PWR KEY for charger logo"
-	depends on LGE_PM
-	help
-	  PWR KEY could be controlled by this code.
-
 config SMB349_VZW_FAST_CHG
 	depends on SMB349_CHARGER
 	default n

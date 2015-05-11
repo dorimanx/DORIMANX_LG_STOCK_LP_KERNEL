@@ -169,9 +169,3 @@ config BCM4335BT
 	---help---
 	  This is a configuration for bt lock enable.
 
-config BRCM_WAPI
-        bool "Enables WAPI support"
-        depends on BCMDHD
-        default n
-        ---help---
-          Enables WAPI support

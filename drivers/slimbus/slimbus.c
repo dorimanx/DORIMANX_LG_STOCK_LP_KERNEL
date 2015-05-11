@@ -798,10 +798,10 @@ int slim_assign_laddr(struct slim_controller *ctrl, const u8 *e_addr,
 	bool exists = false;
 	struct slim_device *sbdev;
 #ifdef CONFIG_SND_SOC_ES325_SLIM
-	/* LGE_BSP_AUDIO
-	* assign laddr to slim slave : Audience eS325 ALSA SoC Audio driver
-	* 2013-01-10, jeremy.pi@lge.com
-	*/
+	/*              
+                                                                    
+                                
+ */
 	struct sbi_boardinfo *bi;
 #endif /* CONFIG_SND_SOC_ES325_SLIM */
 	struct list_head *pos, *next;
@@ -847,10 +847,10 @@ int slim_assign_laddr(struct slim_controller *ctrl, const u8 *e_addr,
 	ctrl->addrt[i].laddr = *laddr;
 
 #ifdef CONFIG_SND_SOC_ES325_SLIM
-	/* LGE_BSP_AUDIO
-	* assign laddr to slim slave : Audience eS325 ALSA SoC Audio driver
-	* 2013-01-10, jeremy.pi@lge.com
-	*/
+	/*              
+                                                                    
+                                
+ */
 	list_for_each(pos, &board_list) {
 		bi = list_entry(pos, struct sbi_boardinfo, list);
 		if (memcmp(e_addr, bi->board_info.slim_slave->e_addr, 6) == 0) {
@@ -1123,7 +1123,7 @@ int slim_xfer_msg(struct slim_controller *ctrl, struct slim_device *sbdev,
 	} else
 		ret = slim_processtxn(ctrl, SLIM_MSG_DEST_LOGICALADDR, mc, ec,
 				SLIM_MSG_MT_CORE, rbuf, wbuf, len, mlen,
-				msg->comp, sbdev->laddr, NULL);
+				NULL, sbdev->laddr, NULL);
 xfer_err:
 	return ret;
 }

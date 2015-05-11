@@ -1545,11 +1545,6 @@ static inline int qpnp_adc_get_revid_version(struct device *dev)
 int32_t qpnp_iadc_read(struct qpnp_iadc_chip *dev,
 				enum qpnp_iadc_channels channel,
 				struct qpnp_iadc_result *result);
-
-#ifdef CONFIG_LGE_PM
-int32_t qpnp_iadc_read_lge(enum qpnp_iadc_channels channel,
-        struct qpnp_iadc_result *result);
-#endif
 /**
  * qpnp_iadc_get_rsense() - Reads the RDS resistance value from the
 			trim registers.
@@ -1582,10 +1577,6 @@ int32_t qpnp_iadc_get_gain_and_offset(struct qpnp_iadc_chip *dev,
  *		pointer used everytime client makes an ADC request.
  */
 struct qpnp_iadc_chip *qpnp_get_iadc(struct device *dev, const char *name);
-#ifdef CONFIG_MACH_LGE
-int32_t qpnp_iadc_is_ready(void);
-#endif
-
 /**
  * qpnp_iadc_vadc_sync_read() - Performs synchronous VADC and IADC read.
  *		The api is to be used only by the BMS to perform

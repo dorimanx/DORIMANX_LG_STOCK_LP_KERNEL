@@ -485,6 +485,6 @@
 };
 &pm8941_lsid1 {
 	qcom,leds@d300 {
-		flash-boost-supply = <&pm8941_chg_boost>;
+		flash_boost-supply = <&pm8941_chg_boost>;
 	};
 };

@@ -23,7 +23,15 @@
 
 /* Fixed constants first: */
 #undef NR_OPEN
+#ifdef CONFIG_MACH_LGE
+/*           
+                                     
+                                
+ */
+#define INR_OPEN_CUR 2048	/* Initial setting for nfile rlimits */
+#else
 #define INR_OPEN_CUR 1024	/* Initial setting for nfile rlimits */
+#endif
 #define INR_OPEN_MAX 4096	/* Hard limit for nfile rlimits */
 
 #define BLOCK_SIZE_BITS 10

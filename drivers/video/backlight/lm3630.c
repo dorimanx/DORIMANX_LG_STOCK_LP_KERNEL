@@ -38,11 +38,7 @@
 #define BL_ON        1
 #define BL_OFF       0
 
-#if defined(CONFIG_B1_LGD_PANEL)
-#define PWM_THRESHOLD 165	/* UI bar 56 % */
-#define PWM_OFF 0
-#define PWM_ON 1
-#elif defined(CONFIG_G2_LGD_PANEL)
+#ifdef CONFIG_G2_LGD_PANEL
 #define PWM_THRESHOLD 135	/* UI bar 41 % */
 #define PWM_OFF 0
 #define PWM_ON 1
@@ -111,7 +107,7 @@ int wireless_backlight_state(void)
 EXPORT_SYMBOL(wireless_backlight_state);
 #endif
 
-#if defined(CONFIG_G2_LGD_PANEL) || defined(CONFIG_B1_LGD_PANEL)
+#ifdef CONFIG_G2_LGD_PANEL
 static void bl_set_pwm_mode(int mode)
 {
 	if (mode)
@@ -124,10 +120,10 @@ static void bl_set_pwm_mode(int mode)
 static void lm3630_hw_reset(void)
 {
 	int gpio = main_lm3630_dev->gpio;
-	/* LGE_CHANGE
-	 * Fix GPIO Setting Warning
-	 * 2011. 12. 14, kyunghoo.ryu@lge.com
-	 */
+	/*           
+                            
+                                      
+  */
 
 	if (gpio_is_valid(gpio)) {
 		gpio_direction_output(gpio, 1);
@@ -192,7 +188,7 @@ static void lm3630_set_main_current_level(struct i2c_client *client, int level)
 	if(factory_boot)
 		level = min_brightness;
 #endif
-#if defined(CONFIG_G2_LGD_PANEL) || defined(CONFIG_B1_LGD_PANEL)
+#ifdef CONFIG_G2_LGD_PANEL
 	if (level < PWM_THRESHOLD)
 		bl_set_pwm_mode(PWM_OFF);
 	else
@@ -258,9 +254,10 @@ void lm3630_backlight_on(int level)
 		pr_info("%s : level = %d\n", __func__, level);
 
 #if defined(CONFIG_B1_LGD_PANEL)
-		mdelay(30);
-#elif defined(CONFIG_G2_LGD_PANEL)
-		mdelay(15);
+		if(lge_get_board_revno() < HW_REV_1_0)
+			mdelay(50);
+		else
+			mdelay(10);
 #endif
 		lm3630_hw_reset();
 
@@ -333,11 +330,11 @@ static int bl_set_intensity(struct backlight_device *bd)
 #else
 	struct i2c_client *client = to_i2c_client(bd->dev.parent);
 
-	/* LGE_CHANGE
-	 * if it's trying to set same backlight value,
-	 * skip it.
-	 * 2013-02-15, baryun.hwang@lge.com
-	 */
+	/*           
+                                               
+            
+                                    
+  */
 	if (bd->props.brightness == cur_main_lcd_level) {
 		pr_debug("%s level is already set. skip it\n", __func__);
 		return 0;
@@ -635,7 +632,7 @@ static int lm3630_probe(struct i2c_client *i2c_dev,
 	bl_dev->props.max_brightness = MAX_BRIGHTNESS_LM3630;
 #if defined(CONFIG_B1_LGD_PANEL)
 	if(lge_get_boot_mode() == LGE_BOOT_MODE_CHARGERLOGO)
-		bl_dev->props.brightness = 0x99; // same to LK
+		bl_dev->props.brightness = 0;
 	else if(lge_get_boot_mode() == LGE_BOOT_MODE_FACTORY
 			|| lge_get_boot_mode() == LGE_BOOT_MODE_FACTORY2
 			|| lge_get_boot_mode() == LGE_BOOT_MODE_FACTORY3

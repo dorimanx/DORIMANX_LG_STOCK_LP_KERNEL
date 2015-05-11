@@ -91,11 +91,11 @@ MODULE_PARM_DESC(
 	"MMC/SD cards are removable and may be removed during suspend");
 
 /*
- * LGE_CHANGE_S
- * Date 	: 2014.03.19
- * Author 	: bohyun.jung@lge.com
- * Comment 	: Dynamic MMC log
- * 			  set mmc log level by accessing '/sys/module/mmc_core/parameters/debug_level' through adb shell.
+               
+                     
+                                
+                             
+                                                                                                       
  */
 #if defined(CONFIG_LGE_MMC_DYNAMIC_LOG)
 
@@ -106,7 +106,7 @@ MODULE_PARM_DESC(
     debug_level,
     "MMC/SD cards debug_level");
 
-#endif	/* end of LGE_CHANGE_E */
+#endif	/*                     */
 
 #define MMC_UPDATE_BKOPS_STATS_HPI(stats)	\
 	do {					\
@@ -573,13 +573,8 @@ EXPORT_SYMBOL(mmc_start_idle_time_bkops);
  */
 static void mmc_wait_data_done(struct mmc_request *mrq)
 {
-	unsigned long flags;
-	struct mmc_context_info *context_info = &mrq->host->context_info;
-
-	spin_lock_irqsave(&context_info->lock, flags);
 	mrq->host->context_info.is_done_rcv = true;
 	wake_up_interruptible(&mrq->host->context_info.wait);
-	spin_unlock_irqrestore(&context_info->lock, flags);
 }
 
 static void mmc_wait_done(struct mmc_request *mrq)
@@ -725,7 +720,6 @@ static int mmc_wait_for_data_req_done(struct mmc_host *host,
 	struct mmc_context_info *context_info = &host->context_info;
 	bool pending_is_urgent = false;
 	bool is_urgent = false;
-	bool is_done_rcv = false;
 	int err, ret;
 	unsigned long flags;
 
@@ -736,10 +730,9 @@ static int mmc_wait_for_data_req_done(struct mmc_host *host,
 				 context_info->is_urgent));
 		spin_lock_irqsave(&context_info->lock, flags);
 		is_urgent = context_info->is_urgent;
-		is_done_rcv = context_info->is_done_rcv;
 		context_info->is_waiting_last_req = false;
 		spin_unlock_irqrestore(&context_info->lock, flags);
-		if (is_done_rcv) {
+		if (context_info->is_done_rcv) {
 			context_info->is_done_rcv = false;
 			context_info->is_new_req = false;
 			cmd = mrq->cmd;
@@ -1151,10 +1144,10 @@ int mmc_interrupt_hpi(struct mmc_card *card)
 
 out:
 #ifdef CONFIG_MACH_LGE
-	/* LGE_CHANGE
-	 * add debug code
-	 * 2014-01-16, B2-BSP-FS@lge.com
-	 */
+	/*           
+                  
+                                 
+  */
 	if (err)
 		pr_err("%s: mmc_interrupt_hpi() failed. err: (%d)\n",	mmc_hostname(card->host), err);
 #endif
@@ -1342,12 +1335,12 @@ void mmc_set_data_timeout(struct mmc_data *data, const struct mmc_card *card)
 			limit_us = 3000000;
 		else
 			#ifdef CONFIG_MACH_LGE
-			/* LGE_CHANGE
-			 * Although we already applied enough time,
-			 * timeout-error occurs until now with several-ultimate-crappy-memory.
-			 * So, we give more time than before.
-			 * 2014-01-16, B2-BSP-FS@lge.com
-			 */
+			/*           
+                                              
+                                                                         
+                                        
+                                   
+    */
 			limit_us = 300000;
 			#else
 			limit_us = 100000;
@@ -1982,10 +1975,10 @@ void mmc_power_up(struct mmc_host *host)
 	 * to reach the minimum voltage.
 	 */
 #ifdef CONFIG_MACH_LGE
-	/* LGE_CHANGE
-	 * Augmenting delay-time for some crappy card.
-	 * 2014-01-16, B2-BSP-FS@lge.com
-	 */
+	/*           
+                                               
+                                 
+  */
 	mmc_delay(20);
 #else
 	mmc_delay(10);
@@ -2001,10 +1994,10 @@ void mmc_power_up(struct mmc_host *host)
 	 * time required to reach a stable voltage.
 	 */
 #ifdef CONFIG_MACH_LGE
-	/* LGE_CHANGE
-	 * Augmenting delay-time for some crappy card.
-	 * 2014-01-16, B2-BSP-FS@lge.com
-	 */
+	/*           
+                                               
+                                 
+  */
 	mmc_delay(20);
 #else
 	mmc_delay(10);
@@ -2016,10 +2009,10 @@ void mmc_power_up(struct mmc_host *host)
 void mmc_power_off(struct mmc_host *host)
 {
 	#ifdef CONFIG_MACH_LGE
-		/* LGE_CHANGE
-		 * If it is already power-off, skip below.
-		 * 2014-01-16, B2-BSP-FS@lge.com
-		 */
+		/*           
+                                            
+                                  
+   */
 		if (host->ios.power_mode == MMC_POWER_OFF) {
             pr_info("[LGE][MMC][%-18s( )] host->index:%d, already power-off, skip below\n", __func__, host->index);
 			return;
@@ -2199,9 +2192,9 @@ void mmc_detect_change(struct mmc_host *host, unsigned long delay)
 
 #ifdef CONFIG_MACH_LGE
 /*
- * LGE_CHANGE
- * add wake_lock because of lockup issue when copying/moving big size files
- * 2014-03-26, B2-BSP-FS@lge.com
+             
+                                                                           
+                                
  */
 	wake_lock(&host->detect_wake_lock);
 #endif
@@ -3287,10 +3280,10 @@ void mmc_rescan(struct work_struct *work)
 	bool extend_wakelock = false;
 
 #ifdef CONFIG_MACH_LGE
-	/* LGE_CHANGE
-	* Adding Print
-	* 2014-01-16, B2-BSP-FS@lge.com
-	*/
+	/*           
+               
+                                
+ */
     pr_info("[LGE][MMC][%-18s( ) START!] mmc%d\n", __func__, host->index);
 #endif
 
@@ -3357,9 +3350,9 @@ void mmc_rescan(struct work_struct *work)
 
 #ifdef CONFIG_MACH_LGE
 /*
- * LGE_CHANGE
- * add wake_lock because of lockup issue when copying/moving big size files
- * 2014-03-26, B2-BSP-FS@lge.com
+             
+                                                                           
+                                
  */
 	else
 		wake_unlock(&host->detect_wake_lock);
@@ -3528,18 +3521,9 @@ int mmc_flush_cache(struct mmc_card *card)
 			pr_err("%s: cache flush timeout\n",
 					mmc_hostname(card->host));
 			rc = mmc_interrupt_hpi(card);
-#if defined(CONFIG_LGE_MMC_RESET_IF_HANG)
 			if (rc)
-            {
 				pr_err("%s: mmc_interrupt_hpi() failed (%d)\n",
 						mmc_hostname(host), rc);
-                err = -ENODEV;
-            }
-#else
-            if (rc)
-                pr_err("%s: mmc_interrupt_hpi() failed (%d)\n",
-                        mmc_hostname(host), rc);
-#endif
 		} else if (err) {
 			pr_err("%s: cache flush error %d\n",
 					mmc_hostname(card->host), err);

@@ -508,7 +508,7 @@ int mdss_mdp_overlay_pipe_setup(struct msm_fb_data_type *mfd,
 
 	if (req->flags & MDP_ROT_90) {
 		pr_err("unsupported inline rotation\n");
-		return -EOPNOTSUPP;
+		return -ENOTSUPP;
 	}
 
 	if ((req->dst_rect.w > MAX_DST_W) || (req->dst_rect.h > MAX_DST_H)) {
@@ -591,7 +591,7 @@ int mdss_mdp_overlay_pipe_setup(struct msm_fb_data_type *mfd,
 
 		if (pipe == NULL) {
 			pr_err("error allocating pipe\n");
-			return -ENODEV;
+			return -ENOMEM;
 		}
 
 		ret = mdss_mdp_pipe_map(pipe);

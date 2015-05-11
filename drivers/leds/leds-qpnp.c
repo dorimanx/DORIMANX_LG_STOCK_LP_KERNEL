@@ -109,7 +109,7 @@
 #define FLASH_FAULT_DETECT(base)	(base + 0x51)
 #define FLASH_PERIPHERAL_SUBTYPE(base)	(base + 0x05)
 #define FLASH_CURRENT_RAMP(base)	(base + 0x54)
-#define FLASH_VPH_PWR_DROOP(base)	(base + 0x5A) /* LGE_CHANGE, Change FLASH_VPH_PWR_DROOP, 2014-02-04, jinw.kim@lge.com */
+#define FLASH_VPH_PWR_DROOP(base)	(base + 0x5A) /*                                                                      */
 
 #define FLASH_MAX_LEVEL			0x4F
 #define TORCH_MAX_LEVEL			0x0F
@@ -129,7 +129,7 @@
 #define FLASH_VREG_MASK			0xC0
 #define FLASH_STARTUP_DLY_MASK		0x02
 #define FLASH_CURRENT_RAMP_MASK		0xBF
-#define FLASH_VPH_PWR_DROOP_MASK	0xF3 /* LGE_CHANGE, Change FLASH_VPH_PWR_DROOP, 2014-02-04, jinw.kim@lge.com */
+#define FLASH_VPH_PWR_DROOP_MASK	0xF3 /*                                                                      */
 
 
 #define FLASH_ENABLE_ALL		0xE0
@@ -239,32 +239,25 @@
 #define KPDBL_ID_MISSED_NOTI_YELLOW	20
 #define KPDBL_ID_MISSED_NOTI_TURQUOISE	29
 #define KPDBL_ID_MISSED_NOTI_LIME	32
-#define KPDBL_ID_CALLING 35
-#define KPDBL_ID_REAR_MISSED_NOTI 36
 #define KPDBL_ID_URGENT_CALL_MISSED_NOTI	37
 
 #ifdef CONFIG_LEDS_PM8941_EMOTIONAL
-/* LGE RGB brightness tunning factors */
+/*                                    */
 #define RGB_BRIGHTNESS_TUNNING_R	1
 #define RGB_BRIGHTNESS_TUNNING_G	1
 #define RGB_BRIGHTNESS_TUNNING_B	1
 
-/* LGE mix brightness tunning factors */
+/*                                    */
 int mix_brightness_tunning = 1;
 
-/* LGE brightness tunning factors */
+/*                                */
 #define BRIGHTNESS_TUNNING	40 / 255
 #endif
 
 #if defined(CONFIG_LEDS_WINDOW_COLOR)
-/* LGE window color brightness tunning factors */
-#if defined(CONFIG_MACH_MSM8974_B1_KR) || defined(CONFIG_MACH_MSM8974_B1W)
-#define WINDOW_COLOR_BRIGHTNESS_TUNNING_BK	60 / 255
-#define WINDOW_COLOR_BRIGHTNESS_TUNNING_WH	60 / 255
-#else
+/*                                             */
 #define WINDOW_COLOR_BRIGHTNESS_TUNNING_BK	40 / 255
 #define WINDOW_COLOR_BRIGHTNESS_TUNNING_WH	40 / 255
-#endif
 #endif
 
 #define CONFIG_LGE_PM_CHARGING_CHARGER_TEMP
@@ -452,9 +445,9 @@ struct mpp_config_data {
 struct flash_config_data {
 	u8	current_prgm;
 #if defined(CONFIG_LGE_DUAL_LED)
-/* LGE_CHANGE
- * For Dual flash
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                 
+                               
  */
 	u8	current_prgm2;
 #endif
@@ -902,7 +895,7 @@ static int qpnp_mpp_set(struct qpnp_led_data *led)
 	return 0;
 }
 
-#if defined(CONFIG_QPNP_CHARGER) || defined(CONFIG_MACH_MSM8974_B1_KR) || defined(CONFIG_MACH_MSM8974_B1W) /* LGE_CHANGE, To use original function, qpnp_charger should be enabled, 2014-03-12, jinw.kim@lge.com */
+#if defined(CONFIG_QPNP_CHARGER) || defined(CONFIG_MACH_MSM8974_B1_KR) || defined(CONFIG_MACH_MSM8974_B1W) /*                                                                                                    */
 static int qpnp_flash_regulator_operate(struct qpnp_led_data *led, bool on)
 {
 	int rc, i;
@@ -1167,12 +1160,12 @@ static int qpnp_flash_set(struct qpnp_led_data *led)
 		"Unable to read from addr=0x1066, rc(%d)\n", rc);
 	}
 	/* ADDED CODE, END */
-#endif //CONFIG_LGE_PM_CHARGING_CHARGER_TEMP
+#endif //                                   
 
 #if defined(CONFIG_MACH_LGE)
-/* LGE_CHANGE
- * For Dual flash
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                 
+                               
  */
 	pr_info("%s: %d: name = %s, val = %d\n",
 		__func__, __LINE__, led->cdev.name, val);
@@ -1365,7 +1358,7 @@ static int qpnp_flash_set(struct qpnp_led_data *led)
 				return rc;
 			}
 			/* ADDED CODE, END */
-#endif //CONFIG_LGE_PM_CHARGING_CHARGER_TEMP
+#endif //                                   
 
 			rc = qpnp_led_masked_write(led,
 				FLASH_ENABLE_CONTROL(led->base),
@@ -1514,7 +1507,7 @@ static int qpnp_flash_set(struct qpnp_led_data *led)
 			return rc;
 		}
 		/* ADDED CODE, END */
-#endif //CONFIG_LGE_PM_CHARGING_CHARGER_TEMP
+#endif //                                   
 	}
 
 	qpnp_dump_regs(led, flash_debug_regs, ARRAY_SIZE(flash_debug_regs));
@@ -1545,9 +1538,9 @@ error_flash_set:
 }
 
 #if defined(CONFIG_LGE_DUAL_LED)
-/* LGE_CHANGE
- * For Dual flash
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                 
+                               
  */
 static int qpnp_flash_set2(struct qpnp_led_data *led)
 {
@@ -1567,7 +1560,7 @@ static int qpnp_flash_set2(struct qpnp_led_data *led)
 		"Unable to read from addr=0x1066, rc(%d)\n", rc);
 	}
 	/* ADDED CODE, END */
-#endif //CONFIG_LGE_PM_CHARGING_CHARGER_TEMP
+#endif //                                   
 
 	pr_info("%s: %d: name = %s, val = %d, %d\n",
 		__func__, __LINE__, led->cdev.name, val, val2);
@@ -1666,7 +1659,7 @@ static int qpnp_flash_set2(struct qpnp_led_data *led)
 				return rc;
 			}
 			/* ADDED CODE, END */
-#endif //CONFIG_LGE_PM_CHARGING_CHARGER_TEMP
+#endif //                                   
 
 			rc = qpnp_led_masked_write(led,
 				FLASH_ENABLE_CONTROL(led->base),
@@ -1761,7 +1754,7 @@ static int qpnp_flash_set2(struct qpnp_led_data *led)
 				return rc;
 			}
 			/* ADDED CODE, END */
-#endif //CONFIG_LGE_PM_CHARGING_CHARGER_TEMP
+#endif //                                   
 
 			rc = qpnp_led_masked_write(led,
 				FLASH_ENABLE_CONTROL(led->base),
@@ -1890,7 +1883,7 @@ static int qpnp_flash_set2(struct qpnp_led_data *led)
 			return rc;
 		}
 		/* ADDED CODE, END */
-#endif //CONFIG_LGE_PM_CHARGING_CHARGER_TEMP
+#endif //                                   
 	}
 
 	qpnp_dump_regs(led, flash_debug_regs, ARRAY_SIZE(flash_debug_regs));
@@ -2004,7 +1997,7 @@ static int qpnp_kpdbl_set(struct qpnp_led_data *led)
 			dev_err(&led->spmi_dev->dev, "pwm enable failed\n");
 			return rc;
 		}
-		/* workaround for KPDBL_LUT_RAMP_CONTROL, wonjong.shin@lge.com */
+		/*                                                             */
 		if (led->kpdbl_cfg->pwm_cfg->mode == LPG_MODE) {
 			rc = qpnp_led_masked_write(led, 0xE3C8, 0xFF, 0x03);
 			if (rc) {
@@ -2184,9 +2177,9 @@ static int qpnp_rgb_set(struct qpnp_led_data *led)
 }
 
 #if defined(CONFIG_LGE_DUAL_LED)
-/* LGE_CHANGE
- * For Dual flash
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                 
+                               
  */
 static void qpnp_led_set2(struct led_classdev *led_cdev,
 				enum led_brightness value, enum led_brightness value2)
@@ -2255,9 +2248,9 @@ static void __qpnp_led_work(struct qpnp_led_data *led,
 	case QPNP_ID_FLASH1_LED0:
 	case QPNP_ID_FLASH1_LED1:
 #if defined(CONFIG_LGE_DUAL_LED)
-/* LGE_CHANGE
- * For Dual flash
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                 
+                               
  */
 		if (led->flash_cfg->torch_enable)
 			rc = qpnp_flash_set2(led);
@@ -3287,9 +3280,9 @@ static int __devinit qpnp_flash_init(struct qpnp_led_data *led)
 	}
 
 #if defined(CONFIG_MACH_LGE)
-/* LGE_CHANGE
- * Change FLASH_VPH_PWR_DROOP
- * 2014-02-04, jinw.kim@lge.com
+/*           
+                             
+                               
  */
 	/* Enable VPH_PWR_DROOP and set threshold to 2.9V (0xC2) */
 	rc = qpnp_led_masked_write(led, FLASH_VPH_PWR_DROOP(led->base),
@@ -3827,7 +3820,7 @@ static int __devinit qpnp_get_config_pwm(struct pwm_config_data *pwm_cfg,
 	else
 		return rc;
 
-/* for led mode change. wonjong.shin@lge.com*/
+/*                                          */
 #if 0
 	if (pwm_cfg->mode != MANUAL_MODE) {
 #endif
@@ -4251,9 +4244,7 @@ void change_led_pattern(int pattern)
 	int *duty_pcts_green = NULL;
 	int *duty_pcts_blue = NULL;
 	struct lut_params rgb_lut_params;
-#if !(defined(CONFIG_MACH_MSM8974_B1_KR) || defined(CONFIG_MACH_MSM8974_B1W))
 	int i;
-#endif
 
 	/* 1. set all leds brightness to 0 */
 	red_led->cdev.brightness = 0;
@@ -4450,7 +4441,6 @@ void change_led_pattern(int pattern)
 	if ( duty_pcts_red == NULL || duty_pcts_green == NULL || duty_pcts_blue == NULL)
 		return;
 
-#if !(defined(CONFIG_MACH_MSM8974_B1_KR) || defined(CONFIG_MACH_MSM8974_B1W))
 	/* brightness tunning */
 	for(i = 0; i < 79; i++) {
 		if(i >= 0 && i <= 62) {
@@ -4480,7 +4470,6 @@ void change_led_pattern(int pattern)
 	duty_pcts_red = leds_pwm_duty_pcts_brightness_tunning;
 	duty_pcts_green = leds_pwm_duty_pcts_brightness_tunning;
 	duty_pcts_blue = leds_pwm_duty_pcts_brightness_tunning;
-#endif
 
 	/* 4. lut disable, so we can edit LUT table after done this. */
 	pwm_disable(red_led->rgb_cfg->pwm_cfg->pwm_dev);
@@ -4974,7 +4963,7 @@ void set_kpdbl_pattern(int pattern)
 		printk(KERN_INFO "[REAR LED] set_kpdbl_pattern() is_kpdbl_on : %d, pattern : %d \n",
 		is_kpdbl_on, pattern);
 
-	if (!pattern) {
+	if (!pattern && is_kpdbl_on == 1) {
 		pwm_disable(kpdbl_lpg1->kpdbl_cfg->pwm_cfg->pwm_dev);
 		pwm_disable(kpdbl_lpg2->kpdbl_cfg->pwm_cfg->pwm_dev);
 
@@ -4987,9 +4976,7 @@ void set_kpdbl_pattern(int pattern)
 		qpnp_led_masked_write(kpdbl_lpg2, 0xE3C8, 0x00, 0x00);
 
 		is_kpdbl_on = 0;
-	}
-
-	if (pattern == KPDBL_ID_CALLING) {
+	} else if (pattern == 35 && is_kpdbl_on == 0) {
 		pwm_disable(kpdbl_lpg1->kpdbl_cfg->pwm_cfg->pwm_dev);
 		pwm_disable(kpdbl_lpg2->kpdbl_cfg->pwm_cfg->pwm_dev);
 
@@ -5020,7 +5007,7 @@ void set_kpdbl_pattern(int pattern)
 		qpnp_kpdbl_set(kpdbl_lpg2);
 
 		is_kpdbl_on = 1;
-	} else if (pattern == KPDBL_ID_REAR_MISSED_NOTI) {
+	} else if (pattern == 36 && is_kpdbl_on == 0) {
 		pwm_disable(kpdbl_lpg1->kpdbl_cfg->pwm_cfg->pwm_dev);
 		pwm_disable(kpdbl_lpg2->kpdbl_cfg->pwm_cfg->pwm_dev);
 
@@ -5136,38 +5123,38 @@ void make_rear_blink_led_pattern(int delay_on, int delay_off)
 		qpnp_led_masked_write(kpdbl_lpg2, 0xE3C8, 0x00, 0x00);
 
 		is_kpdbl_on = 0;
+	} else {
+		pwm_disable(kpdbl_lpg1->kpdbl_cfg->pwm_cfg->pwm_dev);
+		pwm_disable(kpdbl_lpg2->kpdbl_cfg->pwm_cfg->pwm_dev);
+
+		kpdbl_lpg1->kpdbl_cfg->pwm_cfg->mode = LPG_MODE;
+		kpdbl_lpg1->kpdbl_cfg->pwm_cfg->default_mode = LPG_MODE;
+		kpdbl_lpg2->kpdbl_cfg->pwm_cfg->mode = LPG_MODE;
+		kpdbl_lpg2->kpdbl_cfg->pwm_cfg->default_mode = LPG_MODE;
+
+		kpdbl_lut_params.start_idx = -1;
+		kpdbl_lut_params.idx_len = 4;
+		kpdbl_lut_params.lut_pause_hi = delay_on;
+		kpdbl_lut_params.lut_pause_lo = delay_off;
+		kpdbl_lut_params.ramp_step_ms = 24;
+		kpdbl_lut_params.flags = 91;
+
+		pwm_lut_config(kpdbl_lpg1->kpdbl_cfg->pwm_cfg->pwm_dev, 200,
+			blink_pattern, kpdbl_lut_params);
+		pwm_lut_config(kpdbl_lpg2->kpdbl_cfg->pwm_cfg->pwm_dev, 200,
+			blink_pattern, kpdbl_lut_params);
+
+		pwm_enable(kpdbl_lpg1->kpdbl_cfg->pwm_cfg->pwm_dev);
+		pwm_enable(kpdbl_lpg2->kpdbl_cfg->pwm_cfg->pwm_dev);
+
+		kpdbl_lpg1->cdev.brightness = 127;
+		kpdbl_lpg2->cdev.brightness = 127;
+
+		qpnp_kpdbl_set(kpdbl_lpg1);
+		qpnp_kpdbl_set(kpdbl_lpg2);
+
+		is_kpdbl_on = 1;
 	}
-
-	pwm_disable(kpdbl_lpg1->kpdbl_cfg->pwm_cfg->pwm_dev);
-	pwm_disable(kpdbl_lpg2->kpdbl_cfg->pwm_cfg->pwm_dev);
-
-	kpdbl_lpg1->kpdbl_cfg->pwm_cfg->mode = LPG_MODE;
-	kpdbl_lpg1->kpdbl_cfg->pwm_cfg->default_mode = LPG_MODE;
-	kpdbl_lpg2->kpdbl_cfg->pwm_cfg->mode = LPG_MODE;
-	kpdbl_lpg2->kpdbl_cfg->pwm_cfg->default_mode = LPG_MODE;
-
-	kpdbl_lut_params.start_idx = -1;
-	kpdbl_lut_params.idx_len = 4;
-	kpdbl_lut_params.lut_pause_hi = delay_on;
-	kpdbl_lut_params.lut_pause_lo = delay_off;
-	kpdbl_lut_params.ramp_step_ms = 24;
-	kpdbl_lut_params.flags = 91;
-
-	pwm_lut_config(kpdbl_lpg1->kpdbl_cfg->pwm_cfg->pwm_dev, 200,
-		blink_pattern, kpdbl_lut_params);
-	pwm_lut_config(kpdbl_lpg2->kpdbl_cfg->pwm_cfg->pwm_dev, 200,
-		blink_pattern, kpdbl_lut_params);
-
-	pwm_enable(kpdbl_lpg1->kpdbl_cfg->pwm_cfg->pwm_dev);
-	pwm_enable(kpdbl_lpg2->kpdbl_cfg->pwm_cfg->pwm_dev);
-
-	kpdbl_lpg1->cdev.brightness = 127;
-	kpdbl_lpg2->cdev.brightness = 127;
-
-	qpnp_kpdbl_set(kpdbl_lpg1);
-	qpnp_kpdbl_set(kpdbl_lpg2);
-
-	is_kpdbl_on = 1;
 }
 #endif
 
@@ -5337,9 +5324,9 @@ static int __devinit qpnp_leds_probe(struct spmi_device *spmi)
 
 		led->cdev.brightness_set    = qpnp_led_set;
 #if defined(CONFIG_LGE_DUAL_LED)
-/* LGE_CHANGE
- * For Dual flash
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                 
+                               
  */
 		led->cdev.brightness_set2    = qpnp_led_set2;
 #endif
@@ -5356,9 +5343,6 @@ static int __devinit qpnp_leds_probe(struct spmi_device *spmi)
 				== 0) {
 			if (!of_find_property(node, "flash-boost-supply", NULL))
 				regulator_probe = true;
-#if !defined(CONFIG_QPNP_CHARGER)
-				regulator_probe = true;
-#endif
 			rc = qpnp_get_config_flash(led, temp, &regulator_probe);
 			if (rc < 0) {
 				dev_err(&led->spmi_dev->dev,

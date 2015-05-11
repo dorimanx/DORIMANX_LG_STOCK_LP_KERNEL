@@ -154,7 +154,5 @@ extern void taiko_event_register(
 	int (*machine_event_cb)(struct snd_soc_codec *codec,
 				enum wcd9xxx_codec_event),
 	struct snd_soc_codec *codec);
-#ifdef CONFIG_LGE_HEADSET_MIC_NOISE_WA
-	extern void taiko_dec5_vol_mute(void);
-#endif
+
 #endif

@@ -1755,10 +1755,10 @@ static int dwc3_gadget_vbus_session(struct usb_gadget *_gadget, int is_active)
 	dwc->vbus_active = is_active;
 #ifdef CONFIG_USB_G_LGE_ANDROID
 /*
- * B2-BSP-USB@lge.com
- * If usb has disconnected during gadget reset,
- * gadget doesn't receive both reset interrupt and disconnect interrupt.
- * Thus, check that here.
+                     
+                                               
+                                                                        
+                         
  */
 	if (!dwc->vbus_active
 			&& dwc->softconnect
@@ -2677,13 +2677,13 @@ static void dwc3_gadget_wakeup_interrupt(struct dwc3 *dwc)
 {
 	dev_vdbg(dwc->dev, "%s\n", __func__);
 
-	/* Only perform resume from L2 or Early suspend states */
-	if (dwc->link_state == DWC3_LINK_STATE_U3) {
-		dbg_event(0xFF, "WAKEUP", 0);
-		dwc->gadget_driver->resume(&dwc->gadget);
-	}
+	/*
+	 * TODO take core out of low power mode when that's
+	 * implemented.
+	 */
 
-	dwc->link_state = DWC3_LINK_STATE_U0;
+	dbg_event(0xFF, "WAKEUP", 0);
+	dwc->gadget_driver->resume(&dwc->gadget);
 }
 
 static void dwc3_gadget_linksts_change_interrupt(struct dwc3 *dwc,

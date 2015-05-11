@@ -35,8 +35,8 @@
  * (as a macro let's say).
  */
 
-/* BEGIN : janghyun.baek@lge.com 2012-12-26 Temporarily change mode to 777
- * debug power sysfs node */
+/*                                                                        
+                          */
 #ifdef CONFIG_LGE_PM
 #define PSEUDO_BATT_ATTR(_name)						\
 {									\
@@ -74,7 +74,7 @@
 }
 #endif
 /* QCT origin */
-/* END : janghyun.baek@lge.com 2012-12-26 */
+/*                                        */
 
 static struct device_attribute power_supply_attrs[];
 

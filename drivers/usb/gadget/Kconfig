@@ -1275,13 +1275,4 @@ config USB_G_LGE_SERIALNO_REDIRECTION
 
 	default n
 
-config USB_EMBEDDED_BATTERY_REBOOT
-	boolean "power cycle when factory cable is connected"
-	help
-	  In case of the phone with embedded battery, power cycle is implemented
-          when factory cable is connected.
-
-	  Say y if this must be needed.
-
-	default n
 endif # USB_GADGET

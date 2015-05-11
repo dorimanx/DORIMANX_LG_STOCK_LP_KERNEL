@@ -200,6 +200,10 @@ static const struct soc_enum msm8974_auxpcm_enum[] = {
 };
 
 #ifdef CONFIG_SND_FM_RADIO
+#undef CONFIG_SND_FM_SWTICH
+#endif
+
+#ifdef CONFIG_SND_FM_RADIO
 
 atomic_t tert_mi2s_rsc_ref;
 #define GPIO_TERT_MI2S_SCK    74
@@ -210,7 +214,7 @@ atomic_t tert_mi2s_rsc_ref;
 #define GPIO_FM_RADIO_SWITCH 69
 #endif
 
-#ifndef CONFIG_SND_SOC_CS35L32
+#if 0
 struct request_gpio {
 	unsigned gpio_no;
 	char *gpio_name;
@@ -3308,7 +3312,7 @@ static struct snd_soc_dai_link msm8974_hdmi_dai_link[] = {
 /* DAI LINK added by lge should be here */
 /* even if functions is defeatured, dummy dai should be there */
 /* if you need to create new dai link, u must add new one behind last one */
-/* num of qct dia should be below LGE_DAI_LINK_ID_BASE */
+/*                                                     */
 
 #define LGE_DAI_LINK_ID_BASE	80
 
@@ -3531,7 +3535,7 @@ static struct snd_soc_dai_link msm8974_lge_dai_link[] = {
 		.ignore_pmdown_time = 1,
 		.be_id = MSM_FRONTEND_DAI_MULTIMEDIA1
 	},
-#endif /*CONFIG_SND_LGE_DSDP_DUAL_AUDIO*/
+#endif /*                              */
 
 
 
@@ -3812,7 +3816,7 @@ static __devinit int msm8974_asoc_machine_probe(struct platform_device *pdev)
 	}
 
 #ifndef CONFIG_SND_DISABLE_DUMMY_DAI
-/* Filled dummy dai behind LGE_DAI_LINK_ID_BASE */
+/*                                              */
 {
 	static char dummy_dai_name[LGE_DAI_LINK_ID_BASE][50];
 	int i;
@@ -3839,7 +3843,7 @@ static __devinit int msm8974_asoc_machine_probe(struct platform_device *pdev)
 #endif /*CONFIG_SND_SOC_CS35L32*/
 
 #ifndef CONFIG_SND_DISABLE_DUMMY_DAI
-/* Append DAIs added by LGE in DAI LINK*/
+/*                                     */
 	memcpy(msm8974_dai_links + card->num_links,
 			msm8974_lge_dai_link, sizeof(msm8974_lge_dai_link));
 	card->dai_link	= msm8974_dai_links;

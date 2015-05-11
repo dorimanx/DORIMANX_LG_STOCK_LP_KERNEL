@@ -137,7 +137,7 @@
 		qcom,core-temp-hysteresis = <5>;
 
 		qcom,vdd-apps-rstr{
-			qcom,levels = <0>;
+			qcom,levels = <1190400>;
 		};
 	};
 

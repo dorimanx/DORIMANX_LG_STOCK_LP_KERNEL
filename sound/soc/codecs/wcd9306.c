@@ -291,9 +291,6 @@ struct tapan_priv {
 	u32 anc_slot;
 	bool anc_func;
 
-	/*track adie loopback mode*/
-	bool lb_mode;
-
 	/*track tapan interface type*/
 	u8 intf_type;
 
@@ -308,8 +305,6 @@ struct tapan_priv {
 	int aux_pga_cnt;
 	u8 aux_l_gain;
 	u8 aux_r_gain;
-
-	bool dec_active[NUM_DECIMATORS];
 
 	bool spkr_pa_widget_on;
 
@@ -516,43 +511,6 @@ static int tapan_put_anc_func(struct snd_kcontrol *kcontrol,
 	mutex_unlock(&dapm->codec->mutex);
 	return 0;
 }
-
-static int tapan_loopback_mode_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct tapan_priv *tapan = snd_soc_codec_get_drvdata(codec);
-
-	ucontrol->value.integer.value[0] = tapan->lb_mode;
-	dev_dbg(codec->dev, "%s: lb_mode = %d\n",
-		__func__, tapan->lb_mode);
-
-	return 0;
-}
-
-static int tapan_loopback_mode_put(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct tapan_priv *tapan = snd_soc_codec_get_drvdata(codec);
-
-	dev_dbg(codec->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
-		__func__, ucontrol->value.integer.value[0]);
-
-	switch (ucontrol->value.integer.value[0]) {
-	case 0:
-		tapan->lb_mode = false;
-		break;
-	case 1:
-		tapan->lb_mode = true;
-		break;
-	default:
-		return -EINVAL;
-	}
-
-	return 0;
-}
-
 
 static int tapan_pa_gain_get(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
@@ -1078,13 +1036,6 @@ static int tapan_config_compander(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
-static const char * const tapan_loopback_mode_ctrl_text[] = {
-		"DISABLE", "ENABLE"};
-static const struct soc_enum tapan_loopback_mode_ctl_enum[] = {
-		SOC_ENUM_SINGLE_EXT(2, tapan_loopback_mode_ctrl_text),
-};
-
-
 static const char * const tapan_ear_pa_gain_text[] = {"POS_6_DB", "POS_4P5_DB",
 						      "POS_3_DB", "POS_1P5_DB",
 						      "POS_0_DB", "NEG_2P5_DB",
@@ -1160,9 +1111,6 @@ static const struct snd_kcontrol_new tapan_common_snd_controls[] = {
 
 	SOC_ENUM_EXT("EAR PA Gain", tapan_ear_pa_gain_enum[0],
 		tapan_pa_gain_get, tapan_pa_gain_put),
-
-	SOC_ENUM_EXT("LOOPBACK Mode", tapan_loopback_mode_ctl_enum[0],
-		tapan_loopback_mode_get, tapan_loopback_mode_put),
 
 	SOC_SINGLE_TLV("HPHL Volume", TAPAN_A_RX_HPH_L_GAIN, 0, 20, 1,
 		line_gain),
@@ -2464,11 +2412,10 @@ static int tapan_codec_enable_dec(struct snd_soc_dapm_widget *w,
 {
 	struct snd_soc_codec *codec = w->codec;
 	unsigned int decimator;
-	struct tapan_priv *tapan_p = snd_soc_codec_get_drvdata(codec);
 	char *dec_name = NULL;
 	char *widget_name = NULL;
 	char *temp;
-	int ret = 0, i;
+	int ret = 0;
 	u16 dec_reset_reg, tx_vol_ctl_reg, tx_mux_ctl_reg;
 	u8 dec_hpf_cut_of_freq;
 	int offset;
@@ -2520,10 +2467,6 @@ static int tapan_codec_enable_dec(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		for (i = 0; i < NUM_DECIMATORS; i++) {
-			if (decimator == i + 1)
-				tapan_p->dec_active[i] = true;
-		}
 
 		/* Enableable TX digital mute */
 		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x01, 0x01);
@@ -2554,11 +2497,8 @@ static int tapan_codec_enable_dec(struct snd_soc_dapm_widget *w,
 
 	case SND_SOC_DAPM_POST_PMU:
 
-		if (tapan_p->lb_mode) {
-			pr_debug("%s: loopback mode unmute the DEC\n",
-							__func__);
-			snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x01, 0x00);
-		}
+		/* Disable TX digital mute */
+		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x01, 0x00);
 
 		if (tx_hpf_work[decimator - 1].tx_hpf_cut_of_freq !=
 				CF_MIN_3DB_150HZ) {
@@ -2587,10 +2527,7 @@ static int tapan_codec_enable_dec(struct snd_soc_dapm_widget *w,
 		snd_soc_update_bits(codec, tx_mux_ctl_reg, 0x08, 0x08);
 		snd_soc_update_bits(codec, tx_mux_ctl_reg, 0x30,
 			(tx_hpf_work[decimator - 1].tx_hpf_cut_of_freq) << 4);
-		for (i = 0; i < NUM_DECIMATORS; i++) {
-			if (decimator == i + 1)
-				tapan_p->dec_active[i] = false;
-		}
+
 		break;
 	}
 out:
@@ -4091,53 +4028,6 @@ static int tapan_hw_params(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-int tapan_digital_mute(struct snd_soc_dai *dai, int mute)
-{
-	struct snd_soc_codec *codec = NULL;
-	u16 tx_vol_ctl_reg = 0;
-	u8 decimator = 0, i;
-	struct tapan_priv *tapan_p;
-
-	pr_debug("%s: Digital Mute val = %d\n", __func__, mute);
-
-	if (!dai || !dai->codec) {
-		pr_err("%s: Invalid params\n", __func__);
-		return -EINVAL;
-	}
-	codec = dai->codec;
-	tapan_p = snd_soc_codec_get_drvdata(codec);
-
-	if (dai->id != AIF1_CAP) {
-		dev_dbg(codec->dev, "%s: Not capture use case skip\n",
-		__func__);
-		return 0;
-	}
-
-	mute = (mute) ? 1 : 0;
-	if (!mute) {
-		/*
-		 * 5 ms is an emperical value for the mute time
-		 * that was arrived by checking the pop level
-		 * to be inaudible
-		 */
-		usleep_range(5000, 5010);
-	}
-
-	for (i = 0; i < NUM_DECIMATORS; i++) {
-		if (tapan_p->dec_active[i])
-			decimator = i + 1;
-		if (decimator && decimator <= NUM_DECIMATORS) {
-			pr_debug("%s: Mute = %d Decimator = %d", __func__,
-					mute, decimator);
-			tx_vol_ctl_reg = TAPAN_A_CDC_TX1_VOL_CTL_CFG +
-				8 * (decimator - 1);
-			snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x01, mute);
-		}
-		decimator = 0;
-	}
-	return 0;
-}
-
 static struct snd_soc_dai_ops tapan_dai_ops = {
 	.startup = tapan_startup,
 	.shutdown = tapan_shutdown,
@@ -4146,7 +4036,6 @@ static struct snd_soc_dai_ops tapan_dai_ops = {
 	.set_fmt = tapan_set_dai_fmt,
 	.set_channel_map = tapan_set_channel_map,
 	.get_channel_map = tapan_get_channel_map,
-	.digital_mute = tapan_digital_mute,
 };
 
 static struct snd_soc_dai_driver tapan9302_dai[] = {
@@ -6336,7 +6225,6 @@ static int tapan_codec_probe(struct snd_soc_codec *codec)
 	tapan->aux_r_gain = 0x1F;
 	tapan->ldo_h_users = 0;
 	tapan->micb_2_users = 0;
-	tapan->lb_mode = false;
 	tapan_update_reg_defaults(codec);
 	tapan_update_reg_mclk_rate(wcd9xxx);
 	tapan_codec_init_reg(codec);

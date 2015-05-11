@@ -254,8 +254,7 @@ int fuji_ois_init_cmd(int limit, int ver)
 		RegWriteA(0x609D,0xFFFF & (uint16_t)gyro_signed_offset_y);	
 
 		RegWriteA(0x6023, 0x04);
-		pr_info("%s done\n", __func__);
-		usleep(50000); /* wait 50ms */
+		usleep(200000); /* wait 200ms */
 
 		break;
 	}
@@ -579,7 +578,7 @@ int32_t fuji_ois_stat(struct msm_sensor_ois_info_t *ois_stat)
 	gyro_signed_diff_x = from_signed_word(gyro_diff_x);
 	gyro_signed_diff_y = from_signed_word(gyro_diff_y);
 
-	/* fuji spec is 3dps, LGE spec is 10dps and up scale to 10 dps */
+	/*                                                             */
 	ois_stat->gyro[0] = (int16_t)gyro_signed_diff_x * 3;
 	ois_stat->gyro[1] = (int16_t)gyro_signed_diff_y * 3;
 	CDBG("%s gyro_signed_diff_x(0x%x) -> 0x%x \n", __func__,

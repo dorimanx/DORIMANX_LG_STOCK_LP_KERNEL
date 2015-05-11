@@ -78,7 +78,7 @@ static void *emergency_dload_mode_addr;
 
 /* Download mode master kill-switch */
 static int dload_set(const char *val, struct kernel_param *kp);
-static int download_mode = 0;
+static int download_mode = 1;
 module_param_call(download_mode, dload_set, param_get_int,
 			&download_mode, 0644);
 static int panic_prep_restart(struct notifier_block *this,
@@ -282,7 +282,7 @@ static void msm_restart_prepare(const char *cmd)
 
 	/* Hard reset the PMIC unless memory contents must be maintained. */
 #ifdef CONFIG_MACH_LGE
-	/* LGE_CHANGE : there's no reason to forcing a hard reset on reboot request */
+	/*                                                                          */
 	if (true || get_dload_mode() || (cmd != NULL && cmd[0] != '\0'))
 #else
 	if (get_dload_mode() || (cmd != NULL && cmd[0] != '\0'))

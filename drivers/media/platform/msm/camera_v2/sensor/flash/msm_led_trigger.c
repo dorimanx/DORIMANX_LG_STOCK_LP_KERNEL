@@ -46,9 +46,9 @@ static int32_t msm_led_trigger_get_subdev_id(struct msm_led_flash_ctrl_t *fctrl,
 }
 
 #if !defined(CONFIG_LGE_DUAL_LED)
-/* LGE_CHANGE
- * For Dual flash
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                 
+                               
  */
 static int32_t msm_led_trigger_config(struct msm_led_flash_ctrl_t *fctrl,
 	void *data)
@@ -59,9 +59,9 @@ static int32_t msm_led_trigger_config(struct msm_led_flash_ctrl_t *fctrl,
 	uint32_t curr_l, max_curr_l;
 
 #if defined(CONFIG_MACH_LGE)
-/* LGE_CHANGE
- * Add debug log
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                
+                               
  */
 	pr_info("called led_state %d, values %d, %d\n",
 		cfg->cfgtype, cfg->flash_current[0], cfg->flash_current[1]);
@@ -126,9 +126,9 @@ static int32_t msm_led_trigger_config(struct msm_led_flash_ctrl_t *fctrl,
 		break;
 
 #if defined(CONFIG_MACH_LGE)
-/* LGE_CHANGE
- * For Dual flash
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                 
+                               
  */
 	case MSM_CAMERA_LED_TORCH:
 		if (fctrl->torch_trigger) {
@@ -182,22 +182,6 @@ static int32_t msm_led_trigger_config(struct msm_led_flash_ctrl_t *fctrl,
 		break;
 
 	case MSM_CAMERA_LED_LOW:
-		if (fctrl->torch_trigger) {
-			max_curr_l = fctrl->torch_max_current;
-			for(i = 0; i < fctrl->num_sources; i++) {
-				if (cfg->flash_current[i] > 0 &&
-						cfg->flash_current[i] <= max_curr_l) {
-					torch_curr[i] = cfg->flash_current[i];
-				} else {
-					torch_curr[i] = fctrl->torch_op_current;
-					pr_err("LED %d current clamped to %d\n",
-						i, torch_curr[i]);
-				}
-			}
-			led_trigger_event2(fctrl->torch_trigger,
-				torch_curr[1], torch_curr[0]);
-		}
-		break;
 	case MSM_CAMERA_LED_TORCH:
 		if (fctrl->torch_trigger) {
 			max_curr_l = fctrl->torch_max_current;
@@ -211,13 +195,8 @@ static int32_t msm_led_trigger_config(struct msm_led_flash_ctrl_t *fctrl,
 						i, torch_curr[i]);
 				}
 			}
-#if !defined(CONFIG_MACH_MSM8974_DZNY_DCM)
 			led_trigger_event2(fctrl->torch_trigger,
 				torch_curr[1], torch_curr[0]);
-#else
-			led_trigger_event2(fctrl->torch_trigger,
-				1, 1);
-#endif
 		}
 		break;
 

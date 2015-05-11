@@ -250,8 +250,8 @@ static struct max14688_jack_match max14688_jack_matches[] = {
 static struct max14688_button_match max14688_button_matches[] = {
   /*           name      mic                left         event   event
                        impedence          impedence      type    code */
-    BUTTON_MATCH("MEDIA",  Z(0,      125000), DONTCARE,    EV_KEY, KEY_MEDIA),
-    BUTTON_MATCH("ASSIST", Z(125000, 220000), DONTCARE,    EV_KEY, 582),
+    BUTTON_MATCH("MEDIA",  Z(0,      120000), DONTCARE,    EV_KEY, KEY_MEDIA),
+    BUTTON_MATCH("ASSIST", Z(120000, 220000), DONTCARE,    EV_KEY, 582),
     BUTTON_MATCH("VOLUP",  Z(220000, 360000), DONTCARE,    EV_KEY, KEY_VOLUMEUP),
     BUTTON_MATCH("VOLDN",  Z(360000, 750000), DONTCARE,    EV_KEY, KEY_VOLUMEDOWN),
 };

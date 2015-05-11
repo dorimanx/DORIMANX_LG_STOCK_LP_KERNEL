@@ -1944,11 +1944,11 @@ static int bq24296_batt_power_get_property(struct power_supply *psy,
 				!= POWER_SUPPLY_CHARGE_TYPE_NONE;
 		break;
 	case POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL:
-		/* it makes ibat max set following themral mitigation.
-		 * But, SMB349 cannot control ibat current like PMIC.
-		 * if LGE charging scenario make charging thermal control,
-		 * it is good interface to use LG mitigation level.
-		 */
+		/*                                                    
+                                                       
+                                                            
+                                                     
+   */
 		val->intval = 0;
 		break;
 	case POWER_SUPPLY_PROP_PSEUDO_BATT:
@@ -2013,11 +2013,11 @@ static int bq24296_batt_power_set_property(struct power_supply *psy,
 			val->intval ? "inserted" : "removed");
 		break;
 	case POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL:
-		/* it makes ibat max set following themral mitigation.
-		 * But, SMB349 cannot control ibat current like PMIC.
-		 * if LGE charging scenario make charging thermal control,
-		 * it is good interface to use LG mitigation level.
-		 */
+		/*                                                    
+                                                       
+                                                            
+                                                     
+   */
 		break;
 #if defined CONFIG_VZW_POWER_REQ
 	case POWER_SUPPLY_PROP_VZW_CHG:
@@ -2343,9 +2343,10 @@ static void bq24296_batt_external_power_changed(struct power_supply *psy)
 	/* For MST, boost current up over 900mA in spite of USB */
 	if (safety_timer_enabled == 0 && ret.intval < 900) {
 		ret.intval = 900;
-		bq24296_charger_psy_setprop(chip, psy_this, INPUT_CURRENT_MAX, ret.intval);
 		pr_info("safety timer disabled.... input current limit = %d\n",ret.intval);
 	}
+
+	bq24296_charger_psy_setprop(chip, psy_this, INPUT_CURRENT_MAX, ret.intval);
 #else
 #if defined(CONFIG_CHARGER_UNIFIED_WLC)
 	if (wireless_charging) {
@@ -3087,9 +3088,8 @@ static void bq24296_monitor_batt_temp(struct work_struct *work)
 	if (((res.change_lvl != STS_CHE_NONE) && req.is_charger) ||
 		(res.force_update == true)) {
 		if (res.change_lvl == STS_CHE_NORMAL_TO_DECCUR ||
-			((res.force_update == true) && (res.state == CHG_BATT_DECCUR_STATE) &&
-			(res.dc_current != DC_CURRENT_DEF) &&
-			(res.change_lvl != STS_CHE_STPCHG_TO_DECCUR)
+			(res.force_update == true && res.state == CHG_BATT_DECCUR_STATE &&
+			res.dc_current != DC_CURRENT_DEF
 			)) {
 			chip->otp_ibat_current = res.dc_current;
 		} else if (res.change_lvl == STS_CHE_NORMAL_TO_STPCHG ||
