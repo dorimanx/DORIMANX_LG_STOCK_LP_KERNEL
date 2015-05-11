@@ -234,11 +234,11 @@ config QUEUED_SPINLOCK
 	def_bool y if ARCH_USE_QUEUED_SPINLOCK
 	depends on SMP && !PARAVIRT_SPINLOCKS
 
-config ARCH_USE_QUEUE_RWLOCK
+config ARCH_USE_QUEUED_RWLOCKS
 	bool
 
-config QUEUE_RWLOCK
-	def_bool y if ARCH_USE_QUEUE_RWLOCK
+config QUEUED_RWLOCKS
+	def_bool y if ARCH_USE_QUEUED_RWLOCKS
 	depends on SMP
 
 config RWSEM_SPIN_ON_OWNER
