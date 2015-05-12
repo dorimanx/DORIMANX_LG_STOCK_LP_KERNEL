@@ -29,7 +29,7 @@
 #ifdef CONFIG_MACH_LGE
 static int lge_snd_ctrl_locked = 1;
 static int lge_stweaks_control = 1;
-int lge_snd_pa_ctrl_locked = 0;
+int lge_snd_pa_ctrl_locked = 1;
 #endif
 
 extern struct snd_soc_codec *fauxsound_codec_ptr;
@@ -49,8 +49,8 @@ int taiko_write(struct snd_soc_codec *codec, unsigned int reg,
 #define REG_SZ  25
 
 #ifdef CONFIG_MACH_LGE
-static int cached_regs[] = {6, 6, -1, -1, 0, 0, -1, -1, -1, -1,
-			1, -1, -1, -1, -1, -1, 10, 10, -1, -1,
+static int cached_regs[] = {-1, -1, -1, -1, 0, 0, -1, -1, -1, -1,
+			1, -1, -1, -1, -1, -1, 3, 3, -1, -1,
 			-1, -1, -1, -1, -1};
 #else
 static int cached_regs[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -235,6 +235,7 @@ int snd_hax_reg_access(unsigned int reg)
 	int ret = 1;
 
 	switch (reg) {
+#if 0 /* LP sound driver do not work with PA high/low */
 		/* Analog Power Amp (PA) */
 		case TAIKO_A_RX_HPH_L_GAIN:
 		case TAIKO_A_RX_HPH_R_GAIN:
@@ -244,6 +245,7 @@ int snd_hax_reg_access(unsigned int reg)
 #endif
 		case TAIKO_A_RX_HPH_L_STATUS:
 		case TAIKO_A_RX_HPH_R_STATUS:
+#endif
 #ifdef CONFIG_MACH_LGE
 			if (lge_snd_ctrl_locked > 0)
 				ret = 0;
