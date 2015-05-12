@@ -1099,6 +1099,7 @@ static ssize_t show_bios_limit(struct cpufreq_policy *policy, char *buf)
 }
 
 #ifdef CONFIG_CPU_VOLTAGE_TABLE
+#define UV_INTERFACE_VERSION 1.1
 extern ssize_t show_UV_mV_table(struct cpufreq_policy *policy, char *buf);
 extern ssize_t store_UV_mV_table(struct cpufreq_policy *policy,
 				 const char *buf, size_t count);

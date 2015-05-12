@@ -48,6 +48,7 @@
 #endif
 
 #ifdef CONFIG_CPU_VOLTAGE_TABLE
+#define UV_INTERFACE_VERSION 1.1
 static struct cpufreq_frequency_table *dts_freq_table;
 #endif
 

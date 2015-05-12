@@ -23,6 +23,7 @@
 #include <linux/cpumask.h>
 
 #ifdef CONFIG_CPU_VOLTAGE_TABLE
+#define UV_INTERFACE_VERSION 1.1
 #include <linux/cpufreq.h>
 #endif
 
@@ -601,11 +602,18 @@ module_param(pvs_config_ver, uint, S_IRUGO);
 
 extern bool is_used_by_scaling(unsigned int freq);
 
+static unsigned int cnt;
+
 ssize_t show_UV_mV_table(struct cpufreq_policy *policy, char *buf)
 {
 	int i, freq, len = 0;
 	/* use only master core 0 */
 	int num_levels = cpu_clk[0]->vdd_class->num_levels;
+
+	if (cnt) {
+		cnt = 0;
+		return -EINVAL;
+	}
 
 	/* sanity checks */
 	if (num_levels < 0)
@@ -632,7 +640,8 @@ ssize_t store_UV_mV_table(struct cpufreq_policy *policy, char *buf,
 	int i, j;
 	int ret = 0;
 	unsigned int val;
-	char size_cur[8];
+	/* freq step number */
+	char size_cur[19];
 	/* use only master core 0 */
 	int num_levels = cpu_clk[0]->vdd_class->num_levels;
 
@@ -658,11 +667,12 @@ ssize_t store_UV_mV_table(struct cpufreq_policy *policy, char *buf,
 
 		/* Non-standard sysfs interface: advance buf */
 		ret = sscanf(buf, "%s", size_cur);
-		buf += strlen(size_cur) + 1;
+		cnt = strlen(size_cur);
+		buf += cnt + 1;
 	}
 	pr_warn("faux123: user voltage table modified!\n");
 
-	return ret;
+	return count;
 }
 #endif
 
