@@ -8987,6 +8987,7 @@ static void dhd_hang_process(void *dhd_info, void *event_info, u8 event)
 		wl_cfg80211_hang(dev, WLAN_REASON_UNSPECIFIED);
 #endif
 	}
+	dhd->pub.hang_was_sent = 0;
 }
 
 #ifdef CUSTOMER_HW4
