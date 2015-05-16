@@ -167,7 +167,7 @@ BUILD_NOW()
 		base=0x00000000
 		offset=0x05000000
 		tags_addr=0x00000100
-		cmd_line="console=ttyHSL0,115200,n8 user_debug=31 ehci-hcd.park=3 msm_rtb.filter=0x0 androidboot.hardware=g2"
+		cmd_line="console=ttyHSL0,115200,n8 user_debug=31 ehci-hcd.park=3 androidboot.hardware=g2"
 		./mkbootimg --kernel zImage --ramdisk ramdisk.gz --cmdline "$cmd_line" --base $base --pagesize 2048 --offset $offset --tags-addr $tags_addr --dt dt.img -o newboot.img
 		mv newboot.img ../boot.img
 
