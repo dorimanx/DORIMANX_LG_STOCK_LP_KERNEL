@@ -1174,7 +1174,7 @@ int usb_stor_Bulk_transport(struct scsi_cmnd *srb, struct us_data *us)
 						US_BULK_CS_WRAP_LEN &&
 					bcs->Signature ==
 						cpu_to_le32(US_BULK_CS_SIGN)) {
-				US_DEBUGP("Device skipped data phase\n");
+				usb_stor_dbg(us, "Device skipped data phase\n");
 				scsi_set_resid(srb, transfer_length);
 				goto skipped_data_phase;
 			}

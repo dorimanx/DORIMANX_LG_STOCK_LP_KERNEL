@@ -115,7 +115,7 @@ MODULE_PARM_DESC(dcd_wait_try_count, "Maximum retry count for DCD timeout");
 #ifdef CONFIG_LGE_PM
 static bool prop_chg_detect = true;
 #else
-static bool prop_chg_detect;
+static bool prop_chg_detect = false;
 #endif
 module_param(prop_chg_detect, bool, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(prop_chg_detect, "Enable Proprietary charger detection");
@@ -2132,7 +2132,6 @@ static void dwc3_chg_detect_work(struct work_struct *w)
 			dwc3_chg_enable_primary_det(mdwc);
 			delay = DWC3_CHG_PRIMARY_DET_TIME;
 			mdwc->chg_state = USB_CHG_STATE_DCD_DONE;
-
 		} else {
 			delay = DWC3_CHG_DCD_POLL_TIME;
 		}
@@ -3024,7 +3023,6 @@ static void dwc3_id_work(struct work_struct *w)
 		}
 	}
 #endif
-
 	/* Give external client a chance to handle */
 	if (!mdwc->ext_inuse && usb_ext) {
 		if (mdwc->pmic_id_irq)

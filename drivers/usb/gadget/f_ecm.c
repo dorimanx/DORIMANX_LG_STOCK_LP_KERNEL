@@ -760,7 +760,7 @@ ecm_bind(struct usb_configuration *c, struct usb_function *f)
 	if (!ep)
 		goto fail;
 	ecm->notify = ep;
-	ep->driver_data = cdev; /* claim */
+	ep->driver_data = cdev;	/* claim */
 
 	status = -ENOMEM;
 

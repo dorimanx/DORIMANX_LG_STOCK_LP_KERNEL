@@ -915,13 +915,13 @@ static void touch_otg_work(struct work_struct *w)
 		trigger_baseline_state_machine(0, -1);
 		pr_info("[Touch] TA/USB OUT!!!!!!!!!!!!!!!!\n");
 	} else {
-			if (dotg->charger->chg_type == DWC3_DCP_CHARGER) {
-					trigger_baseline_state_machine(1, 1);
-					pr_info("[Touch] TA IN!!!!!!!!!!!!!!!!\n");
-			} else {
-					trigger_baseline_state_machine(1, 0);
-					pr_info("[Touch] USB IN!!!!!!!!!!!!!!!!\n");
-			}
+		if (dotg->charger->chg_type == DWC3_DCP_CHARGER) {
+			trigger_baseline_state_machine(1, 1);
+			pr_info("[Touch] TA IN!!!!!!!!!!!!!!!!\n");
+		} else {
+			trigger_baseline_state_machine(1, 0);
+			pr_info("[Touch] USB IN!!!!!!!!!!!!!!!!\n");
+		}
 	}
 }
 #endif

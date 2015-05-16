@@ -1416,7 +1416,7 @@ int __dwc3_gadget_ep_set_halt(struct dwc3_ep *dep, int value, int protocol)
 	if (value) {
 		if (!protocol && ((dep->direction && dep->flags & DWC3_EP_BUSY) ||
 				(!list_empty(&dep->req_queued) ||
-				!list_empty(&dep->request_list)))) {
+				 !list_empty(&dep->request_list)))) {
 			dev_dbg(dwc->dev, "%s: pending request, cannot halt\n",
 					dep->name);
 			return -EAGAIN;
