@@ -2860,25 +2860,16 @@ static void wl_netlink_recv(struct sk_buff *skb)
 
 static int wl_netlink_init(void)
 {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
 	struct netlink_kernel_cfg cfg = {
 		.input	= wl_netlink_recv,
 	};
-#endif
 
 	if (nl_sk != NULL) {
 		WL_ERR(("nl_sk already exist\n"));
 		return BCME_ERROR;
 	}
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-	nl_sk = netlink_kernel_create(&init_net, NETLINK_OXYGEN,
-		0, wl_netlink_recv, NULL, THIS_MODULE);
-#elif (LINUX_VERSION_CODE < KERNEL_VERSION(3, 7, 0))
 	nl_sk = netlink_kernel_create(&init_net, NETLINK_OXYGEN, THIS_MODULE, &cfg);
-#else
-	nl_sk = netlink_kernel_create(&init_net, NETLINK_OXYGEN, &cfg);
-#endif
 
 	if (nl_sk == NULL) {
 		WL_ERR(("nl_sk is not ready\n"));
