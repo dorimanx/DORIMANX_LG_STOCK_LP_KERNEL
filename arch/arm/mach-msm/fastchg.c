@@ -58,6 +58,7 @@
  * cleaned not supported ma level 300. it's not in drivers or tables. best to clean it.
  * version 2.9 allowed higher ma set on misc chargers. was locked to 1000ma. + set max ma to 900 for USB
  * charge connection.
+ * version 3.0 guard max charge for OTG driver. to protect hardware. max is 1500.
  */
 
 int force_fast_charge;
