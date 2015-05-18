@@ -576,7 +576,9 @@ static void msm_vfe40_read_irq_status(struct vfe_device *vfe_dev,
 	msm_camera_io_w(*irq_status1, vfe_dev->vfe_base + 0x34);
 	msm_camera_io_w_mb(1, vfe_dev->vfe_base + 0x24);
 	if (*irq_status0 & 0x18000000) {
+#ifdef JUNK_LOG
 		pr_err_ratelimited("%s: Protection triggered\n", __func__);
+#endif
 		*irq_status0 &= ~(0x18000000);
 	}
 

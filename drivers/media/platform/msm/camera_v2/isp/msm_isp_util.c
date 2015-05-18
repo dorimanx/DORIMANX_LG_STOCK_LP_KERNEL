@@ -1269,8 +1269,10 @@ irqreturn_t msm_isp_process_irq(int irq_num, void *data)
 	vfe_dev->hw_info->vfe_ops.irq_ops.
 		read_irq_status(vfe_dev, &irq_status0, &irq_status1);
 	if ((irq_status0 == 0) && (irq_status1 == 0)) {
+#ifdef JUNK_LOG
 		pr_err_ratelimited("%s: irq_status0 & 1 are both 0\n",
 			__func__);
+#endif
 		return IRQ_HANDLED;
 	}
 	msm_isp_process_overflow_irq(vfe_dev,
