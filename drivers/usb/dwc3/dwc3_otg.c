@@ -995,10 +995,21 @@ static void dwc3_otg_sm_work(struct work_struct *w)
 				switch (charger->chg_type) {
 				case DWC3_PROPRIETARY_CHARGER:
 #if defined(CONFIG_LGE_PM)
+#ifdef CONFIG_FORCE_FAST_CHARGE
+					if (force_fast_charge > 1)
+						dwc3_otg_set_power(phy,
+							fast_charge_level);
+					else if (force_fast_charge > 0)
+						dwc3_otg_set_power(phy, 1200);
+					else
+						dwc3_otg_set_power(phy,
+							DWC3_IDEV_CHG_PROPRIETARY_MAX);
+#else
 					dwc3_otg_set_power(phy,
 							DWC3_IDEV_CHG_PROPRIETARY_MAX);
 					pm_runtime_put_sync(phy->dev);
 					break;
+#endif
 #endif
 				case DWC3_DCP_CHARGER:
 					dev_dbg(phy->dev, "lpm, DCP charger\n");
@@ -1015,8 +1026,16 @@ static void dwc3_otg_sm_work(struct work_struct *w)
 					work = 1;
 					break;
 				case DWC3_SDP_CHARGER:
+#ifdef CONFIG_FORCE_FAST_CHARGE
+					if (force_fast_charge > 0)
+						dwc3_otg_set_power(phy, 900);
+					else
+						dwc3_otg_set_power(phy,
+								DWC3_IDEV_CHG_MIN);
+#else
 					dwc3_otg_set_power(phy,
 								DWC3_IDEV_CHG_MIN);
+#endif
 					dwc3_otg_start_peripheral(&dotg->otg,
 									1);
 					phy->state = OTG_STATE_B_PERIPHERAL;
