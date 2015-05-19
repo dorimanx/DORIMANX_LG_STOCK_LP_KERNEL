@@ -35,6 +35,9 @@ modules.builtin
 
 arch/arm/boot/compressed/piggy.lz4
 arch/arm/mach-msm/smd_rpc_sym.c
+android-toolchain/libexec/gcc/arm-LG-linux-gnueabi/5.1.0/cc1
+android-toolchain/libexec/gcc/arm-LG-linux-gnueabi/5.1.0/cc1obj
+android-toolchain/libexec/gcc/arm-LG-linux-gnueabi/5.1.0/lto1
 
 #
 # Top-level generic files
