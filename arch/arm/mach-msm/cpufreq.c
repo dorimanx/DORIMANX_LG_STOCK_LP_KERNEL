@@ -50,7 +50,7 @@
 #endif
 
 #ifdef CONFIG_CPU_VOLTAGE_TABLE
-#define UV_INTERFACE_VERSION 1.1
+#define UV_INTERFACE_VERSION 1.2
 static struct cpufreq_frequency_table *dts_freq_table;
 #endif
 
@@ -706,6 +706,9 @@ static int cpufreq_parse_dt(struct device *dev)
 bool is_used_by_scaling(unsigned int freq)
 {
 	unsigned int i, cpu_freq;
+
+	if (!dts_freq_table)
+		return -EINVAL;
 
 	for (i = 0; dts_freq_table[i].frequency != CPUFREQ_TABLE_END; i++) {
 		cpu_freq = dts_freq_table[i].frequency;
