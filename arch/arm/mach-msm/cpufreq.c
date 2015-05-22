@@ -29,6 +29,7 @@
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/platform_device.h>
+#include <trace/events/power.h>
 #include <mach/socinfo.h>
 #include <mach/cpufreq.h>
 
@@ -213,6 +214,7 @@ static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq,
 
 	cpufreq_notify_transition(&freqs, CPUFREQ_PRECHANGE);
 
+	trace_cpu_frequency_switch_start(freqs.old, freqs.new, policy->cpu);
 	if (is_clk) {
 		unsigned long rate = new_freq * 1000;
 		rate = clk_round_rate(cpu_clk[policy->cpu], rate);
@@ -225,8 +227,10 @@ static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq,
 		ret = acpuclk_set_rate(policy->cpu, new_freq, SETRATE_CPUFREQ);
 	}
 
-	if (!ret)
+	if (!ret) {
+		trace_cpu_frequency_switch_end(policy->cpu);
 		cpufreq_notify_transition(&freqs, CPUFREQ_POSTCHANGE);
+	}
 
 	/* Restore priority after clock ramp-up */
 	if (freqs.new > freqs.old && saved_sched_policy >= 0) {
