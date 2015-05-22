@@ -217,8 +217,10 @@ static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq,
 	if (!ret) {
 		freq_index[policy->cpu] = index;
 		update_l2_bw(NULL);
-		cpufreq_notify_transition(&freqs, CPUFREQ_POSTCHANGE);
 	}
+
+	if (!ret)
+		cpufreq_notify_transition(&freqs, CPUFREQ_POSTCHANGE);
 
 	/* Restore priority after clock ramp-up */
 	if (freqs.new > freqs.old && saved_sched_policy >= 0) {
