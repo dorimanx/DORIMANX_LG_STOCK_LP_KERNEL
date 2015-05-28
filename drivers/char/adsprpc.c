@@ -44,7 +44,12 @@
 #include "adsprpc_compat.h"
 #include "adsprpc_shared.h"
 #include <linux/msm_audio_ion.h>
+#include <soc/qcom/scm.h>
 
+#define TZ_PIL_PROTECT_MEM_SUBSYS_ID 0x0C
+#define TZ_PIL_CLEAR_PROTECT_MEM_SUBSYS_ID 0x0D
+#define TZ_PIL_AUTH_QDSP6_PROC 1
+#define ADSP_MMAP_HEAP_ADDR 4
 #define AUDIO_ADSP_STREAM_ID	1
 #define STREAM_ID	((uint64_t)AUDIO_ADSP_STREAM_ID << 32)
 #define RPC_TIMEOUT	(5 * HZ)
@@ -276,8 +281,8 @@ static int fastrpc_mmap_remove(struct fastrpc_file *fl, uintptr_t va,
 	struct hlist_node *n;
 	spin_lock(&fl->hlock);
 	hlist_for_each_entry_safe(map, n, &fl->maps, hn) {
-		if (map->va == va &&
-		    map->va + map->len == va + len &&
+		if (map->raddr == va &&
+		    map->raddr + map->len == va + len &&
 		    map->refs == 1) {
 			match = map;
 			hlist_del_init(&map->hn);
@@ -308,10 +313,12 @@ static void fastrpc_mmap_free(struct fastrpc_mmap *map)
 
 	if (map->refs)
 		return;
-	ion_unmap_iommu(map->client, map->handle,
-			me->domain_id, 0);
-	ion_unmap_kernel(map->client, map->handle);
-	msm_audio_ion_client_destroy(map->client);
+	if (map->flags != ADSP_MMAP_HEAP_ADDR) {
+		ion_unmap_iommu(map->client, map->handle,
+				me->domain_id, 0);
+		ion_unmap_kernel(map->client, map->handle);
+		msm_audio_ion_client_destroy(map->client);
+	}
 	kfree(map);
 }
 
@@ -643,6 +650,8 @@ static void fastrpc_file_list_dtor(struct fastrpc_apps *me)
 
 static int fastrpc_mmap_create(struct fastrpc_file *fl, int fd, uintptr_t va,
 			       ssize_t len, struct fastrpc_mmap **ppmap);
+static int fastrpc_mmap_create_physical(struct fastrpc_file *fl,
+		struct fastrpc_ioctl_mmap *ud, struct fastrpc_mmap **ppmap);
 
 static int get_args(uint32_t kernel, struct smq_invoke_ctx *ctx,
 			remote_arg_t *upra)
@@ -1147,7 +1156,7 @@ static int fastrpc_mmap_on_dsp(struct fastrpc_file *fl, uint32_t flags,
 	ra[0].buf.pv = (void *)&inargs;
 	ra[0].buf.len = sizeof(inargs);
 	page.addr = map->phys;
-	if (msm_audio_ion_is_smmu_available())
+	if (msm_audio_ion_is_smmu_available() && flags != ADSP_MMAP_HEAP_ADDR)
 		page.addr |= STREAM_ID;
 	page.size = map->size;
 	ra[1].buf.pv = (void *)&page;
@@ -1166,8 +1175,19 @@ static int fastrpc_mmap_on_dsp(struct fastrpc_file *fl, uint32_t flags,
 	VERIFY(err, 0 == (err = fastrpc_internal_invoke(fl,
 		FASTRPC_MODE_PARALLEL, 1, &ioctl)));
 	map->raddr = (uintptr_t)routargs.vaddrout;
+	map->flags = flags;
 	if (err)
 		goto bail;
+	if (flags == ADSP_MMAP_HEAP_ADDR) {
+		struct scm_desc desc = {0};
+		desc.args[0] = TZ_PIL_AUTH_QDSP6_PROC;
+		desc.args[1] = map->phys;
+		desc.args[2] = map->size;
+		desc.arginfo = SCM_ARGS(3);
+		err = scm_call2(SCM_SIP_FNID(SCM_SVC_PIL,
+			TZ_PIL_PROTECT_MEM_SUBSYS_ID), &desc);
+	}
+
 bail:
 	return err;
 }
@@ -1203,6 +1223,48 @@ static int fastrpc_munmap_on_dsp(struct fastrpc_file *fl,
 	return err;
 }
 
+static int fastrpc_munmap_on_dsp_remote_heap(struct fastrpc_file *fl,
+				 struct fastrpc_mmap *map, uint8_t akey)
+{
+	struct fastrpc_ioctl_invoke_fd ioctl;
+	struct scm_desc desc = {0};
+	remote_arg_t ra[1];
+	int err = 0;
+	struct {
+		int pid;
+		uintptr_t vaddrout;
+		ssize_t size;
+	} inargs;
+
+	inargs.pid = current->tgid;
+	inargs.size = map->size;
+	inargs.vaddrout = map->raddr;
+	ra[0].buf.pv = (void *)&inargs;
+	ra[0].buf.len = sizeof(inargs);
+
+	ioctl.inv.handle = 1;
+	if (fl->apps->compat)
+		ioctl.inv.sc = REMOTE_SCALARS_MAKE(5, 1, 0);
+	else
+		ioctl.inv.sc = REMOTE_SCALARS_MAKE(3, 1, 0);
+	ioctl.inv.pra = ra;
+	ioctl.fds = 0;
+
+	desc.args[0] = TZ_PIL_AUTH_QDSP6_PROC;
+	desc.args[1] = map->phys;
+	desc.args[2] = map->size;
+	desc.args[3] = akey;
+	desc.arginfo = SCM_ARGS(4);
+	err = scm_call2(SCM_SIP_FNID(SCM_SVC_PIL,
+		TZ_PIL_CLEAR_PROTECT_MEM_SUBSYS_ID), &desc);
+	if (err)
+		goto bail;
+	VERIFY(err, 0 == (err = fastrpc_internal_invoke(fl,
+		FASTRPC_MODE_PARALLEL, 1, &ioctl)));
+bail:
+	return err;
+}
+
 static int fastrpc_mmap_remove(struct fastrpc_file *fl, uintptr_t va,
 			     ssize_t len, struct fastrpc_mmap **ppmap);
 
@@ -1213,9 +1275,30 @@ static int fastrpc_internal_munmap(struct fastrpc_file *fl,
 {
 	int err = 0;
 	struct fastrpc_mmap *map = 0;
+
 	if (!fastrpc_mmap_remove(fl, ud->vaddrout, ud->size,
 				 &map)) {
 		VERIFY(err, !fastrpc_munmap_on_dsp(fl, map));
+		if (err)
+			goto bail;
+		fastrpc_mmap_free(map);
+	}
+bail:
+	if (err && map)
+		fastrpc_mmap_add(map);
+	return err;
+}
+
+static int fastrpc_internal_munmap_remote_heap(struct fastrpc_file *fl,
+				   struct fastrpc_ioctl_munmap_remote_heap *ud)
+{
+	int err = 0;
+	struct fastrpc_mmap *map = 0;
+
+	if (!fastrpc_mmap_remove(fl, ud->vaddrout, ud->size,
+				 &map)) {
+		VERIFY(err, !fastrpc_munmap_on_dsp_remote_heap(fl,
+							map, ud->akey));
 		if (err)
 			goto bail;
 		fastrpc_mmap_free(map);
@@ -1296,6 +1379,48 @@ bail:
 	return err;
 }
 
+static int fastrpc_mmap_create_physical(struct fastrpc_file *fl,
+		struct fastrpc_ioctl_mmap *ud, struct fastrpc_mmap **ppmap)
+{
+	int err = 0;
+	int fd = ud->fd;
+	uintptr_t va = (uintptr_t)ud->vaddrin;
+	ssize_t len = ud->size;
+	struct fastrpc_mmap *map = 0;
+	struct vm_area_struct *vma;
+	unsigned long pfn;
+
+	if (!fastrpc_mmap_find(fl, fd, va, len, ppmap))
+		return 0;
+	VERIFY(err, map = kzalloc(sizeof(*map), GFP_KERNEL));
+	if (err)
+		goto bail;
+	map->fl = fl;
+	map->fd = fd;
+	VERIFY(err, 0 != (vma = find_vma(current->mm, va)));
+	if (err)
+		goto bail;
+	VERIFY(err, 0 == follow_pfn(vma, va , &pfn));
+	if (err)
+		goto bail;
+	map->phys = __pfn_to_phys(pfn);
+	map->size = len;
+	map->va = va;
+	map->refs = 1;
+	map->len = len;
+	INIT_HLIST_NODE(&map->hn);
+
+	spin_lock(&fl->hlock);
+	hlist_add_head(&map->hn, &fl->maps);
+	spin_unlock(&fl->hlock);
+	*ppmap = map;
+
+bail:
+	if (err && map)
+		fastrpc_mmap_free(map);
+	return err;
+}
+
 static int fastrpc_internal_mmap(struct fastrpc_file *fl,
 				 struct fastrpc_ioctl_mmap *ud)
 {
@@ -1306,8 +1431,11 @@ static int fastrpc_internal_mmap(struct fastrpc_file *fl,
 			       &map))
 		return 0;
 
-	VERIFY(err, !fastrpc_mmap_create(fl, ud->fd, (uintptr_t)ud->vaddrin,
-					 ud->size, &map));
+	if (ud->flags == ADSP_MMAP_HEAP_ADDR)
+		VERIFY(err, !fastrpc_mmap_create_physical(fl, ud, &map));
+	else
+		VERIFY(err, !fastrpc_mmap_create(fl, ud->fd,
+				(uintptr_t)ud->vaddrin, ud->size, &map));
 	if (err)
 		goto bail;
 	VERIFY(err, 0 == fastrpc_mmap_on_dsp(fl, ud->flags, map));
@@ -1431,6 +1559,7 @@ static long fastrpc_device_ioctl(struct file *file, unsigned int ioctl_num,
 		struct fastrpc_ioctl_mmap mmap;
 		struct fastrpc_ioctl_munmap munmap;
 		struct fastrpc_ioctl_init init;
+		struct fastrpc_ioctl_munmap_remote_heap munmaprh;
 	} p;
 	void *param = (char *)ioctl_param;
 	struct fastrpc_file *fl = (struct fastrpc_file *)file->private_data;
@@ -1469,6 +1598,16 @@ static long fastrpc_device_ioctl(struct file *file, unsigned int ioctl_num,
 			goto bail;
 		VERIFY(err, 0 == (err = fastrpc_internal_munmap(fl,
 							&p.munmap)));
+		if (err)
+			goto bail;
+		break;
+	case FASTRPC_IOCTL_MUNMAP_REMOTE_HEAP:
+		VERIFY(err, 0 == copy_from_user(&p.munmaprh, param,
+						sizeof(p.munmaprh)));
+		if (err)
+			goto bail;
+		VERIFY(err, 0 == (err = fastrpc_internal_munmap_remote_heap(fl,
+							&p.munmaprh)));
 		if (err)
 			goto bail;
 		break;
