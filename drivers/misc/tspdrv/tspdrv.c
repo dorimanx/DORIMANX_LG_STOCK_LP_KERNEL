@@ -39,7 +39,7 @@
 #include <linux/platform_device.h>
 #include <asm/uaccess.h>
 #include <asm/atomic.h>
-#include <tspdrv.h>
+#include "tspdrv.h"
 
 static int g_nTimerPeriodMs = 5; /* 5ms timer by default. This variable could be used by the SPI.*/
 
@@ -49,7 +49,7 @@ static atomic_t g_bRuntimeRecord;
 #endif
 
 static char IMMR_DEB = false;
-#include <ImmVibeSPI.c>
+#include "ImmVibeSPI.c"
 #if (defined(VIBE_DEBUG) && defined(VIBE_RECORD)) || defined(VIBE_RUNTIME_RECORD)
 #include <tspdrvRecorder.c>
 #endif
@@ -92,11 +92,11 @@ static int g_nMajor = 0;
 
 
 /* Needs to be included after the global variables because they use them */
-#include <tspdrvOutputDataHandler.c>
+#include "tspdrvOutputDataHandler.c"
 #ifdef CONFIG_HIGH_RES_TIMERS
-    #include <VibeOSKernelLinuxHRTime.c>
+    #include "VibeOSKernelLinuxHRTime.c"
 #else
-    #include <VibeOSKernelLinuxTime.c>
+    #include "VibeOSKernelLinuxTime.c"
 #endif
 
 asmlinkage void _DbgOut(int level, const char *fmt,...)
@@ -187,9 +187,9 @@ MODULE_DESCRIPTION("TouchSense Kernel Module");
 MODULE_LICENSE("GPL v2");
 
 #if 1
-/* LGE_CHANGED_START
-  * Vibrator on/off device file is added(vib_enable)
-  * 2012.11.11, sehwan.lee@lge.com
+/*                  
+                                                    
+                                  
   */
 static int val = 0;
 
@@ -230,7 +230,7 @@ static struct device_attribute immersion_device_attrs[] = {
 	__ATTR(vib_enable,  S_IRUGO | S_IWUSR, immersion_enable_show, immersion_enable_store),
 };
 
-/* LGE_CHANGED_END 2012.11.11, sehwan.lee@lge.com */
+/*                                                */
 #endif
 
 static int __init tspdrv_init(void)
@@ -273,9 +273,9 @@ static int __init tspdrv_init(void)
         DbgOut((DBL_ERROR, "tspdrv: platform_driver_register failed.\n"));
     }
 #if 1
-/* LGE_CHANGED_START
-  * Vibrator on/off device file is added(vib_enable)
-  * 2012.11.11, sehwan.lee@lge.com
+/*                  
+                                                    
+                                  
   */
 	for (i = 0; i < ARRAY_SIZE(immersion_device_attrs); i++) {
 			nRet = device_create_file(miscdev.this_device, &immersion_device_attrs[i]);
@@ -283,7 +283,7 @@ static int __init tspdrv_init(void)
 				return nRet;
 	}
 
-/* LGE_CHANGED_END 2012.11.11, sehwan.lee@lge.com */
+/*                                                */
 #endif
     DbgRecorderInit(());
 

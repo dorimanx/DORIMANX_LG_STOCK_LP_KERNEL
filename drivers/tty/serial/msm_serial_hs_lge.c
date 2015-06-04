@@ -2830,8 +2830,8 @@ deregister_bam:
 	return rc;
 }
 
-/* LGE_CHANGE_S, [BT][younghyun.kwon@lge.com], 2013-04-10, For G2 LPM */
-/* LG_BTUI : chanha.park@lge.com : Added bluesleep interface - [S] */
+/*                                                                    */
+/*                                                                 */
 #ifdef CONFIG_LGE_BLUESLEEP
 struct uart_port* msm_hs_get_bt_uport(unsigned int line)
 {
@@ -2877,9 +2877,9 @@ int msm_hs_get_bt_uport_clock_state(struct uart_port *uport)
 	return ret;
 }
 EXPORT_SYMBOL(msm_hs_get_bt_uport_clock_state);
-#endif /* CONFIG_LGE_BLUESLEEP */
-/* LG_BTUI : chanha.park@lge.com : Added bluesleep interface - [E] */
-/* LGE_CHANGE_E, [BT][younghyun.kwon@lge.com], 2013-04-10 */
+#endif /*                      */
+/*                                                                 */
+/*                                                        */
 
 static bool deviceid[UARTDM_NR] = {0};
 /*
@@ -2996,7 +2996,7 @@ static int __devinit msm_hs_probe(struct platform_device *pdev)
 		return -ENXIO;
 	}
 
-#if 0  // suhui.kim@lge.com  BT Bring-up, wakeup_irq is not used
+#if 0  //                                                       
 	wakeup_irqres = platform_get_irq_byname(pdev, "wakeup_irq");
 	if (wakeup_irqres < 0) {
 		wakeup_irqres = -1;

@@ -932,10 +932,10 @@ static inline bool can_support_cdc(struct usb_configuration *c)
 
 #ifdef CONFIG_USB_G_LGE_MULTICONFIG_ATF_WA
 /*
- * B2-BSP-USB@lge.com
- * For support Android file transfer,
- * change ACM interfaceclass value when connect to OS X.
- * This is just workaround codes until 0x633e added to libmtp.
+                     
+                                     
+                                                        
+                                                              
  */
 static int lge_acm_desc_change(struct usb_function *f, bool is_mac)
 {

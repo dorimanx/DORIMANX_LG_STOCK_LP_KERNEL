@@ -282,7 +282,7 @@ static void msm_restart_prepare(const char *cmd)
 
 	/* Hard reset the PMIC unless memory contents must be maintained. */
 #ifdef CONFIG_MACH_LGE
-	/* LGE_CHANGE : there's no reason to forcing a hard reset on reboot request */
+	/*                                                                          */
 	if (true || get_dload_mode() || (cmd != NULL && cmd[0] != '\0'))
 #else
 	if (get_dload_mode() || (cmd != NULL && cmd[0] != '\0'))

@@ -38,7 +38,7 @@
 #include "pil-msa.h"
 #include "sysmon.h"
 
-/* FEATURE_LGE_MODEM_DEBUG_INFO, 2014-08-18, jin.park@lge.com */
+/*                                                            */
 #define FEATURE_LGE_MODEM_DEBUG_INFO
 #ifdef FEATURE_LGE_MODEM_DEBUG_INFO
 #include <asm/uaccess.h>
@@ -62,7 +62,7 @@ struct modem_data {
 	struct completion stop_ack;
 };
 
-/* LGE_MODEM_RESET, 2013-12-17, wj1208.jo@lge.com */
+/*                                                */
 struct lge_hw_smem_id2_type {
 	u32 build_info;             /* build type user:0 userdebug:1 eng:2 */
 	int modem_reset;
@@ -70,9 +70,9 @@ struct lge_hw_smem_id2_type {
 
 #define subsys_to_drv(d) container_of(d, struct modem_data, subsys_desc)
 
-// [START] jin.park@lge.com, SSR FEATURE
+//                                      
 char ssr_noti[MAX_SSR_REASON_LEN];
-// [END] jin.park@lge.com, SSR FEATURE
+//                                    
 
 #ifdef FEATURE_LGE_MODEM_DEBUG_INFO
 enum modem_ssr_event {

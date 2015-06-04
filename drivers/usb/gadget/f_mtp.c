@@ -547,11 +547,11 @@ struct mtp_ext_config_desc_function {
 
 #ifndef CONFIG_USB_G_LGE_MULTIPLE_CONFIGURATION
 #ifdef NOT_CONFIG_USB_G_LGE_ANDROID
-/* LGE_CHANGE
- * MS Ext Desciptor for MTP and adb (to use in testing driver).
- * NOTE: this remains for reference code about MTP setting with ADB enabled.
- * Therefore we do not use this officially(so NOT_ prefix is used).
- * 2011-02-09, hyunhui.park@lge.com
+/*           
+                                                               
+                                                                            
+                                                                   
+                                   
  */
 
 /* MTP Extended Configuration Descriptor */
@@ -666,11 +666,11 @@ static void mtp_request_free(struct usb_request *req, struct usb_ep *ep)
 	if (req) {
 #ifdef CONFIG_USB_G_LGE_ANDROID
 		/*
-		 * B2-BSP-USB@lge.com 2014-04-17
-		 * Just preventive codes.
-		 * If function called normally,
-		 * panic possibility doesn't exist.
-		 */
+                                  
+                           
+                                 
+                                     
+   */
 		if (req->buf)
 #endif
 		kfree(req->buf);
@@ -982,12 +982,12 @@ retry_tx_alloc:
 				mtp_request_free(req, dev->ep_in);
 #ifdef CONFIG_USB_G_LGE_ANDROID
 			/*
-			 * B2-BSP-USB@lge.com 2014-04-17
-			 * If mem alloc fail in mtp_request_new function,
-			 * before goto fail we need to free request buf that already allocated.
-			 * Or if mtp_tx_req_len is larger than MTP_BULK_BUFFER_SIZE,
-			 * decrease buffer size to MTP_BULK_BUFFER_SIZE and retry allocation.
-			 */
+                                   
+                                                    
+                                                                          
+                                                               
+                                                                        
+    */
 			if (mtp_tx_req_len <= MTP_BULK_BUFFER_SIZE)
 				goto tx_fail;
 #endif
@@ -1019,13 +1019,13 @@ retry_rx_alloc:
 				mtp_request_free(dev->rx_req[i], dev->ep_out);
 #else
 			/*
-			 * B2-BSP-USB@lge.com 2014-04-17
-			 * If mem alloc fail in mtp_request_new function,
-			 * before goto fail we need to free request buf that already allocated.
-			 * Or if mtp_tx_req_len is larger than MTP_BULK_BUFFER_SIZE,
-			 * decrease buffer size to MTP_BULK_BUFFER_SIZE and retry allocation.
-			 * And fixed pagecompound bug_on during abnormal kfree.
-			 */
+                                   
+                                                    
+                                                                          
+                                                               
+                                                                        
+                                                          
+    */
 			for (i--; i >= 0; i--)
 				mtp_request_free(dev->rx_req[i], dev->ep_out);
 
@@ -2278,7 +2278,7 @@ static void mtp_debugfs_init(struct mtp_dev *dev)
 
 	debugfs_create_file("profile", 0444, dent, dev, &debug_profile_ops);
 }
-#endif /* CONFIG_USB_G_LGE_MTP_PROFILING && CONFIG_DEBUG_FS */
+#endif /*                                                   */
 
 static int mtp_setup(void)
 {

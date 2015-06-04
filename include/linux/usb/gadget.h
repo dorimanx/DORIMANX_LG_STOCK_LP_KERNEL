@@ -184,10 +184,10 @@ struct usb_ep {
 
 /*-------------------------------------------------------------------------*/
 #ifdef CONFIG_USB_G_LGE_MULTIPLE_CONFIGURATION
-/*B2-BSP-USB@lge.com
- * If some eps need to share the usb_requset,
- * this function is do that.
- * Change original ep num of dwc3_request to parameter ep num.
+/*                  
+                                             
+                            
+                                                              
  */
 static inline void lge_usb_ep_yield_request(struct usb_ep *ep,
 				       struct usb_request *req)

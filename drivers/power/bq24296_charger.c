@@ -1944,11 +1944,11 @@ static int bq24296_batt_power_get_property(struct power_supply *psy,
 				!= POWER_SUPPLY_CHARGE_TYPE_NONE;
 		break;
 	case POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL:
-		/* it makes ibat max set following themral mitigation.
-		 * But, SMB349 cannot control ibat current like PMIC.
-		 * if LGE charging scenario make charging thermal control,
-		 * it is good interface to use LG mitigation level.
-		 */
+		/*                                                    
+                                                       
+                                                            
+                                                     
+   */
 		val->intval = 0;
 		break;
 	case POWER_SUPPLY_PROP_PSEUDO_BATT:
@@ -2013,11 +2013,11 @@ static int bq24296_batt_power_set_property(struct power_supply *psy,
 			val->intval ? "inserted" : "removed");
 		break;
 	case POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL:
-		/* it makes ibat max set following themral mitigation.
-		 * But, SMB349 cannot control ibat current like PMIC.
-		 * if LGE charging scenario make charging thermal control,
-		 * it is good interface to use LG mitigation level.
-		 */
+		/*                                                    
+                                                       
+                                                            
+                                                     
+   */
 		break;
 #if defined CONFIG_VZW_POWER_REQ
 	case POWER_SUPPLY_PROP_VZW_CHG:

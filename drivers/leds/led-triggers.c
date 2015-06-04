@@ -212,9 +212,9 @@ EXPORT_SYMBOL_GPL(led_trigger_unregister);
 /* Simple LED Tigger Interface */
 
 #if defined(CONFIG_LGE_DUAL_LED)
-/* LGE_CHANGE
- * For Dual flash
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                 
+                               
  */
 void led_trigger_event2(struct led_trigger *trigger,
 			enum led_brightness brightness, enum led_brightness brightness2)

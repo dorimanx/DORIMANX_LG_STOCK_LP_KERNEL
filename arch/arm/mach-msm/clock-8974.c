@@ -884,7 +884,7 @@ static struct clk_freq_tbl ftbl_gcc_blsp1_2_qup1_6_spi_apps_clk[] = {
 	F(  960000,    cxo,  10,   1,   2),
 	F( 4800000,    cxo,   4,   0,   0),
 #if defined(CONFIG_LGE_BROADCAST_TDMB)
-	F(7207207, gpll0, 4.5, 2, 37), //for using 7.207MHz spi clock in LGE DMB
+	F(7207207, gpll0, 4.5, 2, 37), //                                       
 #endif
 	F( 9600000,    cxo,   2,   0,   0),
 	F(15000000,  gpll0,  10,   1,   4),
@@ -1481,8 +1481,8 @@ static struct rcg_clk ce2_clk_src = {
 };
 
 static struct clk_freq_tbl ftbl_gcc_gp_clk[] = {
-/* soojung.lim@lge.com, 2013-05-23
- * To use 24MHz GP/GCC_GP clock for V2 H/W
+/*                                
+                                          
  */
  #ifdef CONFIG_MACH_LGE
 	F( 4800000, cxo, 4, 0, 0),
@@ -5012,7 +5012,7 @@ static struct clk_lookup msm_clocks_8974_common[] __initdata = {
 	CLK_LOOKUP("iface_clk", gcc_blsp2_ahb_clk.c, "f995e000.serial"),
 #if defined(CONFIG_LGE_BROADCAST_TDMB)
 	CLK_LOOKUP("iface_clk", gcc_blsp2_ahb_clk.c, "f9964000.spi"),
-#endif /* LGE_BROADCAST */
+#endif /*               */
 #if defined(CONFIG_LGE_IRRC) || defined(CONFIG_LGE_IRDA_KDDI)
 	CLK_LOOKUP("iface_clk", gcc_blsp2_ahb_clk.c, "f9962000.serial"),
 #else
@@ -5021,20 +5021,20 @@ static struct clk_lookup msm_clocks_8974_common[] __initdata = {
 	CLK_LOOKUP("core_clk", gcc_blsp2_qup1_i2c_apps_clk.c, ""),
 	CLK_LOOKUP("core_clk", gcc_blsp2_qup1_spi_apps_clk.c, ""),
 
-/* LGE_BROADCAST_ISDBT_JAPAN { */
+/*                             */
 #if defined (CONFIG_LGE_BROADCAST_ISDBT_JAPAN)
 	CLK_LOOKUP("iface_clk", gcc_blsp2_ahb_clk.c, "f9964000.i2c"),
 	CLK_LOOKUP("core_clk", gcc_blsp2_qup2_i2c_apps_clk.c, "f9964000.i2c"),	/* BLSP8, BLSP 2 QUP 1, 0xF9964000 */
 #else
 	CLK_LOOKUP("core_clk", gcc_blsp2_qup2_i2c_apps_clk.c, ""),
 #endif
-/* LGE_BROADCAST_ISDBT_JAPAN } */
+/*                             */
 
 #if defined(CONFIG_LGE_BROADCAST_TDMB)
 	CLK_LOOKUP("core_clk", gcc_blsp2_qup2_spi_apps_clk.c, "f9964000.spi"),
 #else
 	CLK_LOOKUP("core_clk", gcc_blsp2_qup2_spi_apps_clk.c, ""),
-#endif /* LGE_BROADCAST */
+#endif /*               */
 	CLK_LOOKUP("core_clk", gcc_blsp2_qup3_i2c_apps_clk.c, ""),
 	CLK_LOOKUP("core_clk", gcc_blsp2_qup3_spi_apps_clk.c, ""),
 	CLK_LOOKUP("core_clk", gcc_blsp2_qup4_i2c_apps_clk.c, ""),
@@ -5057,7 +5057,7 @@ static struct clk_lookup msm_clocks_8974_common[] __initdata = {
 	CLK_LOOKUP("core_clk", gcc_blsp2_uart4_apps_clk.c, "f9960000.uart"),
 #else
 	CLK_LOOKUP("core_clk", gcc_blsp2_uart4_apps_clk.c, ""),
-#endif /* CONFIG_LGE_BLUETOOTH */
+#endif /*                      */
 
 #if (defined(CONFIG_MACH_MSM8974_G3) || defined(CONFIG_MACH_MSM8974_DZNY)) && defined(CONFIG_LGE_NFC_SONY)
 	CLK_LOOKUP("core_clk", gcc_blsp2_uart4_apps_clk.c, "f9960000.serial"),
@@ -5409,7 +5409,7 @@ static struct clk_lookup msm_clocks_8974_common[] __initdata = {
 	CLK_LOOKUP("csi3_rdi_clk", camss_csi3rdi_clk.c,
 					"fda0a000.qcom,ispif"),
 
-/* LGE_CHANGE_S, QCT patch for dual camera, 2013-9-27, jonghwan.ko@lge.com */
+/*                                                                         */
 	CLK_LOOKUP("csi1_src_clk", csi1_clk_src.c,
 					"fda0a000.qcom,ispif"),
 	CLK_LOOKUP("csi1_clk", camss_csi1_clk.c,
@@ -5436,7 +5436,7 @@ static struct clk_lookup msm_clocks_8974_common[] __initdata = {
 					"fda0a000.qcom,ispif"),
 	CLK_LOOKUP("csi3_rdi_clk", camss_csi3rdi_clk.c,
 					"fda0a000.qcom,ispif"),
-/* LGE_CHANGE_E, QCT patch for dual camera, 2013-9-27, jonghwan.ko@lge.com */
+/*                                                                         */
 	/*VFE clocks*/
 	CLK_LOOKUP("camss_top_ahb_clk", camss_top_ahb_clk.c,
 					"fda10000.qcom,vfe"),

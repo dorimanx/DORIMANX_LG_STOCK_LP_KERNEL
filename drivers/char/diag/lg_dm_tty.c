@@ -783,7 +783,7 @@ static int lge_dm_tty_ioctl(struct tty_struct *tty, unsigned int cmd,
 			"result = %d\n", __func__, result);
 	break;
   case DM_TTY_MODEM_DEBUGGER:
-    //boyoung507.kim@lge.com
+    //                      
     memset(rw_buf, 0, sizeof(rw_buf));
     strcpy(rw_buf,ssr_noti);
     if (copy_to_user((void *)arg, &rw_buf, sizeof(rw_buf))){

@@ -1755,10 +1755,10 @@ static int dwc3_gadget_vbus_session(struct usb_gadget *_gadget, int is_active)
 	dwc->vbus_active = is_active;
 #ifdef CONFIG_USB_G_LGE_ANDROID
 /*
- * B2-BSP-USB@lge.com
- * If usb has disconnected during gadget reset,
- * gadget doesn't receive both reset interrupt and disconnect interrupt.
- * Thus, check that here.
+                     
+                                               
+                                                                        
+                         
  */
 	if (!dwc->vbus_active
 			&& dwc->softconnect

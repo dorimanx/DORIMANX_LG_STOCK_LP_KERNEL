@@ -1687,7 +1687,7 @@ static void composite_debugfs_init(struct usb_composite_dev	*cdev)
 
 	debugfs_create_file("desc", 0444, dent, cdev, &debug_desc_ops);
 }
-#endif /* CONFIG_USB_G_LGE_ANDROID && CONFIG_DEBUG_FS */
+#endif /*                                             */
 
 static int composite_bind(struct usb_gadget *gadget)
 {

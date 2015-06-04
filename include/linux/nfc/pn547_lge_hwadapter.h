@@ -26,4 +26,4 @@ void pn547_get_clk_source(struct pn547_dev *pn547_dev);
 
 void pn547_parse_dt(struct device *dev, struct pn547_dev *pn547_dev);
 
-#endif /* _PN547_LGE_HWADAPTER_H_ */
+#endif /*                         */

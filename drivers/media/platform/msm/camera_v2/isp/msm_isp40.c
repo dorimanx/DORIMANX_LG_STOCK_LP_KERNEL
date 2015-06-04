@@ -346,13 +346,13 @@ static void msm_vfe40_init_hardware_reg(struct vfe_device *vfe_dev)
 	msm_camera_io_w(0xC001FF7F, vfe_dev->vfe_base + 0x974);
 	/* BUS_CFG */
 	msm_camera_io_w(0x10000001, vfe_dev->vfe_base + 0x50);
-/* LGE_CHANGE_S, scaler problem fix  (#CN 01452263, #CR622416), 2014-04-03, kh.kang@lge.com */
+/*                                                                                          */
 #if !(defined(CONFIG_MACH_MSM8974_G2_KR) || defined(CONFIG_MACH_MSM8974_TIGERS_KR) || defined(CONFIG_MACH_MSM8974_TIGERS_KR) || defined(CONFIG_MACH_MSM8974_B1_KR) || defined(CONFIG_MACH_MSM8974_B1W))
 	msm_camera_io_w(0xF80000F3, vfe_dev->vfe_base + 0x28);
 #else // original
 	msm_camera_io_w(0xE00000F3, vfe_dev->vfe_base + 0x28);
 #endif
-/* LGE_CHANGE_E, scaler problem fix  (#CN 01452263, #CR622416), 2014-04-03, kh.kang@lge.com */
+/*                                                                                          */
 	msm_camera_io_w_mb(0xFEFFFFFF, vfe_dev->vfe_base + 0x2C);
 	msm_camera_io_w(0xFFFFFFFF, vfe_dev->vfe_base + 0x30);
 	msm_camera_io_w_mb(0xFEFFFFFF, vfe_dev->vfe_base + 0x34);
@@ -692,7 +692,7 @@ static void msm_vfe40_axi_cfg_comp_mask(struct vfe_device *vfe_dev,
 	 * microcontroller to update certain VFE registers
 	 */
 
-/* LGE_CHANGE_S, scaler problem fix  (#CN 01452263, #CR622416), 2014-04-03, kh.kang@lge.com */
+/*                                                                                          */
 #if !(defined(CONFIG_MACH_MSM8974_G2_KR) || defined(CONFIG_MACH_MSM8974_TIGERS_KR) || defined(CONFIG_MACH_MSM8974_TIGERS_KR) || defined(CONFIG_MACH_MSM8974_B1_KR) || defined(CONFIG_MACH_MSM8974_B1W))
 	if (stream_info->stream_src == PIX_VIEWFINDER) {
 		comp_mask |= (axi_data->composite_info[comp_mask_index].
@@ -720,7 +720,7 @@ static void msm_vfe40_axi_cfg_comp_mask(struct vfe_device *vfe_dev,
 		irq_mask |= BIT(28);
 	}
 #endif
-/* LGE_CHANGE_E, scaler problem fix  (#CN 01452263, #CR622416), 2014-04-03, kh.kang@lge.com */
+/*                                                                                          */
 
 
 	msm_camera_io_w(comp_mask, vfe_dev->vfe_base + 0x40);
@@ -740,7 +740,7 @@ static void msm_vfe40_axi_clear_comp_mask(struct vfe_device *vfe_dev,
 	irq_mask = msm_camera_io_r(vfe_dev->vfe_base + 0x28);
 	irq_mask &= ~(1 << (comp_mask_index + 25));
 
-/* LGE_CHANGE_S, scaler problem fix  (#CN 01452263, #CR622416), 2014-04-03, kh.kang@lge.com */
+/*                                                                                          */
 #if !(defined(CONFIG_MACH_MSM8974_G2_KR) || defined(CONFIG_MACH_MSM8974_TIGERS_KR) || defined(CONFIG_MACH_MSM8974_TIGERS_KR) || defined(CONFIG_MACH_MSM8974_B1_KR) || defined(CONFIG_MACH_MSM8974_B1W))
 	if (stream_info->stream_src == PIX_VIEWFINDER) {
 		comp_mask &= ~(axi_data->composite_info[comp_mask_index].
@@ -768,7 +768,7 @@ static void msm_vfe40_axi_clear_comp_mask(struct vfe_device *vfe_dev,
 		irq_mask &= ~BIT(28);
 	}
 #endif
-	/* LGE_CHANGE_E, scaler problem fix  (#CN 01452263, #CR622416), 2014-04-03, kh.kang@lge.com */
+	/*                                                                                          */
 
 	msm_camera_io_w(comp_mask, vfe_dev->vfe_base + 0x40);
 	msm_camera_io_w(irq_mask, vfe_dev->vfe_base + 0x28);

@@ -74,10 +74,10 @@
 #define HALT_ACK_TIMEOUT_US				500000
 #define CLK_UPDATE_TIMEOUT_US				500000
 
-// LGE_UPDATE_S enable_ramdump only for pronto
+//                                            
 static int enable_pronto_ramdump;
 module_param(enable_pronto_ramdump, int, S_IRUGO | S_IWUSR);
-// LGE_UPDATE_E
+//             
 
 struct pronto_data {
 	void __iomem *base;
@@ -428,10 +428,10 @@ static int wcnss_ramdump(int enable, const struct subsys_desc *subsys)
 	struct pronto_data *drv = subsys_to_drv(subsys);
 
     pr_err("Enter : wcnss_ramdump(), arg enable = %d,  enable_pronto_ramdump = %d\n", enable, enable_pronto_ramdump);
-// LGE_UPDATE_S enable_ramdump only for pronto
+//                                            
 //	if (!enable)
 	if(!enable_pronto_ramdump)
-// LGE_UPDATE_E
+//             
 		return 0;
 
 	return pil_do_ramdump(&drv->desc, drv->ramdump_dev);

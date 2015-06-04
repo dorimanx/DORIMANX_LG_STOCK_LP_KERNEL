@@ -98,11 +98,11 @@ static void __init msm8974_early_memory(void)
  * into this category, and thus the driver should not be added here. The
  * EPROBE_DEFER can satisfy most dependency problems.
  */
-/* LGE_CHANGE_S, [WiFi][jaewoo.hwang@lge.com], 2013-01-28, Wifi Bring Up */
+/*                                                                       */
 #if defined (CONFIG_BCMDHD) || defined (CONFIG_BCMDHD_MODULE)
 extern void init_bcm_wifi(void);
 #endif
-/* LGE_CHANGE_E, [WiFi][jaewoo.hwang@lge.com], 2013-01-28, Wifi Bring Up */
+/*                                                                       */
 
 void __init msm8974_add_drivers(void)
 {
@@ -124,15 +124,15 @@ void __init msm8974_add_drivers(void)
 #ifdef CONFIG_LGE_QFPROM_INTERFACE
 	lge_add_qfprom_devices();
 #endif
-/* LGE_CHANGE_S, [WiFi][jaewoo.hwang@lge.com], 2013-01-28, Wifi Bring Up */
+/*                                                                       */
 #if defined (CONFIG_BCMDHD) || defined (CONFIG_BCMDHD_MODULE)
 	init_bcm_wifi();
 #endif
-/* LGE_CHANGE_E, [WiFi][jaewoo.hwang@lge.com], 2013-01-28, Wifi Bring Up */
+/*                                                                       */
 #if defined(CONFIG_LCD_KCAL)
-/* LGE_CHANGE_S
-* change code for LCD KCAL
-* 2013-05-08, seojin.lee@lge.com
+/*             
+                          
+                                
 */
 	lge_add_lcd_kcal_devices();
 #endif /* CONFIG_LCD_KCAL */
@@ -195,7 +195,7 @@ static struct of_dev_auxdata msm8974_auxdata_lookup[] __initdata = {
 	{}
 };
 
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up*/
+/*                                                          */
 #ifdef CONFIG_MFD_WM5110
 static struct slim_device wm5110_slim_audio = {
 	.name = "wm5110-slim-audio",

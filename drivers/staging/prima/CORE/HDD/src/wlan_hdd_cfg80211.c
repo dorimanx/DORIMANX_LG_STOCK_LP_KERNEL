@@ -10013,7 +10013,7 @@ int __wlan_hdd_cfg80211_scan( struct wiphy *wiphy,
            scanRequest.minChnTime, scanRequest.maxChnTime,
            scanRequest.p2pSearch, scanRequest.skipDfsChnlInP2pSearch);
 
-    // 2014.10.28, Add Scanning Log for Issue Debugging, kuhyun.kwon@lge.com
+    //                                                                      
     hddLog(VOS_TRACE_LEVEL_ERROR, "Scan RequestType:%d, Scan Mode:%d, NumOfChannels:%d,",
         scanRequest.requestType, scanRequest.scanType, scanRequest.ChannelInfo.numOfChannels);
 

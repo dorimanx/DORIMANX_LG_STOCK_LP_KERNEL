@@ -498,7 +498,7 @@ static struct of_device_id qpnp_charger_match_table[] = {
 	{}
 };
 
-/* BEGIN : janghyun.baek@lge.com 2013-01-25 For factory cable detection */
+/*                                                                      */
 #ifdef CONFIG_LGE_PM
 static struct qpnp_chg_chip *qpnp_chg;
 static unsigned int cable_type;
@@ -511,7 +511,7 @@ static bool is_factory_cable(void)
 	else
 		return 0;
 }
-/* END : janghyun.baek@lge.com 2013-01-25 */
+/*                                        */
 
 int32_t qpnp_charger_is_ready(void)
 {

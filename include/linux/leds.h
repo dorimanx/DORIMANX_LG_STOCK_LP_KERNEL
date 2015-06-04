@@ -41,9 +41,9 @@ struct led_classdev {
 	const char		*name;
 	int			 brightness;
 #if defined(CONFIG_LGE_DUAL_LED)
-/* LGE_CHANGE
- * For Dual flash
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                 
+                               
  */
 	int			 brightness2;
 #endif
@@ -62,9 +62,9 @@ struct led_classdev {
 	void		(*brightness_set)(struct led_classdev *led_cdev,
 					  enum led_brightness brightness);
 #if defined(CONFIG_LGE_DUAL_LED)
-/* LGE_CHANGE
- * For Dual flash
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                 
+                               
  */
 	void		(*brightness_set2)(struct led_classdev *led_cdev,
 					  enum led_brightness brightness, enum led_brightness brightness2);
@@ -142,9 +142,9 @@ extern void led_brightness_set(struct led_classdev *led_cdev,
 			       enum led_brightness brightness);
 
 #if defined(CONFIG_LGE_DUAL_LED)
-/* LGE_CHANGE
- * For Dual flash
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                 
+                               
  */
 extern void led_brightness_set2(struct led_classdev *led_cdev,
 			       enum led_brightness brightness, enum led_brightness brightness2);
@@ -184,9 +184,9 @@ extern void led_trigger_unregister_simple(struct led_trigger *trigger);
 extern void led_trigger_event(struct led_trigger *trigger,
 				enum led_brightness event);
 #if defined(CONFIG_LGE_DUAL_LED)
-/* LGE_CHANGE
- * For Dual flash
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                 
+                               
  */
 extern void led_trigger_event2(struct led_trigger *trigger,
 				enum led_brightness event, enum led_brightness event2);
@@ -206,9 +206,9 @@ extern void led_trigger_blink(struct led_trigger *trigger,
 #define led_trigger_event(x, y) do {} while(0)
 
 #if defined(CONFIG_LGE_DUAL_LED)
-/* LGE_CHANGE
- * For Dual flash
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                 
+                               
  */
 #define led_trigger_event2(x, y, z) do {} while(0)
 #endif

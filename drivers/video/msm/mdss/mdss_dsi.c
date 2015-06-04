@@ -36,7 +36,7 @@ extern struct mdss_panel_data *pdata_base;
 extern int dw8768_mode_change(int mode);
 static bool touch_driver_registered=false;
 #include <linux/input/lge_touch_notify.h>
-#endif //CONFIG_LGE_MIPI_DZNY_JDI_INCELL_FHD_VIDEO_PANEL
+#endif //                                               
 
 static int mdss_dsi_regulator_init(struct platform_device *pdev)
 {
@@ -889,11 +889,11 @@ int mdss_dsi_on(struct mdss_panel_data *pdata)
 
 #if !defined(CONFIG_B1_LGD_PANEL)
 #ifdef CONFIG_MACH_LGE
-	/* LGE_CHANGE
-	 * change position after panel reset
-	 * due to not get into reset sequence (in case lp11)
-	 * 2014-08-07, baryun.hwang@lge.com
-	 */
+	/*           
+                                     
+                                                     
+                                    
+  */
 	if (!mipi->lp11_init)
 #endif
 		pdata->panel_info.panel_power_on = 1;
@@ -1947,7 +1947,7 @@ int dsi_panel_device_register(struct device_node *pan_node,
         gpio_set_value(ctrl_pdata->dsv_ena, 1);
 	}
 }
-#else // else : CONFIG_LGE_MIPI_DZNY_JDI_INCELL_FHD_VIDEO_PANEL
+#else //                                                       
 
 #if defined(CONFIG_MACH_MSM8974_G3) || defined(CONFIG_MACH_MSM8974_DZNY)
 {
@@ -1970,7 +1970,7 @@ int dsi_panel_device_register(struct device_node *pan_node,
     ctrl_pdata->disp_en_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node,
 			"qcom,platform-enable-gpio", 0);
 #endif
-#endif //CONFIG_LGE_MIPI_DZNY_JDI_INCELL_FHD_VIDEO_PANEL
+#endif //                                               
 
 #ifdef CONFIG_MACH_LGE
 	if (!gpio_is_valid(ctrl_pdata->disp_en_gpio)) {
@@ -2074,12 +2074,12 @@ int dsi_panel_device_register(struct device_node *pan_node,
 		pr_err("%s:%d, reset gpio not specified\n",
 						__func__, __LINE__);
 	} else {
-		/* LGE_CHANGE
-		 * gpio request once in booting time
-		 * to meet gpio request/free pair
-		 * only when conitnous splash on
-		 * 2014-08-07, baryun.hwang@lge.com
-		 */
+		/*           
+                                      
+                                   
+                                  
+                                     
+   */
 		if (pinfo->cont_splash_enabled) {
 			rc = gpio_request(ctrl_pdata->rst_gpio, "disp_rst_n");
 			if (rc) {

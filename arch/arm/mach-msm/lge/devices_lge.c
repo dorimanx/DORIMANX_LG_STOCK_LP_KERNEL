@@ -43,9 +43,9 @@
 #include "ram_console.h"
 
 #if defined(CONFIG_LCD_KCAL)
-/* LGE_CHANGE_S
-   * change code for LCD KCAL
-   * 2013-05-08, seojin.lee@lge.com
+/*             
+                             
+                                   
    */
 #include <linux/module.h>
 #include "../../../../drivers/video/msm/mdss/mdss_fb.h"
@@ -240,7 +240,7 @@ void __init lge_add_persistent_device(void)
 
 
 
-/* BEGIN : janghyun.baek@lge.com 2012-12-26 For cable detection */
+/*                                                              */
 #ifdef CONFIG_LGE_PM
 struct chg_cable_info_table {
 	int threshhold;
@@ -272,7 +272,7 @@ void __init lge_add_qfprom_devices(void)
 static bool cable_type_defined;
 static struct chg_cable_info_table pm8941_acc_cable_type_data[MAX_CABLE_NUM];
 #endif
-/* END : janghyun.baek@lge.com 2012-12-26 */
+/*                                        */
 #ifdef CONFIG_LGE_DIAG_USB_ACCESS_LOCK
 static struct platform_device lg_diag_cmd_device = {
 	.name = "lg_diag_cmd",
@@ -288,7 +288,7 @@ void __init lge_add_diag_devices(void)
 }
 #endif
 
-/* BEGIN : janghyun.baek@lge.com 2012-12-26 For cable detection */
+/*                                                              */
 #ifdef CONFIG_LGE_PM
 void get_cable_data_from_dt(void *of_node)
 {
@@ -475,7 +475,7 @@ void lge_pm_read_cable_info(struct qpnp_vadc_chip *vadc)
 	lge_pm_get_cable_info(vadc, &lge_cable_info);
 }
 #endif
-/* END : janghyun.baek@lge.com 2012-12-26 For cable detection */
+/*                                                            */
 
 #if defined(CONFIG_LGE_KSWITCH)
 static int kswitch_status;
@@ -593,7 +593,7 @@ int __init lge_boot_mode_init(char *s)
 	else if (!strcmp(s, "pif_910k"))
 		lge_boot_mode = LGE_BOOT_MODE_PIFBOOT3;
 	printk("ANDROID BOOT MODE : %d %s\n", lge_boot_mode, s);
-	/* LGE_UPDATE_E for MINIOS2.0 */
+	/*                            */
 
 	return 1;
 }
@@ -721,9 +721,9 @@ void __init lge_add_lcd_misc_devices(void)
 #endif
 
 #ifdef CONFIG_LCD_KCAL
-/* LGE_CHANGE_S
-* change code for LCD KCAL
-* 2013-05-08, seojin.lee@lge.com
+/*             
+                          
+                                
 */
 int g_kcal_r = 255;
 int g_kcal_g = 255;
@@ -922,7 +922,7 @@ void __init lge_add_qsdl_device(void)
 {
 	platform_device_register(&lge_qsdl_device);
 }
-#endif /* CONFIG_LGE_QSDL_SUPPORT */
+#endif /*                         */
 
 #ifdef CONFIG_USB_G_LGE_ANDROID
 static int get_factory_cable(void)

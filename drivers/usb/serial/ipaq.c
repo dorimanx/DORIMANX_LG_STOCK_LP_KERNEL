@@ -68,7 +68,7 @@ static struct usb_device_id ipaq_id_table [] = {
 	{ USB_DEVICE(0x0409, 0x00D7) }, /* NEC USB Sync */
 	{ USB_DEVICE(0x0409, 0x8024) }, /* NEC USB Sync */
 	{ USB_DEVICE(0x0409, 0x8025) }, /* NEC USB Sync */
-	{ USB_DEVICE(0x043E, 0x9C01) }, /* LGE USB Sync */
+	{ USB_DEVICE(0x043E, 0x9C01) }, /*              */
 	{ USB_DEVICE(0x045E, 0x00CE) }, /* Microsoft USB Sync */
 	{ USB_DEVICE(0x045E, 0x0400) }, /* Windows Powered Pocket PC 2002 */
 	{ USB_DEVICE(0x045E, 0x0401) }, /* Windows Powered Pocket PC 2002 */

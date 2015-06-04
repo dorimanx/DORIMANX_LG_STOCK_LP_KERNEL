@@ -290,10 +290,10 @@ EXPORT_SYMBOL_GPL(tcp_orphan_count);
 
 int sysctl_tcp_wmem[3] __read_mostly;
 int sysctl_tcp_rmem[3] __read_mostly;
-/* 2013-10-30 beney.kim@lge.com LGP_DATA_TCPIP_DATASCHEDULER [START] */
+/*                                                                   */
 int sysctl_ds_enable __read_mostly;
 EXPORT_SYMBOL(sysctl_ds_enable);
-/* 2013-10-30 beney.kim@lge.com LGP_DATA_TCPIP_DATASCHEDULER [END] */
+/*                                                                 */
 
 EXPORT_SYMBOL(sysctl_tcp_rmem);
 EXPORT_SYMBOL(sysctl_tcp_wmem);
@@ -3445,9 +3445,9 @@ restart:
 
 			sock_hold(sk);
 			spin_unlock_bh(lock);
-/* 2013-07-05 indal.choi@lge.com LGP_DATA_KERNEL_CRASHFIX_TCP_NUKE_ADDR [START] */
+/*                                                                              */
 			lock_sock(sk);
-/* 2013-07-05 indal.choi@lge.com LGP_DATA_KERNEL_CRASHFIX_TCP_NUKE_ADDR [END] */
+/*                                                                            */
 			local_bh_disable();
 			bh_lock_sock(sk);
 			sk->sk_err = ETIMEDOUT;
@@ -3456,9 +3456,9 @@ restart:
 			tcp_done(sk);
 			bh_unlock_sock(sk);
 			local_bh_enable();
-/* 2013-07-05 indal.choi@lge.com LGP_DATA_KERNEL_CRASHFIX_TCP_NUKE_ADDR [START] */
+/*                                                                              */
 			release_sock(sk);
-/* 2013-07-05 indal.choi@lge.com LGP_DATA_KERNEL_CRASHFIX_TCP_NUKE_ADDR [END] */
+/*                                                                            */
 			sock_put(sk);
 
 			goto restart;

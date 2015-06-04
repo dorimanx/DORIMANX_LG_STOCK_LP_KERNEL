@@ -10,10 +10,10 @@
  * GNU General Public License for more details.
  */
 /*
-	Last updated : 2014/06/23, by sungmin.woo@lge.com, seonyoung.kim@lge.com
-	change description : fix wrap around problem, 03/18
-				       cover non-proxy sensor case, abnormal camera close by kill qcamera-daemon 04/12
-				       non-calibration module error, increased max-convergence time 05/06
+                                                                         
+                                                    
+                                                                                          
+                                                                             
 */
 
 #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__

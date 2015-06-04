@@ -60,7 +60,7 @@ static int dapm_up_seq[] = {
 	[snd_soc_dapm_pre] = 0,
 	[snd_soc_dapm_supply] = 1,
 #ifdef CONFIG_SND_SOC_WM5110
-	/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+	/*                                                           */
 	[snd_soc_dapm_regulator_supply] = 1,
 #endif
 	[snd_soc_dapm_micbias] = 2,
@@ -99,7 +99,7 @@ static int dapm_down_seq[] = {
 	[snd_soc_dapm_virt_mux] = 9,
 	[snd_soc_dapm_value_mux] = 9,
 #ifdef CONFIG_SND_SOC_WM5110
-	/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+	/*                                                           */
 	[snd_soc_dapm_regulator_supply] = 11,
 #endif
 	[snd_soc_dapm_supply] = 11,
@@ -752,7 +752,7 @@ static int is_connected_output_ep(struct snd_soc_dapm_widget *widget,
 	DAPM_UPDATE_STAT(widget, path_checks);
 
 #ifdef 	CONFIG_SND_SOC_WM5110
-	/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+	/*                                                           */
         switch (widget->id) {
         case snd_soc_dapm_supply:
         case snd_soc_dapm_regulator_supply:
@@ -782,7 +782,7 @@ static int is_connected_output_ep(struct snd_soc_dapm_widget *widget,
 			return widget->outputs;
 		}
 
-		/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+		/*                                                           */
 		/* connected jack or spk ? */
 		if (widget->id == snd_soc_dapm_hp ||
 		    widget->id == snd_soc_dapm_spk ||
@@ -856,7 +856,7 @@ static int is_connected_input_ep(struct snd_soc_dapm_widget *widget,
 
 	DAPM_UPDATE_STAT(widget, path_checks);
 #ifdef CONFIG_SND_SOC_WM5110
-	/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+	/*                                                           */
         switch (widget->id) {
         case snd_soc_dapm_supply:
         case snd_soc_dapm_regulator_supply:
@@ -1086,7 +1086,7 @@ int dapm_reg_event(struct snd_soc_dapm_widget *w,
 EXPORT_SYMBOL_GPL(dapm_reg_event);
 
 #ifdef CONFIG_SND_SOC_WM5110
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+/*                                                           */
 int dapm_regulator_event(struct snd_soc_dapm_widget *w,
                    struct snd_kcontrol *kcontrol, int event)
 {
@@ -1579,7 +1579,7 @@ static void dapm_widget_set_power(struct snd_soc_dapm_widget *w, bool power,
 	switch (w->id) {
 	case snd_soc_dapm_supply:
 #ifdef 	CONFIG_SND_SOC_WM5110
-	/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+	/*                                                           */
         case snd_soc_dapm_regulator_supply:
 #endif
 		/* Supplies can't affect their outputs, only their inputs */
@@ -1693,7 +1693,7 @@ static int dapm_power_widgets(struct snd_soc_dapm_context *dapm, int event)
 			switch (w->id) {
 			case snd_soc_dapm_supply:
 #ifdef CONFIG_SND_SOC_WM5110
-			/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+			/*                                                           */
 			case snd_soc_dapm_regulator_supply:
 #endif
 			case snd_soc_dapm_micbias:
@@ -2088,7 +2088,7 @@ static ssize_t dapm_widget_show(struct device *dev,
 		case snd_soc_dapm_mixer_named_ctl:
 		case snd_soc_dapm_supply:
 #ifdef CONFIG_SND_SOC_WM5110
-		/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+		/*                                                           */
 		case snd_soc_dapm_regulator_supply:
 #endif
 			if (w->name)
@@ -2338,7 +2338,7 @@ static int snd_soc_dapm_add_route(struct snd_soc_dapm_context *dapm,
 	case snd_soc_dapm_post:
 	case snd_soc_dapm_supply:
 #ifdef CONFIG_SND_SOC_WM5110
-	/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+	/*                                                           */
 	case snd_soc_dapm_regulator_supply:
 #endif
 	case snd_soc_dapm_aif_in:
@@ -2374,7 +2374,7 @@ static int snd_soc_dapm_add_route(struct snd_soc_dapm_context *dapm,
 		return 0;
 	}
 #ifdef 	CONFIG_SND_SOC_WM5110
-	/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+	/*                                                           */
 	dapm_mark_dirty(wsource, "Route added");
 	dapm_mark_dirty(wsink, "Route added");
 #endif
@@ -2387,7 +2387,7 @@ err:
 	return ret;
 }
 #ifdef CONFIG_SND_SOC_WM5110
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+/*                                                           */
 static int snd_soc_dapm_del_route(struct snd_soc_dapm_context *dapm,
 				  const struct snd_soc_dapm_route *route)
 {
@@ -2478,7 +2478,7 @@ int snd_soc_dapm_add_routes(struct snd_soc_dapm_context *dapm,
 EXPORT_SYMBOL_GPL(snd_soc_dapm_add_routes);
 
 #ifdef CONFIG_SND_SOC_WM5110
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+/*                                                           */
 /**
  * snd_soc_dapm_del_routes - Remove routes between DAPM widgets
  * @dapm: DAPM context
@@ -3090,7 +3090,7 @@ int snd_soc_dapm_put_pin_switch(struct snd_kcontrol *kcontrol,
 }
 EXPORT_SYMBOL_GPL(snd_soc_dapm_put_pin_switch);
 
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+/*                                                           */
 /**
  * snd_soc_dapm_new_control - create new dapm control
  * @dapm: DAPM context

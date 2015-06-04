@@ -790,10 +790,10 @@ int msm_vidc_release_buffers(void *instance, int buffer_type)
 				&buffer_info);
 #ifdef CONFIG_MACH_LGE
 		/*
-		* LGE_CHANGE
-		* When buffer linked list has abnormal values, exit for loop and error value return
-		* 2014-02-17, jinny.park@lge.com
-		*/
+              
+                                                                                     
+                                  
+  */
 		if (rc) {
 			dprintk(VIDC_ERR,
 			"Failed Release buffer: %d, %d, %d\n",

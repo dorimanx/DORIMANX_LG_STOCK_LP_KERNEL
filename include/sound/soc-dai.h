@@ -208,7 +208,7 @@ struct snd_soc_dai_driver {
 	unsigned int id;
 	int ac97_control;
 #ifdef CONFIG_SND_SOC_WM5110
-	/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+	/*                                                           */
 	unsigned int base;
 #endif
 	/* DAI driver callbacks */

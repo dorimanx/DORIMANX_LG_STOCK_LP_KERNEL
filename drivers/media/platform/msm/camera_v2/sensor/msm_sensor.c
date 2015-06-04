@@ -23,11 +23,11 @@
 #if defined(CONFIG_LG_OIS)
 #include "msm_ois.h"
 #endif
-/* LGE_CHANGE_S, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
+/*                                                                 */
 #if defined(CONFIG_LG_PROXY)
 #include "msm_proxy.h"
 #endif
-/* LGE_CHANGE_E, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
+/*                                                                 */
 
 /*#define CONFIG_MSMB_CAMERA_DEBUG*/
 #undef CDBG
@@ -191,14 +191,14 @@ static int32_t msm_sensor_get_dt_data(struct device_node *of_node,
 		rc = 0;
 	}
 
-	/* LGE_CHANGE_S, OIS capability, 2013-06-26, kh.kang@lge.com */
+	/*                                                           */
 	if (of_property_read_bool(of_node, "qcom,gpio-ois-ldo") == true) {
 		sensordata->sensor_info->ois_supported = true;
 	}
 	else {
 		sensordata->sensor_info->ois_supported = false;
 	}
-	/* LGE_CHANGE_E, OIS capability, 2013-06-26, kh.kang@lge.com */
+	/*                                                           */
 
 
 	rc = msm_sensor_get_dt_csi_data(of_node, &sensordata->csi_lane_params);
@@ -508,12 +508,12 @@ int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 	int rc = 0;
 	uint16_t chipid = 0;
 
-/* [LGE_CHANGE_S] youngbae.choi@lge.com, 2013-05-16
- * when failed matching ID , retry the read. */
+/*                                                 
+                                             */
 	int i = 0;
 	int n_res = 0;
-/* [LGE_CHANGE_E] youngbae.choi@lge.com, 2013-05-16
- * when failed matching ID , retry the read. */
+/*                                                 
+                                             */
 
 	struct msm_camera_i2c_client *sensor_i2c_client;
 	struct msm_camera_slave_info *slave_info;
@@ -535,8 +535,8 @@ int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 		return -EINVAL;
 	}
 
-/* [LGE_CHANGE_S] youngbae.choi@lge.com, 2013-05-16
- * when failed matching ID , retry the read. */
+/*                                                 
+                                             */
 #if 1
 	for(i =0;i<3;i++){
 		rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_read(
@@ -583,8 +583,8 @@ int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 		return rc;
 	}
 #endif
-/* [LGE_CHANGE_S] youngbae.choi@lge.com, 2013-05-16
- * when failed matching ID , retry the read. */
+/*                                                 
+                                             */
 
 	CDBG("%s: read id: %x expected id %x:\n", __func__, chipid,
 		slave_info->sensor_id);
@@ -684,10 +684,10 @@ int msm_sensor_config(struct msm_sensor_ctrl_t *s_ctrl, void __user *argp)
 			__LINE__, cdata->cfg.sensor_info.is_mount_angle_valid,
 			cdata->cfg.sensor_info.sensor_mount_angle);
 
-/* LGE_CHANGE_S, ois info 2014-09-16 sungmin.cho@lge.com */
+/*                                                       */
         cdata->cfg.sensor_info.ois_supported =
             s_ctrl->sensordata->sensor_info->ois_supported;
-/* LGE_CHANGE_E, ois info 2014-09-16 sungmin.cho@lge.com */
+/*                                                       */
 
 		break;
 	case CFG_GET_SENSOR_INIT_PARAMS:
@@ -1132,7 +1132,7 @@ int msm_sensor_config(struct msm_sensor_ctrl_t *s_ctrl, void __user *argp)
 		}
 		break;
 	}
-/* LGE_CHANGE_S, OIS update, 2013-06-26, kh.kang@lge.com */
+/*                                                       */
 #if defined(CONFIG_LG_OIS)
 	case CFG_OIS_ON:{
 		enum ois_ver_t ver;
@@ -1180,8 +1180,8 @@ int msm_sensor_config(struct msm_sensor_ctrl_t *s_ctrl, void __user *argp)
 		break;
 	}
 #endif
-/* LGE_CHANGE_E, OIS upgrade, 2013-06-26, kh.kang@lge.com */
-/* LGE_CHANGE_S, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
+/*                                                        */
+/*                                                                 */
 #if defined(CONFIG_LG_PROXY)
 	case CFG_PROXY_ON:{
 		rc = msm_init_proxy();
@@ -1231,7 +1231,7 @@ int msm_sensor_config(struct msm_sensor_ctrl_t *s_ctrl, void __user *argp)
 		break;
 
 #endif
-/* LGE_CHANGE_E, For laser sensor, 2014-02-24, sungmin.woo@lge.com */
+/*                                                                 */
 
 	default:
 		rc = -EFAULT;
@@ -1388,7 +1388,7 @@ int32_t msm_sensor_platform_probe(struct platform_device *pdev, void *data)
 	}
 
 #if defined(CONFIG_MACH_MSM8974_G3_KDDI)
-/* LGE_CHANGE, Check sensor type whether 30 fps or not, 2014-05-21, jinw.kim@lge.com */
+/*                                                                                   */
 	if(!strcmp(s_ctrl->sensordata->sensor_name, "imx135")) {
 
 		uint16_t chip_type;
@@ -1423,7 +1423,7 @@ int32_t msm_sensor_platform_probe(struct platform_device *pdev, void *data)
 	}
 #endif
 
-	pr_err("%s %s probe succeeded\n", __func__, /* LGE_CHANGE_S, enable log for probing check, 2014-02-07, jungryoul.choi@lge.com */
+	pr_err("%s %s probe succeeded\n", __func__, /*                                                                                */
 		s_ctrl->sensordata->sensor_name);
 	v4l2_subdev_init(&s_ctrl->msm_sd.sd,
 		s_ctrl->sensor_v4l2_subdev_ops);

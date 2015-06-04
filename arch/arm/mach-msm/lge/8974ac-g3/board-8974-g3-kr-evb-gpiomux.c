@@ -294,7 +294,7 @@ static struct gpiomux_setting atmel_int_sus_cfg = {
 	.drv = GPIOMUX_DRV_2MA,
 	.pull = GPIOMUX_PULL_DOWN,
 };
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up*/
+/*                                                          */
 #if 0
 static struct gpiomux_setting taiko_reset = {
 	.func = GPIOMUX_FUNC_GPIO,
@@ -482,7 +482,7 @@ static struct msm_gpiomux_config msm_mhl_configs[] __initdata = {
 };
 
 
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up*/
+/*                                                          */
 /* Define the WM5110 GPIOs */
 static struct gpiomux_setting wm5110_reset = {
 	.func = GPIOMUX_FUNC_GPIO,
@@ -743,7 +743,7 @@ static struct msm_gpiomux_config msm_blsp_configs[] __initdata = {
 		},
 	},
 #endif
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up*/
+/*                                                          */
 #ifdef CONFIG_MACH_LGE
 	{
 		.gpio      = 53,		/* BLSP2 QUP4 SPI_DATA_MOSI */
@@ -1012,7 +1012,7 @@ static struct msm_gpiomux_config msm_sensor_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gpio_suspend_config[1],
 		},
 	},
-/* LGE change_start,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                             */
 #if defined(CONFIG_LGE_NFC) || defined(CONFIG_NFC_BCM2079X) || defined(CONFIG_LGE_NFC_PN547_C2)
 #else
 	{
@@ -1023,7 +1023,7 @@ static struct msm_gpiomux_config msm_sensor_configs[] __initdata = {
 		},
 	},
 #endif
-/* LGE change_end,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                           */
 
 };
 
@@ -1149,7 +1149,7 @@ static struct msm_gpiomux_config msm_sensor_configs_dragonboard[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gpio_suspend_config[1],
 		},
 	},
-/* LGE change_start,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                             */
 #if defined(CONFIG_LGE_NFC) || defined(CONFIG_NFC_BCM2079X) || defined(CONFIG_LGE_NFC_PN547_C2)
 #else
 	{
@@ -1160,7 +1160,7 @@ static struct msm_gpiomux_config msm_sensor_configs_dragonboard[] __initdata = {
 		},
 	},
 #endif
-/* LGE change_end,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                           */
 };
 #endif
 static struct msm_gpiomux_config msm_sensor_configs_rev_c[] __initdata = {
@@ -1303,7 +1303,7 @@ static struct msm_gpiomux_config msm_sensor_configs_rev_c[] __initdata = {
 	},
 #endif
 
-/* LGE_CHANGE_S, [NFC][byunggu.kang@lge.com], 2013-03-27 */
+/*                                                       */
 #if defined(CONFIG_NFC_BCM2079X)
 #else
 	{
@@ -1314,7 +1314,7 @@ static struct msm_gpiomux_config msm_sensor_configs_rev_c[] __initdata = {
 		},
 	},
 #endif
-/* LGE_CHANGE_E, [NFC][byunggu.kang@lge.com], 2013-03-27 */
+/*                                                       */
 
 	{
 		.gpio = 57, /* 13M_VCM_EN */
@@ -1352,7 +1352,7 @@ static struct msm_gpiomux_config msm_sensor_configs_rev_c[] __initdata = {
 		},
 	},
 };
-#endif /* #if defined(CONFIG_MACH_LGE) */
+#endif /*                              */
 static struct gpiomux_setting auxpcm_act_cfg = {
 	.func = GPIOMUX_FUNC_1,
 	.drv = GPIOMUX_DRV_8MA,
@@ -1556,7 +1556,7 @@ static struct msm_gpiomux_config ath_gpio_configs[] = {
 	},
 };
 
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up*/
+/*                                                          */
 #if 0
 static struct msm_gpiomux_config msm_taiko_config[] __initdata = {
 	{
@@ -1737,7 +1737,7 @@ static struct gpiomux_setting sdc4_data_1_suspend_cfg = {
 
 static struct msm_gpiomux_config msm8974_sdc4_configs[] __initdata = {
 	{
-/* LGE change_start,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                             */
 #if defined(CONFIG_LGE_NFC) || defined(CONFIG_NFC_BCM2079X) || defined(CONFIG_LGE_NFC_PN547_C2)
 #else
 		/* DAT3 */
@@ -1756,7 +1756,7 @@ static struct msm_gpiomux_config msm8974_sdc4_configs[] __initdata = {
 		},
 	},
 #endif
-/* LGE change_end,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                           */
 
 	{
 		/* DAT1 */
@@ -1782,7 +1782,7 @@ static struct msm_gpiomux_config msm8974_sdc4_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &sdc4_suspend_cfg,
 		},
 	},
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up*/
+/*                                                          */
 #if 0
 	{
 		/* CLK */
@@ -1804,7 +1804,7 @@ static void msm_gpiomux_sdc4_install(void)
 static void msm_gpiomux_sdc4_install(void) {}
 #endif /* CONFIG_MMC_MSM_SDC4_SUPPORT */
 
-/* LGE_CHANGE_S, [BT][younghyun.kwon@lge.com], 2013-01-29 */
+/*                                                        */
 #ifdef CONFIG_LGE_BLUETOOTH
 static struct gpiomux_setting bt_blsp5_uart_tx_config = {
     .func = GPIOMUX_FUNC_3,
@@ -1995,8 +1995,8 @@ static void bluetooth_msm_gpiomux_install(void)
     /* PCM I/F */
     msm_gpiomux_install(bt_pcm_configs, ARRAY_SIZE(bt_pcm_configs));
 }
-#endif /* CONFIG_LGE_BLUETOOTH */
-/* LGE_CHANGE_E, [BT][younghyun.kwon@lge.com], 2013-01-29 */
+#endif /*                      */
+/*                                                        */
 
 static struct gpiomux_setting max17048_i2c_sda_config = {
 	/* GPIO_2 */
@@ -2061,7 +2061,7 @@ static struct msm_gpiomux_config apq8074_dragonboard_ts_config[] __initdata = {
 #endif
 
 
-/* LGE change_start,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                             */
 #if defined(CONFIG_LGE_NFC) || defined(CONFIG_NFC_BCM2079X) || defined(CONFIG_LGE_NFC_PN547_C2)
 static struct gpiomux_setting nfc_sda_cfg = {
 	.func = GPIOMUX_FUNC_3,
@@ -2138,7 +2138,7 @@ static struct msm_gpiomux_config msm8974_nfc_configs[] __initdata = {
 	},
 };
 #endif
-/* LGE change_end,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                           */
 
 
 void __init msm_8974_init_gpiomux(void)
@@ -2186,10 +2186,10 @@ void __init msm_8974_init_gpiomux(void)
 #endif
 	msm_gpiomux_install(&sd_card_det, 1);
 
-/* LGE_CHANGE_S, [WiFi][jaewoo.hwang@lge.com], 2013-01-28, Wifi Bring Up */
+/*                                                                       */
 /* printk("jaewoo in msm_gpiomux_sdc3_install\n"); */
 	msm_gpiomux_sdc3_install();
-/* LGE_CHANGE_E, [WiFi][jaewoo.hwang@lge.com], 2013-01-28, Wifi Bring Up */
+/*                                                                       */
 
 	if (machine_is_apq8074() && (of_board_is_liquid() || \
 	    of_board_is_dragonboard()))
@@ -2198,7 +2198,7 @@ void __init msm_8974_init_gpiomux(void)
 	if (!(of_board_is_dragonboard() && machine_is_apq8074()))
 		msm_gpiomux_sdc4_install();
 
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up*/
+/*                                                          */
 	/* install the WM5110 GPIO functions */
 	msm_gpiomux_install(msm_wm5110_configs, ARRAY_SIZE(msm_wm5110_configs));
 	/* msm_gpiomux_install(msm_taiko_config, ARRAY_SIZE(msm_taiko_config)); */
@@ -2252,7 +2252,7 @@ void __init msm_8974_init_gpiomux(void)
 
 #if defined(CONFIG_MACH_LGE)
 	msm_gpiomux_install(msm_sensor_configs_rev_c, ARRAY_SIZE(msm_sensor_configs_rev_c));
-#endif /* #if defined(CONFIG_MACH_LGE) */
+#endif /*                              */
 #ifndef CONFIG_MACH_LGE /*QCT Original code */
 	if (of_board_is_dragonboard() && machine_is_apq8074())
 		msm_gpiomux_install(apq8074_dragonboard_ts_config,
@@ -2262,18 +2262,18 @@ void __init msm_8974_init_gpiomux(void)
 			ARRAY_SIZE(msm_fuel_gauge_configs));
 #endif
 
-/* LGE change_start,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                             */
 #if defined(CONFIG_LGE_NFC) || defined(CONFIG_NFC_BCM2079X) || defined(CONFIG_LGE_NFC_PN547_C2)
 	msm_gpiomux_install(msm8974_nfc_configs, ARRAY_SIZE(msm8974_nfc_configs));
 #endif
-/* LGE change_end,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                           */
 
 
-/* LGE_CHANGE_S, [BT][younghyun.kwon@lge.com], 2013-01-29 */
+/*                                                        */
 #ifdef CONFIG_LGE_BLUETOOTH
     bluetooth_msm_gpiomux_install();
-#endif /* CONFIG_LGE_BLUETOOTH */
-/* LGE_CHANGE_E, [BT][younghyun.kwon@lge.com], 2013-01-29 */
+#endif /*                      */
+/*                                                        */
 }
 
 static void wcnss_switch_to_gpio(void)

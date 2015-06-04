@@ -3304,7 +3304,7 @@ if ((!strncmp(ts->fw_info.ic_fw_identifier, "PLG208", 6)) || (!strncmp(ts->fw_in
 		}
 #endif	//#ifdef CONFIG_MACH_MSM8974_G2_OPEN_COM
 #endif	//#ifdef CONFIG_MACH_MSM8974_VU3_KR
-#endif	//#ifdef CONFIG_LGE_Z_TOUCHSCREEN
+#endif	//                               
 	}
 #else
 	if ((!strcmp(ts->pdata->fw_version, ts->fw_info.ic_fw_version)
@@ -6038,7 +6038,7 @@ static int touch_lcd_suspend(struct device *device)
 	knockon_wakeup_uevent_reporting = 0;
 #endif
 
-#if 0//#ifdef CONFIG_LGE_SECURITY_KNOCK_ON
+#if 0//                                   
 //	atomic_set(&ts->state.uevent_state, UEVENT_IDLE);
 	touch_device_func->suspend(ts->client);
 #endif

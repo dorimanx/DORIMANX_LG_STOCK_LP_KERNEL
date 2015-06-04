@@ -45,7 +45,7 @@
 #define DRIVER_AUTHOR	"Clark Kim <clark.kim@maxim-ic.com>"
 
 #if defined(CONFIG_LGE_PM)
-/* LGE specific */
+/*              */
 #include <mach/board_lge.h>
 #include <linux/max17048_battery.h>
 #include <linux/reboot.h>

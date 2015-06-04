@@ -4054,7 +4054,7 @@ static LGE_TOUCH_ATTR(accuracy, S_IRUGO | S_IWUSR, NULL, store_accuracy_solution
 static LGE_TOUCH_ATTR(show_touches, S_IRUGO | S_IWUSR, show_show_touches, store_show_touches);
 static LGE_TOUCH_ATTR(pointer_location, S_IRUGO | S_IWUSR, show_pointer_location, store_pointer_location);
 static LGE_TOUCH_ATTR(incoming_call, S_IRUGO | S_IWUSR, NULL, store_incoming_call);
-//static LGE_TOUCH_ATTR(f54, S_IRUGO | S_IWUSR, show_f54, store_f54);
+//                                                                   
 static LGE_TOUCH_ATTR(report_mode, S_IRUGO | S_IWUSR, NULL, store_report_mode);
 static LGE_TOUCH_ATTR(ta_debouncing_count, S_IRUGO | S_IWUSR, NULL, store_debouncing_count);
 static LGE_TOUCH_ATTR(ta_debouncing_finger_num, S_IRUGO | S_IWUSR, NULL, store_debouncing_finger_num);
@@ -4887,15 +4887,15 @@ TOUCH_INFO_MSG("ic_chip_rev = %d\n", ts->fw_info.fw_setting.ic_chip_rev);
 
 	enable_irq(ts->client->irq);
 	TOUCH_INFO_MSG("%s : enable_irq !!\n", __func__);
-/* rangkast.jeong not ready
-	if(lge_get_boot_mode() == LGE_BOOT_MODE_CHARGERLOGO) {
-		TOUCH_INFO_MSG("lge_get_boot_mode() is LGE_BOOT_MODE_CHARGERLOGO\n");
-		disable_irq(ts->client->irq);
-		TOUCH_INFO_MSG("%s : disable_irq !!\n", __func__);
-		touch_power_cntl(ts, POWER_OFF);
-	} else {
-		TOUCH_INFO_MSG("lge_get_boot_mode() is not LGE_BOOT_MODE_CHARGERLOGO\n");
-	}
+/*                         
+                                                       
+                                                                       
+                               
+                                                    
+                                  
+         
+                                                                           
+  
 */
 #endif
 	/* Firmware Upgrade Check - use thread for booting time reduction */
@@ -4963,14 +4963,14 @@ TOUCH_INFO_MSG("ic_chip_rev = %d\n", ts->fw_info.fw_setting.ic_chip_rev);
 	TOUCH_INFO_MSG("G1F : touch_f54_func is not executed\n");
 #else
 
-/* rangkast.jeong not ready
+/*                         
 
-	TOUCH_INFO_MSG("%d : bootmode check !!\n", lge_get_boot_mode());
+                                                                 
 
-	if(lge_get_boot_mode() == LGE_BOOT_MODE_NORMAL) {
-		queue_delayed_work(touch_wq, &ts->work_f54,
-				msecs_to_jiffies(ts->pdata->role->booting_delay));
-	}
+                                                  
+                                             
+                                                      
+  
 
 */
 #endif

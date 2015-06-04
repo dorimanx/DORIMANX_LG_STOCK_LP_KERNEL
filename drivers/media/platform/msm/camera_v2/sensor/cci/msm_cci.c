@@ -29,13 +29,13 @@
 #define CYCLES_PER_MICRO_SEC 4915
 #define CCI_MAX_DELAY 10000
 
-/*LGE_CHANGE S, i2c timeout increase, 2013-05-23, youngbae.choi@lge.com */
+/*                                                                      */
 #if 1
 #define CCI_TIMEOUT msecs_to_jiffies(300) //timeout 300ms
 #else /* original */
 #define CCI_TIMEOUT msecs_to_jiffies(100)
 #endif
-/*LGE_CHANGE E, i2c timeout increase, 2013-05-23, youngbae.choi@lge.com */
+/*                                                                      */
 
 
 /* TODO move this somewhere else */

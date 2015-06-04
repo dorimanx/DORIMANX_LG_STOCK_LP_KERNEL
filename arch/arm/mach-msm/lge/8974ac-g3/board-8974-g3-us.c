@@ -122,9 +122,9 @@ void __init msm8974_add_drivers(void)
 	lge_add_lcd_misc_devices();
 #endif
 #if defined(CONFIG_LCD_KCAL)
-/* LGE_CHANGE_S
-* change code for LCD KCAL
-* 2013-05-08, seojin.lee@lge.com
+/*             
+                          
+                                
 */
 	lge_add_lcd_kcal_devices();
 #endif /* CONFIG_LCD_KCAL */

@@ -1871,7 +1871,7 @@ static int i2c_qup_pm_resume_sys(struct device *device)
 	if (pm_runtime_suspended(device)) {
 		dev_info(device, "i2c can't wake up !!! pm_runtime_get_sync() doesn't work !!!\n");
 	}
-#endif /* CONFIG_MACH_LGE */
+#endif /*                 */
 #if defined(CONFIG_CHARGER_MAX77819) || defined(CONFIG_BQ24192_CHARGER) || \
     defined(CONFIG_INPUT_MAX14688) || defined(CONFIG_SMB349_CHARGER) || \
     defined(CONFIG_BQ51053B_CHARGER)

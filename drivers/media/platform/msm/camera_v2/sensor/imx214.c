@@ -155,13 +155,13 @@ static int32_t imx214_platform_probe(struct platform_device *pdev)
 	const struct of_device_id *match;
 	CDBG("%s E\n", __func__);
 	match = of_match_device(imx214_dt_match, &pdev->dev);
-/* LGE_CHANGE_S : WBT, 2013-5-31, jonghwan.ko@lge.com */
+/*                                                    */
 	if(!match)
 	{
 	      pr_err(" %s failed ",__func__);
 	      return -ENODEV;
        }
-/* LGE_CHANGE_E : WBT, 2013-5-31, jonghwan.ko@lge.com */
+/*                                                    */
 	rc = msm_sensor_platform_probe(pdev, match->data);
 	CDBG("%s: X, rc = %d\n", __func__, rc);
 	return rc;
@@ -203,10 +203,10 @@ static void __exit imx214_exit_module(void)
 
 static struct msm_sensor_ctrl_t imx214_s_ctrl = {
 	.sensor_i2c_client = &imx214_sensor_i2c_client,
-/* LGE_CHANGE_S  Camera bring up - Separate Rev.A and B setting */
+/*                                                              */
 //	.power_setting_array.power_setting = imx214_power_setting,
 //	.power_setting_array.size = ARRAY_SIZE(imx214_power_setting),
-/* LGE_CHANGE_E, Camera bring up - Separate Rev.A and B setting */
+/*                                                              */
 	.msm_sensor_mutex = &imx214_mut,
 	.sensor_v4l2_subdev_info = imx214_subdev_info,
 	.sensor_v4l2_subdev_info_size = ARRAY_SIZE(imx214_subdev_info),

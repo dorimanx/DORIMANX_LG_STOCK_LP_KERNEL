@@ -942,10 +942,10 @@ static int msm_ispif_init(struct ispif_device *ispif,
 
 	BUG_ON(!ispif);
 
-/* LGE_CHANGE_S [20130622][youngbae.choi@lge.com] : To enter the deep sleep after finish camera close */
+/*                                                                                                    */
 	wake_unlock(&ispif->camera_wake_lock);
 	pr_err(" %s:%d camera_wake_lock unlock \n",__func__,__LINE__);
-/* LGE_CHANGE_E [20130622][youngbae.choi@lge.com] : To enter the deep sleep after finish camera close */
+/*                                                                                                    */
 
 	if (ispif->ispif_state == ISPIF_POWER_UP) {
 		pr_err("%s: ispif already initted state = %d\n", __func__,
@@ -1039,10 +1039,10 @@ static void msm_ispif_release(struct ispif_device *ispif)
 	iounmap(ispif->clk_mux_base);
 
 	ispif->ispif_state = ISPIF_POWER_DOWN;
-/* LGE_CHANGE_S [20130622][youngbae.choi@lge.com] : To enter the deep sleep after finish camera close */
+/*                                                                                                    */
 	wake_lock_timeout(&ispif->camera_wake_lock, 1*HZ);
 	pr_err(" %s:%d Before suspend, camera release need time to work complete. \n",__func__,__LINE__);
-/* LGE_CHANGE_E [20130622][youngbae.choi@lge.com] : To enter the deep sleep after finish camera close */
+/*                                                                                                    */
 }
 
 static long msm_ispif_cmd(struct v4l2_subdev *sd, void *arg)
@@ -1246,9 +1246,9 @@ static int __devinit ispif_probe(struct platform_device *pdev)
 	ispif->ispif_state = ISPIF_POWER_DOWN;
 	ispif->open_cnt = 0;
 
-/* LGE_CHANGE_S [20130622][youngbae.choi@lge.com] : To enter the deep sleep after finish camera close */
+/*                                                                                                    */
 	wake_lock_init(&ispif->camera_wake_lock, WAKE_LOCK_SUSPEND, "camera_wake_lock");
-/* LGE_CHANGE_E [20130622][youngbae.choi@lge.com] : To enter the deep sleep after finish camera close */
+/*                                                                                                    */
 	return 0;
 
 error:

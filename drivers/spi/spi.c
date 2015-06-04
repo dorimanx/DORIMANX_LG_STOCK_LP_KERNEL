@@ -1405,7 +1405,7 @@ int spi_write_then_read(struct spi_device *spi,
 	 * using the pre-allocated buffer or the transfer is too large.
 	 */
 #ifdef CONFIG_SND_SOC_WM5110
-	/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+	/*                                                           */
 	if ((n_tx + n_rx) > SPI_BUFSIZ || !mutex_trylock(&lock)) {
 		local_buf = kmalloc(max((unsigned int)SPI_BUFSIZ, (unsigned int)(n_tx + n_rx)), GFP_KERNEL);
 		if (!local_buf)

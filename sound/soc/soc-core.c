@@ -2721,7 +2721,7 @@ int snd_soc_put_volsw(struct snd_kcontrol *kcontrol,
 EXPORT_SYMBOL_GPL(snd_soc_put_volsw);
 
 #ifdef CONFIG_SND_SOC_WM5110
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+/*                                                           */
 /**
  * snd_soc_get_volsw_sx - single mixer get callback
  * @kcontrol: mixer control
@@ -2899,7 +2899,7 @@ int snd_soc_put_volsw_s8(struct snd_kcontrol *kcontrol,
 EXPORT_SYMBOL_GPL(snd_soc_put_volsw_s8);
 
 #ifdef CONFIG_SND_SOC_WM5110
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+/*                                                           */
 /**
  * snd_soc_info_volsw_range - single mixer info callback with range.
  * @kcontrol: mixer control
@@ -3132,7 +3132,7 @@ int snd_soc_put_volsw_2r_sx(struct snd_kcontrol *kcontrol,
 EXPORT_SYMBOL_GPL(snd_soc_put_volsw_2r_sx);
 
 #ifdef CONFIG_SND_SOC_WM5110
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+/*                                                           */
 int snd_soc_bytes_info(struct snd_kcontrol *kcontrol,
 		       struct snd_ctl_elem_info *uinfo)
 {

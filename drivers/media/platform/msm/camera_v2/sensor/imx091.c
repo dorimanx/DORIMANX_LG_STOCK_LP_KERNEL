@@ -119,13 +119,13 @@ static int32_t imx091_platform_probe(struct platform_device *pdev)
 	int32_t rc = 0;
 	const struct of_device_id *match;
 	match = of_match_device(imx091_dt_match, &pdev->dev);
-    /* LGE_CHANGE_S : WBT 2014-03-21 sungmin.cho@lge.com */
+    /*                                                   */
     if(!match)
     {
       pr_err(" %s failed ",__func__);
       return -ENODEV;
     }
-    /* LGE_CHANGE_E : WBT 2014-03-21 sungmin.cho@lge.com */
+    /*                                                   */
 	rc = msm_sensor_platform_probe(pdev, match->data);
 	return rc;
 }

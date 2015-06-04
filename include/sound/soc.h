@@ -1134,7 +1134,7 @@ struct soc_multi_mixer_control {
 };
 
 #ifdef CONFIG_SND_SOC_WM5110
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+/*                                                           */
 struct soc_bytes {
 	int base;
 	int num_regs;

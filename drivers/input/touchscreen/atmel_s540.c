@@ -2260,7 +2260,7 @@ static int mxt_read_and_process_messages(struct mxt_data *data, u8 count)
 }
 
 #ifdef CUST_B_TOUCH
-// LGE_CHANGE_S [naomi.kim@lge.com] 13.06.18, make width minor data
+//                                                                 
 #if TOUCHEVENTFILTER
 int set_minor_data(struct mxt_data *data, int area, u8 vector)
 {
@@ -2323,7 +2323,7 @@ int set_minor_data(struct mxt_data *data, int area, u8 vector)
 	return minor;
 }
 #endif
-// LGE_CHANGE_E [naomi.kim@lge.com] 13.06.18, make width minor data
+//                                                                 
 
 static char* get_tool_type(struct mxt_data *data, struct t_data touch_data) {
 	if (touch_data.tool == MT_TOOL_FINGER) {
@@ -2556,7 +2556,7 @@ static void mxt_process_messages_t44(struct work_struct *work)
 				input_report_abs(data->input_dev, ABS_MT_WIDTH_MINOR,
 					data->ts_data.curr_data[i].touch_minor);
 
-			// LGE_CHANGE_S [naomi.kim@lge.com] 13.06.18, add more debugging data
+			//                                                                   
 				#if TOUCHEVENTFILTER
 				dev_dbg(dev,
 					"report_data[%d] : x: %d y: %d, z: %d, M: %d, m: %d, orient: %d)\n",
@@ -2578,7 +2578,7 @@ static void mxt_process_messages_t44(struct work_struct *work)
 						data->ts_data.curr_data[i].orientation
 				);
 				#endif
-				// LGE_CHANGE_E [naomi.kim@lge.com] 13.06.18, add more debugging data
+				//                                                                   
 			}
 		}
 #if DEBUG_ABS

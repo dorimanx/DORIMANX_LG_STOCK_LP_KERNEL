@@ -166,7 +166,7 @@ static CountryInfoTable_t countryInfoTable =
       {REGDOMAIN_ETSI, {'D', 'E'}}, //GERMANY
       {REGDOMAIN_ETSI, {'D', 'K'}}, //DENMARK
       {REGDOMAIN_FCC, {'D', 'O'}}, //DOMINICAN REPUBLIC
-      {REGDOMAIN_ETSI, {'D', 'Z'}}, //ALGERIA
+      {REGDOMAIN_ETSI, {'D', 'Z'}}, //       
       {REGDOMAIN_ETSI, {'E', 'C'}}, //ECUADOR
       {REGDOMAIN_ETSI, {'E', 'E'}}, //ESTONIA
       {REGDOMAIN_ETSI, {'E', 'G'}}, //EGYPT
@@ -338,7 +338,7 @@ static CountryInfoTable_t countryInfoTable =
         { REGDOMAIN_ETSI,    {'D', 'K'}},  //DENMARK
         { REGDOMAIN_WORLD,   {'D', 'M'}},  //DOMINICA
         { REGDOMAIN_APAC,    {'D', 'O'}},  //DOMINICAN REPUBLIC
-        { REGDOMAIN_ETSI,    {'D', 'Z'}},  //ALGERIA
+        { REGDOMAIN_ETSI,    {'D', 'Z'}},  //       
         { REGDOMAIN_APAC,    {'E', 'C'}},  //ECUADOR
         { REGDOMAIN_ETSI,    {'E', 'E'}},  //ESTONIA
         { REGDOMAIN_N_AMER_EXC_FCC, {'E', 'G'}},  //EGYPT

@@ -3735,10 +3735,10 @@ static int __devinit dwc3_msm_probe(struct platform_device *pdev)
 			!mdwc->charger.charging_disabled) {
 		mdwc->usb_psy.name = "usb";
 #ifdef CONFIG_LGE_PM
-		/* B2-BSP-USB@lge.com
-		 * Set psy supply type when usb plug & unplug,
-		 * So, set as unknown type when probing.
-		 */
+		/*                   
+                                                
+                                          
+   */
 		mdwc->usb_psy.type = POWER_SUPPLY_TYPE_UNKNOWN;
 #else
 		mdwc->usb_psy.type = POWER_SUPPLY_TYPE_USB;

@@ -4883,7 +4883,7 @@ int q6asm_set_lgesoundmabl_allparam(struct audio_client *ac, struct lgesoundmabl
 fail_cmd:
 	return rc;
 }
-#endif /*CONFIG_SND_LGE_MABL*/
+#endif /*                   */
 
 int q6asm_read(struct audio_client *ac)
 {

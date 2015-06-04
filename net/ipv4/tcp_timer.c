@@ -207,7 +207,7 @@ static int tcp_write_timeout(struct sock *sk)
 			dst_negative_advice(sk);
 		retry_until = icsk->icsk_syn_retries ? : sysctl_tcp_syn_retries;
 		syn_set = true;
-/* 2013-10-30 beney.kim@lge.com LGP_DATA_TCPIP_DATASCHEDULER [START] */
+/*                                                                   */
 	} else if ((1 << sk->sk_state) & (TCPF_TIME_WAIT)) {
 		// printk(KERN_INFO "tcp_write_timeout: TCP sk=%p, TIME_WAIT State, retry_timer is set to %d, DataScheduler 1.4\n", sk, sysctl_tcp_retries1);
 		// printk(KERN_INFO "tcp_write_timeout: TCP sk=%p, timeout %lu, last rto %d, retransmit %d, backoff %d",
@@ -219,7 +219,7 @@ static int tcp_write_timeout(struct sock *sk)
         //        sk, icsk->icsk_timeout, icsk->icsk_rto, icsk->icsk_retransmits, icsk->icsk_backoff);
 		do_reset = true;
 		retry_until = sysctl_tcp_retries1;
-/* 2013-10-30 beney.kim@lge.com LGP_DATA_TCPIP_DATASCHEDULER [END] */
+/*                                                                 */
 	} else {
 		if (retransmits_timed_out(sk, sysctl_tcp_retries1, 0, 0)) {
 			/* Black hole detection */
@@ -243,12 +243,12 @@ static int tcp_write_timeout(struct sock *sk)
 
 	if (retransmits_timed_out(sk, retry_until,
 				  syn_set ? 0 : icsk->icsk_user_timeout, syn_set)) {
-/* 2013-10-30 beney.kim@lge.com LGP_DATA_TCPIP_DATASCHEDULER [START] */
+/*                                                                   */
 		if (do_reset) {
 			// printk(KERN_INFO "tcp_write_timeout: TCP sk=%p, Reset Connection, DataScheduler 1.4\n", sk);
 			tcp_send_active_reset(sk, GFP_ATOMIC);
 		}
-/* 2013-10-30 beney.kim@lge.com LGP_DATA_TCPIP_DATASCHEDULER [END] */
+/*                                                                 */
 		/* Has it gone just too far? */
 		tcp_write_err(sk);
 		return 1;

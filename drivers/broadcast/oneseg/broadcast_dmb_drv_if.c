@@ -412,7 +412,7 @@ static long broadcast_dmb_ioctl_control(struct file *filep, unsigned int cmd,   
         printk(KERN_DEBUG"LGE_BROADCAST_DMB_IOCTL_DETECT_SYNC result = %d \n", rc);
         break;
     case LGE_BROADCAST_DMB_IOCTL_GET_SIG_INFO:
-        //printk(KERN_DEBUG"[dtv][broadcast_dmb_ioctl_control][LGE_BROADCAST_DMB_IOCTL_GET_SIG_INFO][s]\n");
+        //                                                                                                  
         rc = broadcast_dmb_get_sig_info(argp);
         break;
     case LGE_BROADCAST_DMB_IOCTL_GET_CH_INFO:

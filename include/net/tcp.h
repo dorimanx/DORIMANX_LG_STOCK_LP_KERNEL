@@ -97,14 +97,14 @@ extern void tcp_time_wait(struct sock *sk, int state, int timeo);
 				 * RFC1122 says that the limit is 100 sec.
 				 * 15 is ~13-30min depending on RTO.
 				 */
-/* 2012-01-17 jk.soh@lge.com LGP_DATA_TCPIP_TCP_SYN_RETRY_CONFIG_UPLUS [START]*/
+/*                                                                            */
 #if defined(CONFIG_MACH_MSM8974_B1_LGU) || defined(CONFIG_MACH_MSM8974_G3_LGU) || defined(CONFIG_MACH_MSM8974_G2_LGU)
 #define TCP_SYN_RETRIES	 4
 #else
 #define TCP_SYN_RETRIES	 5	/* number of times to retry active opening a
 				 * connection: ~180sec is RFC minimum	*/
 #endif
-/* 2012-01-17 jk.soh@lge.com LGP_DATA_TCPIP_TCP_SYN_RETRY_CONFIG_UPLUS [END]*/
+/*                                                                          */
 
 #define TCP_SYNACK_RETRIES 5	/* number of times to retry passive opening a
 				 * connection: ~180sec is RFC minimum	*/
@@ -266,9 +266,9 @@ extern int sysctl_tcp_default_init_rwnd;
 extern int sysctl_tcp_delack_seg;
 extern int sysctl_tcp_use_userconfig;
 
-/* 2013-10-30 beney.kim@lge.com LGP_DATA_TCPIP_DATASCHEDULER [START] */
+/*                                                                   */
 extern int sysctl_ds_enable;
-/* 2013-10-30 beney.kim@lge.com LGP_DATA_TCPIP_DATASCHEDULER [END] */
+/*                                                                 */
 
 extern atomic_long_t tcp_memory_allocated;
 extern struct percpu_counter tcp_sockets_allocated;

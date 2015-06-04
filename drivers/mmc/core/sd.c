@@ -258,11 +258,11 @@ static int mmc_read_ssr(struct mmc_card *card)
 		eo = UNSTUFF_BITS(ssr, 400 - 384, 2);
 
 		#ifdef CONFIG_MACH_LGE
-		/* LGE_CHANGE
-		 * Get SPEED_CLASS of SD-card.
-		 * 0:Class0, 1:Class2, 2:Class4, 3:Class6, 4:Class10
-		 * 2014/07/01, B2-BSP-FS@lge.com
-		 */
+		/*           
+                                
+                                                      
+                                  
+   */
 		{
 			unsigned int speed_class_ssr = 0;
 
@@ -1038,10 +1038,10 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 	WARN_ON(!host->claimed);
 
 	#ifdef CONFIG_MACH_LGE
-	/* LGE_UPDATE
-	 * When uSD is not inserted, return proper error-value.
-	 * 2014/01/16, B2-BSP-FS@lge.com
-	 */
+	/*           
+                                                        
+                                 
+  */
 	if (!mmc_cd_get_status(host)) {
         pr_info("[LGE][MMC][%-18s( )] sd-no-exist. skip next\n", __func__);
 		err = -ENOMEDIUM;
@@ -1190,10 +1190,10 @@ static void mmc_sd_detect(struct mmc_host *host)
 {
 	int err = 0;
 #ifdef CONFIG_MACH_LGE
-	/* LGE_UPDATE
-	 * for fixing compile-warning
-	 * 2014-01/16, B2-BSP-FS@lge.com
-	 */
+	/*           
+                              
+                                 
+  */
 #ifdef CONFIG_MMC_PARANOID_SD_INIT
         int retries = 5;
 #endif
@@ -1293,10 +1293,10 @@ static int mmc_sd_resume(struct mmc_host *host)
 		err = mmc_sd_init_card(host, host->ocr, host->card);
 
 		#ifdef CONFIG_MACH_LGE
-			/* LGE_CHANGE
-			* Skip below When ENOMEDIUM
-			* 2014-01-16, B2-BSP-FS@lge.com
-			*/
+			/*           
+                              
+                                  
+   */
 			if (err == -ENOMEDIUM) {
                 pr_info("[LGE][MMC][%-18s( )] error:ENOMEDIUM\n", __func__);
 				break;
@@ -1461,10 +1461,10 @@ int mmc_attach_sd(struct mmc_host *host)
 		err = mmc_sd_init_card(host, host->ocr, NULL);
 
 		#ifdef CONFIG_MACH_LGE
-		/* LGE_CHANGE
-		* Skip below When ENOMEDIUM
-		* 2014-01-16, B2-BSP-FS@lge.com
-		*/
+		/*           
+                             
+                                 
+  */
 		if (err == -ENOMEDIUM) {
             pr_info("[LGE][MMC][%-18s( )] error:ENOMEDIUM\n", __func__);
 			retries = 0;

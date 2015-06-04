@@ -562,7 +562,7 @@ static void dwc3_otg_notify_host_mode(struct usb_otg *otg, int host_mode)
 		power_supply_set_scope(dotg->psy, POWER_SUPPLY_SCOPE_DEVICE);
 }
 
-/* B2-BSP-USB@lge.com make psy getter and move it above power_supply_type setter. 2014-02-06 */
+/*                                                                                           */
 #if defined(CONFIG_LGE_PM) && !defined(CONFIG_USB_DWC3_LGE_SINGLE_PSY)
 static int dwc3_otg_get_psy(struct usb_phy *phy)
 {
@@ -674,7 +674,7 @@ static int dwc3_otg_set_power(struct usb_phy *phy, unsigned mA)
 
 	dev_info(phy->dev, "Avail curr from USB = %u\n", mA);
 
-/* B2-BSP-USB@lge.com make psy getter and move it above power_supply_type setter. 2014-02-06 */
+/*                                                                                           */
 #ifdef CONFIG_LGE_PM
 #ifndef CONFIG_USB_DWC3_LGE_SINGLE_PSY
 	if (dwc3_otg_get_psy(phy) < 0)
@@ -1096,9 +1096,9 @@ static void dwc3_otg_sm_work(struct work_struct *w)
 			phy->state = OTG_STATE_A_HOST;
 #ifdef CONFIG_LGE_PM
 			/*
-			 * sangmin978.lee@lge.com, 2013-03-18
-			 * For OTG, set usb as a current power supply on host mode.
-			 */
+                                        
+                                                              
+    */
 			dotg->psy = power_supply_get_by_name("usb");
 			if (!dotg->psy)
 				dev_err(phy->dev, "couldn't get usb power supply\n");

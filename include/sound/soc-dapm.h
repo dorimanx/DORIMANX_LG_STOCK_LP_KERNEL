@@ -244,7 +244,7 @@
 	.shift = wshift, .invert = winvert, .event = wevent, \
 	.event_flags = wflags}
 #ifdef CONFIG_SND_SOC_WM5110
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+/*                                                           */
 #define SND_SOC_DAPM_REGULATOR_SUPPLY(wname, wdelay) \
 {       .id = snd_soc_dapm_regulator_supply, .name = wname, \
         .reg = SND_SOC_NOPM, .shift = wdelay, .event = dapm_regulator_event, \
@@ -336,7 +336,7 @@ struct snd_soc_dapm_widget_list;
 int dapm_reg_event(struct snd_soc_dapm_widget *w,
 		   struct snd_kcontrol *kcontrol, int event);
 #ifdef CONFIG_SND_SOC_WM5110
-/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+/*                                                           */
 int dapm_regulator_event(struct snd_soc_dapm_widget *w,
                          struct snd_kcontrol *kcontrol, int event);
 #endif
@@ -451,7 +451,7 @@ enum snd_soc_dapm_type {
 	snd_soc_dapm_pre,			/* machine specific pre widget - exec first */
 	snd_soc_dapm_post,			/* machine specific post widget - exec last */
 #ifdef 	CONFIG_SND_SOC_WM5110
-	/* LGE_CHANGE, yeri.lee@lge.com, 2013-10-31, wm5110 Bring up */
+	/*                                                           */
 	snd_soc_dapm_regulator_supply,  /* external regulator */
 #endif
 	snd_soc_dapm_supply,		/* power/clock supply */

@@ -1307,9 +1307,9 @@ static int mmc_blk_reset(struct mmc_blk_data *md, struct mmc_host *host,
 
 	md->reset_done |= type;
 	err = mmc_hw_reset(host);
-/* LGE_CHANGE_S
- * Author : D3-5T-FS@lge.com
- * Change : eMMC can recover itself, but if it fails during re-init, recover routine does not activated. (eMMC is not accessible)
+/*             
+                            
+                                                                                                                                 
  */
 #if defined (CONFIG_LGE_MMC_RESET_IF_HANG)
     /* in case that eMMC failed to re-initialize, retry five times and crash if it is eMMC. */
@@ -1502,11 +1502,11 @@ static int mmc_blk_issue_flush(struct mmc_queue *mq, struct request *req)
 	int ret = 0;
 
 	ret = mmc_flush_cache(card);
-    /* LGE_CHANGE_S
-     * Author : D3-5T-FS@lge.com
-	 * Change : eMMC can recover itself, but if it fails during re-init/flush, recover routine does not activated. (eMMC is not accessible)
-	 * 			try emmc_reset and panic if it continously fails.
-	 */
+    /*             
+                                
+                                                                                                                                        
+                                                        
+  */
 #if defined (CONFIG_LGE_MMC_RESET_IF_HANG)
     if (ret == -ENODEV) {
         pr_err("%s: %s: restart mmc card.\n",
@@ -1577,10 +1577,10 @@ static int mmc_blk_err_check(struct mmc_card *card,
 	int ecc_err = 0, gen_err = 0;
 
 #ifdef CONFIG_MACH_LGE
-	/* LGE_CHANGE
-	 * When uSD is not inserted, return proper error-value.
-	 * 2014-01-16, B2-BSP-FS@lge.com
-	 */
+	/*           
+                                                        
+                                 
+  */
 	if (mmc_card_sd(card) && !mmc_cd_get_status(card->host)) {
         pr_info("[LGE][MMC][%-18s( )] sd-no-exist, skip next\n", __func__);
 		return MMC_BLK_NOMEDIUM;

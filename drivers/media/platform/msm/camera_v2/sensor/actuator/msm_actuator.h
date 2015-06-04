@@ -25,11 +25,11 @@
 #define DEFINE_MSM_MUTEX(mutexname) \
 	static struct mutex mutexname = __MUTEX_INITIALIZER(mutexname)
 
-/* LGE_CHANGE_S Exception Lens Pos Default Infinity only enter moment, seongjo.kim@lge.com, 2013-06-23 */
+/*                                                                                                     */
 #define CAMERA_ENTER_MOMENT                      1
 #define CAMERA_ENTER_MOMENT_AFTER                2
 static int current_moment;
-/* LGE_CHANGE_E Exception Lens Pos Default Infinity only enter moment, seongjo.kim@lge.com, 2013-06-23 */
+/*                                                                                                     */
 #define	MSM_ACTUATOT_MAX_VREGS (10)
 
 struct msm_actuator_ctrl_t;

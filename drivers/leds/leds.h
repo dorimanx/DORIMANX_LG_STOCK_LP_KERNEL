@@ -18,9 +18,9 @@
 #include <linux/leds.h>
 
 #if defined(CONFIG_LGE_DUAL_LED)
-/* LGE_CHANGE
- * For Dual flash
- * 2014-01-14, jinw.kim@lge.com
+/*           
+                 
+                               
  */
 static inline void led_set_brightness2(struct led_classdev *led_cdev,
 					enum led_brightness value, enum led_brightness value2)

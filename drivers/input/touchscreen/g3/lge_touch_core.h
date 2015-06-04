@@ -19,7 +19,7 @@
 #define LGE_TOUCH_CORE_H
 #include <linux/wakelock.h>
 
-//#define LGE_TOUCH_TIME_DEBUG
+//                            
 
 #define MAX_FINGER	10
 #define MAX_BUTTON	4

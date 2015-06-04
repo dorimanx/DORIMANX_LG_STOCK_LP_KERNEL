@@ -386,7 +386,7 @@ static int __devinit gdsc_probe(struct platform_device *pdev)
 						"qcom,skip-logic-collapse");
 	if (!sc->toggle_logic) {
 #ifdef CONFIG_LGE_GDSC_SWCONTROL
-		/* LGE workaround is not used if a device is good pdn revision */
+		/*                                                             */
 		if (lge_get_board_revno() >= use_lge_workaround) {
 			regval &= ~SW_COLLAPSE_MASK;
 			writel_relaxed(regval, sc->gdscr);

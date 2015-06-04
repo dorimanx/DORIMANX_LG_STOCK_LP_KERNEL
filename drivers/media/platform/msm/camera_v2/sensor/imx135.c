@@ -16,9 +16,9 @@
 #define IMX135_SENSOR_NAME "imx135"
 DEFINE_MSM_MUTEX(imx135_mut);
 
-// LGE_CHNAGE_S sungsik.kim 2013/04/07 {
+//                                      
 #define CONFIG_IMX135_DEBUG
-// LGE_CHNAGE_E sungsik.kim 2013/04/07 }
+//                                      
 
 #undef CDBG
 #ifdef CONFIG_IMX135_DEBUG
@@ -185,17 +185,17 @@ static struct msm_sensor_power_setting imx135_power_setting_rev[] =
 		.seq_type = SENSOR_I2C_MUX,
 		.seq_val = 0,
 		.config_val = 0,
-/* LGE_CHANGE_S, fixed fuji ois power scequence issue : must need delay, 2013.11.19, youngil.yun[Start] */
+/*                                                                                                      */
 #if defined(CONFIG_MACH_MSM8974_B1_KR)
 		.delay = 1,
 #else
 		.delay = 0,
 #endif
-/* LGE_CHANGE_E, fixed fuji ois power scequence issue : must need delay, 2013.11.19, youngil.yun[End] */
+/*                                                                                                    */
 	},
 };
 #endif
-#endif //#if defined(CONFIG_MACH_LGE)
+#endif //                            
 
 static struct v4l2_subdev_info imx135_subdev_info[] = {
 	{
@@ -250,13 +250,13 @@ static int32_t imx135_platform_probe(struct platform_device *pdev)
 	const struct of_device_id *match;
 	CDBG("%s E\n", __func__);
 	match = of_match_device(imx135_dt_match, &pdev->dev);
-/* LGE_CHANGE_S : WBT, 2013-5-31, jonghwan.ko@lge.com */
+/*                                                    */
 	if(!match)
 	{
 	      pr_err(" %s failed ",__func__);
 	      return -ENODEV;
        }
-/* LGE_CHANGE_E : WBT, 2013-5-31, jonghwan.ko@lge.com */
+/*                                                    */
 	rc = msm_sensor_platform_probe(pdev, match->data);
 	CDBG("%s: X, rc = %d\n", __func__, rc);
 	return rc;
@@ -277,7 +277,7 @@ static int __init imx135_init_module(void)
 			imx135_s_ctrl.power_setting_array.size = ARRAY_SIZE(imx135_power_setting_rev);
 			break;
 	}
-#endif //#if defined(CONFIG_MACH_LGE)
+#endif //                            
 	rc = platform_driver_probe(&imx135_platform_driver,
 		imx135_platform_probe);
 	if (!rc) {
@@ -299,13 +299,13 @@ static void __exit imx135_exit_module(void)
 
 static struct msm_sensor_ctrl_t imx135_s_ctrl = {
 	.sensor_i2c_client = &imx135_sensor_i2c_client,
-/* LGE_CHANGE_S
- * Camera bring up for LGU Rev.B - Separate Rev.A and B setting
- * 2013-02-28, jinw.kim@lge.com
+/*             
+                                                               
+                               
  */
 //	.power_setting_array.power_setting = imx135_power_setting,
 //	.power_setting_array.size = ARRAY_SIZE(imx135_power_setting),
-/* LGE_CHANGE_E, Camera bring up for LGU Rev.B - Separate Rev.A and B setting */
+/*                                                                            */
 	.msm_sensor_mutex = &imx135_mut,
 	.sensor_v4l2_subdev_info = imx135_subdev_info,
 	.sensor_v4l2_subdev_info_size = ARRAY_SIZE(imx135_subdev_info),

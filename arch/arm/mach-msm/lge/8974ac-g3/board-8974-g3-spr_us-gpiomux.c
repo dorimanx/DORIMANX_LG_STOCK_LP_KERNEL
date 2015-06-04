@@ -424,7 +424,7 @@ static struct msm_gpiomux_config msm_hsic_hub_configs[] = {
 	},
 };
 
-/* LGE_CHANGE_S matthew.choi@lge.com 130319 GPIO Setting for Hall IC */
+/*                                                                   */
 static struct gpiomux_setting hall_ic_act_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
@@ -446,7 +446,7 @@ static struct msm_gpiomux_config msm_hall_ic_configs[] = {
 		},
 	},
 };
-/* LGE_CHANGE_E matthew.choi@lge.com 130319 GPIO Setting for Hall IC */
+/*                                                                   */
 
 
 static struct gpiomux_setting mhl_suspend_config = {
@@ -1121,7 +1121,7 @@ static struct msm_gpiomux_config msm_sensor_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gpio_suspend_config[1],
 		},
 	},
-/* LGE change_start,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                             */
 #if defined(CONFIG_LGE_NFC) || defined(CONFIG_NFC_BCM2079X) || defined(CONFIG_LGE_NFC_PN547_C2)
 #else
 	{
@@ -1132,7 +1132,7 @@ static struct msm_gpiomux_config msm_sensor_configs[] __initdata = {
 		},
 	},
 #endif
-/* LGE change_end,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                           */
 
 };
 
@@ -1258,7 +1258,7 @@ static struct msm_gpiomux_config msm_sensor_configs_dragonboard[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gpio_suspend_config[1],
 		},
 	},
-/* LGE change_start,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                             */
 #if defined(CONFIG_LGE_NFC) || defined(CONFIG_NFC_BCM2079X) || defined(CONFIG_LGE_NFC_PN547_C2)
 #else
 	{
@@ -1269,7 +1269,7 @@ static struct msm_gpiomux_config msm_sensor_configs_dragonboard[] __initdata = {
 		},
 	},
 #endif
-/* LGE change_end,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                           */
 };
 #endif
 /* EVB */
@@ -1602,7 +1602,7 @@ static struct msm_gpiomux_config msm_sensor_configs_rev_b[] __initdata = {
 	},
 };
 
-#endif /* #if defined(CONFIG_MACH_LGE) */
+#endif /*                              */
 static struct gpiomux_setting auxpcm_act_cfg = {
 	.func = GPIOMUX_FUNC_1,
 	.drv = GPIOMUX_DRV_8MA,
@@ -2051,7 +2051,7 @@ static struct gpiomux_setting sdc4_data_1_suspend_cfg = {
 
 static struct msm_gpiomux_config msm8974_sdc4_configs[] __initdata = {
 	{
-/* LGE change_start,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                             */
 #if defined(CONFIG_LGE_NFC) || defined(CONFIG_NFC_BCM2079X) || defined(CONFIG_LGE_NFC_PN547_C2)
 #else
 		/* DAT3 */
@@ -2070,7 +2070,7 @@ static struct msm_gpiomux_config msm8974_sdc4_configs[] __initdata = {
 		},
 	},
 #endif
-/* LGE change_end,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                           */
 
 	{
 		/* DAT1 */
@@ -2115,7 +2115,7 @@ static void msm_gpiomux_sdc4_install(void)
 static void msm_gpiomux_sdc4_install(void) {}
 #endif /* CONFIG_MMC_MSM_SDC4_SUPPORT */
 
-/* LGE_CHANGE_S, [BT][younghyun.kwon@lge.com], 2013-01-29 */
+/*                                                        */
 #ifdef CONFIG_LGE_BLUETOOTH
 static struct gpiomux_setting bt_blsp5_uart_tx_config = {
     .func = GPIOMUX_FUNC_3,
@@ -2306,8 +2306,8 @@ static void bluetooth_msm_gpiomux_install(void)
     /* PCM I/F */
     msm_gpiomux_install(bt_pcm_configs, ARRAY_SIZE(bt_pcm_configs));
 }
-#endif /* CONFIG_LGE_BLUETOOTH */
-/* LGE_CHANGE_E, [BT][younghyun.kwon@lge.com], 2013-01-29 */
+#endif /*                      */
+/*                                                        */
 
 static struct gpiomux_setting max17048_i2c_sda_config = {
 	/* GPIO_2 */
@@ -2372,7 +2372,7 @@ static struct msm_gpiomux_config apq8074_dragonboard_ts_config[] __initdata = {
 #endif
 
 
-/* LGE change_start,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                             */
 #if defined(CONFIG_LGE_NFC) || defined(CONFIG_NFC_BCM2079X) || defined(CONFIG_LGE_NFC_PN547_C2)
 static struct gpiomux_setting nfc_sda_cfg = {
 	.func = GPIOMUX_FUNC_3,
@@ -2449,7 +2449,7 @@ static struct msm_gpiomux_config msm8974_nfc_configs[] __initdata = {
 	},
 };
 #endif
-/* LGE change_end,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                           */
 
 
 void __init msm_8974_init_gpiomux(void)
@@ -2575,9 +2575,9 @@ void __init msm_8974_init_gpiomux(void)
 				ARRAY_SIZE(slimport_configs));
 #endif
 
-/* LGE_CHANGE_S matthew.choi@lge.com 130319 GPIO Setting for Hall IC */
+/*                                                                   */
 	msm_gpiomux_install(msm_hall_ic_configs, ARRAY_SIZE(msm_hall_ic_configs));
-/* LGE_CHANGE_E matthew.choi@lge.com 130319 GPIO Setting for Hall IC */
+/*                                                                   */
 
 
 #ifndef CONFIG_MACH_LGE /*QCT Original code */
@@ -2589,23 +2589,23 @@ void __init msm_8974_init_gpiomux(void)
 			ARRAY_SIZE(msm_fuel_gauge_configs));
 #endif
 
-/* LGE change_start,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                             */
 #if defined(CONFIG_LGE_NFC) || defined(CONFIG_NFC_BCM2079X) || defined(CONFIG_LGE_NFC_PN547_C2)
 	msm_gpiomux_install(msm8974_nfc_configs, ARRAY_SIZE(msm8974_nfc_configs));
 #endif
-/* LGE change_end,[nfc][seunghoon65.lee@lge.com]  B2 Bringup */
+/*                                                           */
 
 
-/* LGE_CHANGE_S, [BT][younghyun.kwon@lge.com], 2013-01-29 */
+/*                                                        */
 #ifdef CONFIG_LGE_BLUETOOTH
     bluetooth_msm_gpiomux_install();
-#endif /* CONFIG_LGE_BLUETOOTH */
-/* LGE_CHANGE_E, [BT][younghyun.kwon@lge.com], 2013-01-29 */
+#endif /*                      */
+/*                                                        */
 
-/* LGE_CHANGE_S, [B2_Broadcast][hyun118.shin@lge.com], 2014-01-28, LGE_BROADCAST */
+/*                                                                               */
 #if defined(CONFIG_LGE_BROADCAST_TDMB)
 	msm_gpiomux_install(msm8974_tdmb_configs, ARRAY_SIZE(msm8974_tdmb_configs));
-#endif /* LGE_BROADCAST */
+#endif /*               */
 
 #if defined(CONFIG_SWITCH_MAX1462X)
 		msm_gpiomux_install(headset_configs, ARRAY_SIZE(headset_configs));
