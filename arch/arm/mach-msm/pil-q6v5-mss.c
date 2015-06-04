@@ -379,8 +379,31 @@ static struct notifier_block adsp_state_notifier_block = {
 static irqreturn_t modem_wdog_bite_intr_handler(int irq, void *dev_id)
 {
 	struct modem_data *drv = subsys_to_drv(dev_id);
+	struct lge_hw_smem_id2_type *smem_id2;
+
+	/* [START] hanwool.lee@lge.com, subsys_modem_restart */
+	u32 size;
+	int ret = -EPERM;
+
+	smem_id2 = smem_get_entry(SMEM_ID_VENDOR2, &size);
+
+	if (smem_id2 == NULL){
+		pr_err("%s:smem_id2 is NULL.\n", __func__);
+		return ret;
+	}
+
+	if( smem_id2 -> modem_reset == 1){
+		pr_err("Ignore watchdog bite received from modem software!\n");
+		ret = subsys_modem_restart();
+		smem_id2->modem_reset = 0;
+		wmb();
+		return ret;
+	}
+	/* [END] hanwool.lee@lge.com, subsys_modem_restart */
+
 	if (drv->ignore_errors)
 		return IRQ_HANDLED;
+
 	pr_err("Watchdog bite received from modem software!\n");
 	subsys_set_crash_status(drv->subsys, true);
 	restart_modem(drv);
