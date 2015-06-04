@@ -50,18 +50,3 @@ config  LGE_HEADSET_MIC_NOISE_WA
     default n
     help
       to reduce mic noise when remove earjack
-
-config  LGE_HEADSET_INSERT_DELAY
-    bool "Delay to decide 3 or 4 poly while detecting"
-    depends on MACH_LGE
-    default n
-    help
-      delay to decide 3 or 4 poly while detecting
-
-config  LGE_HEADSET_INSERT_ADDITIONAL_DELAY
-    bool "Delay to decide 3 or 4 poly while detecting"
-    depends on MACH_LGE
-    default n
-    help
-      delay to decide 3 or 4 poly while detecting
-

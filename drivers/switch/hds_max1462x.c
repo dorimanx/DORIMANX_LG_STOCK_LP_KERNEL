@@ -322,18 +322,8 @@ static void insert_headset(struct hsd_info *hi)
 	atomic_set(&hi->isdetect, TRUE);
 	irq_set_irq_wake(hi->irq_key, 1);
 	gpio_direction_output(hi->gpio_mic_en, 1);
-#ifdef CONFIG_LGE_HEADSET_INSERT_DELAY
-	msleep(500);
-	HSD_DBG("insert delay 500\n");
-#else
 	msleep(40);
 	HSD_DBG("insert delay 40\n");
-#endif
-#ifdef CONFIG_LGE_HEADSET_INSERT_ADDITIONAL_DELAY
-	msleep(100);
-	HSD_DBG("insert delay additional 100\n");
-#endif
-
 	/* check if 3-pole or 4-pole
 	   1. read gpio_key
 	   2. check if 3-pole or 4-pole
