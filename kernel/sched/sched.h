@@ -366,6 +366,9 @@ struct related_thread_group {
 
 extern int group_will_fit(struct sched_cluster *cluster,
 		 struct related_thread_group *grp, u64 demand);
+extern bool have_sched_same_pwr_cost_cpus;
+extern cpumask_var_t sched_same_pwr_cost_cpus;
+
 #endif
 
 /* CFS-related fields in a runqueue */
