@@ -40,6 +40,7 @@ android-toolchain/libexec/gcc/arm-LG-linux-gnueabi/5.1.0/cc1obj
 android-toolchain/libexec/gcc/arm-LG-linux-gnueabi/5.1.0/lto1
 
 READY-RELEASES/*.zip
+READY-KERNEL/view_only_config
 
 #
 # Top-level generic files
