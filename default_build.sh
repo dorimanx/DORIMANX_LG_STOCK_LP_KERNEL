@@ -184,7 +184,7 @@ BUILD_NOW()
 		fi;
 
 		cp arch/arm/boot/zImage READY-KERNEL/boot/
-		cp .config READY-KERNEL/.view_only_config
+		cp .config READY-KERNEL/view_only_config
 
 		# strip not needed debugs from modules.
 		android-toolchain/bin/arm-eabi-strip --strip-unneeded ../ramdisk-lp-tmp/lib/modules/* 2>/dev/null
