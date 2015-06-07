@@ -50,9 +50,13 @@ CLEANUP()
 	rm -f arch/arm/boot/*.cmd
 	rm -f arch/arm/boot/zImage
 	rm -f arch/arm/boot/Image
+
+	BUILD_800=0
+	BUILD_801=0
+	BUILD_802=0
+	BUILD_LS_980=0
 }
 CLEANUP;
-
 
 BUILD_NOW()
 {
@@ -73,9 +77,44 @@ BUILD_NOW()
 		echo "Python2 is used! all good, building!";
 	fi;
 
+	# move into the kernel directory and compile the main image
+	echo "Compiling Kernel.............";
+	if [ ! -f "$KERNELDIR"/.config ]; then
+		if [ "$BUILD_800" -eq "1" ]; then
+			cp arch/arm/configs/dorimanx_d800_defconfig .config
+		elif [ "$BUILD_801" -eq "1" ]; then
+			cp arch/arm/configs/dorimanx_d801_defconfig .config
+		elif [ "$BUILD_802" -eq "1" ]; then
+			cp arch/arm/configs/dorimanx_d802_defconfig .config
+		elif [ "$BUILD_LS_980" -eq "1" ]; then
+			cp arch/arm/configs/dorimanx_ls980_defconfig .config
+		fi;
+	fi;
+
+	if [ -f "$KERNELDIR"/.config ]; then
+		BRANCH_800=$(grep -R "CONFIG_MACH_MSM8974_G2_ATT=y" .config | wc -l)
+		BRANCH_801=$(grep -R "CONFIG_MACH_MSM8974_G2_TMO_US=y" .config | wc -l)
+		BRANCH_802=$(grep -R "CONFIG_MACH_MSM8974_G2_OPEN_COM=y" .config | wc -l)
+		BRANCH_LS_980=$(grep -R "CONFIG_MACH_MSM8974_G2_SPR=y" .config | wc -l)
+		if [ "$BRANCH_800" -eq "0" ] && [ "$BUILD_800" -eq "1" ]; then
+			cp arch/arm/configs/dorimanx_d800_defconfig ./.config
+		fi;
+		if [ "$BRANCH_801" -eq "0" ] && [ "$BUILD_801" -eq "1" ]; then
+			cp arch/arm/configs/dorimanx_d801_defconfig ./.config
+		fi;
+		if [ "$BRANCH_802" -eq "0" ] && [ "$BUILD_802" -eq "1" ]; then
+			cp arch/arm/configs/dorimanx_d802_defconfig ./.config
+		fi;
+		if [ "$BRANCH_LS_980" -eq "0" ] && [ "$BUILD_LS_980" -eq "1" ]; then
+			cp arch/arm/configs/dorimanx_ls980_defconfig ./.config
+		fi;
+	fi;
+
 	# get version from config
 	GETVER=$(grep 'Kernel-.*-V' .config |sed 's/Kernel-//g' | sed 's/.*".//g' | sed 's/-L.*//g');
 	GETBRANCH=$(grep '.*-LG' .config |sed 's/Kernel-Dorimanx-V//g' | sed 's/[1-9].*-LG-//g' | sed 's/.*".//g' | sed 's/-PWR.*//g');
+
+	cp "$KERNELDIR"/.config "$KERNELDIR"/arch/arm/configs/"$KERNEL_CONFIG_FILE";
 
 	# remove all old modules before compile
 	for i in $(find "$KERNELDIR"/ -name "*.ko"); do
@@ -97,14 +136,10 @@ BUILD_NOW()
 		echo "Building kernel with $NR_CPUS CPU threads";
 	fi;
 
-	if [ ! -e .config ]; then
-		cp arch/arm/configs/d802_defconfig ./.config;
-	fi;
-
 	# build zImage
 	time make ARCH=arm CROSS_COMPILE=android-toolchain/bin/arm-eabi- zImage-dtb -j ${NR_CPUS}
 
-	cp .config arch/arm/configs/d802_defconfig
+	cp "$KERNELDIR"/.config "$KERNELDIR"/arch/arm/configs/"$KERNEL_CONFIG_FILE";
 
 	stat "$KERNELDIR"/arch/arm/boot/zImage || exit 1;
 
@@ -118,7 +153,18 @@ BUILD_NOW()
 	# Check that RAMDISK is for this Branch. and check if need to push changes before switch to needed branch.
 
 	# copy all ROOT ramdisk files to ramdisk temp dir.
-	cp -a ../lp_ramdisk_dorimanx/* ../ramdisk-lp-tmp/
+	cp -a ../lp_ramdisk_dorimanx/ROOT-RAMDISK/* ../ramdisk-lp-tmp/
+
+	# copy needed branch files to ramdisk temp dir.
+	if [ "$BUILD_800" == "1" ]; then
+		cp -a ../lp_ramdisk_dorimanx/D800-RAMDISK/* ../ramdisk-lp-tmp/
+	elif [ "$BUILD_801" == "1" ]; then
+		cp -a ../lp_ramdisk_dorimanx/D801-RAMDISK/* ../ramdisk-lp-tmp/
+	elif [ "$BUILD_802" == "1" ]; then
+		cp -a ../lp_ramdisk_dorimanx/D802-RAMDISK/* ../ramdisk-lp-tmp/
+	elif [ "$BUILD_LS_980" == "1" ]; then
+		cp -a ../lp_ramdisk_dorimanx/LS980-RAMDISK/* ../ramdisk-lp-tmp/
+	fi;
 
 	for i in $(find "$KERNELDIR" -name '*.ko'); do
 		cp -av "$i" ../ramdisk-lp-tmp/lib/modules/;
@@ -163,7 +209,7 @@ BUILD_NOW()
 		# build the final boot.img ready for inclusion in flashable zip
 		echo "Build boot.img..............."
 		cp scripts/mkbootimg READY-KERNEL/boot/
-		cd READY-KERNEL/boot
+		cd READY-KERNEL/boot/
 		base=0x00000000
 		offset=0x05000000
 		tags_addr=0x00000100
@@ -199,4 +245,119 @@ BUILD_NOW()
 		echo -e "\e[1;31mKernel STUCK in BUILD! no zImage exist\e[m"
 	fi;
 }
-BUILD_NOW;
+
+CLEAN_KERNEL()
+{
+	PYTHON_CHECK=$(ls -la /usr/bin/python | grep python3 | wc -l);
+	CLEAN_PYTHON_WAS_3=0;
+
+	if [ "$PYTHON_CHECK" -eq "1" ] && [ -e /usr/bin/python2 ]; then
+		if [ -e /usr/bin/python2 ]; then
+			rm /usr/bin/python
+			ln -s /usr/bin/python2 /usr/bin/python
+			echo "Switched to Python2 for building kernel will switch back when done";
+			CLEAN_PYTHON_WAS_3=1;
+		else
+			echo "You need Python2 to build this kernel. install and come back."
+			exit 1;
+		fi;
+	else
+		echo "Python2 is used! all good, building!";
+	fi;
+
+	cp -pv .config .config.bkp;
+	make ARCH=arm mrproper;
+	make clean;
+	cp -pv .config.bkp .config;
+
+	if [ "$CLEAN_PYTHON_WAS_3" -eq "1" ]; then
+		rm /usr/bin/python
+		ln -s /usr/bin/python3 /usr/bin/python
+	fi;
+}
+
+echo "What to cook for you?!";
+select CHOICE in D800 D801 D802 LS980 ALL; do
+	case "$CHOICE" in
+		"D800")
+			export KERNEL_CONFIG=dorimanx_d800_defconfig
+			KERNEL_CONFIG_FILE=dorimanx_d800_defconfig
+			BUILD_800=1;
+			BUILD_NOW;
+			break;;
+		"D801")
+			export KERNEL_CONFIG=dorimanx_d801_defconfig
+			KERNEL_CONFIG_FILE=dorimanx_d801_defconfig
+			BUILD_801=1;
+			BUILD_NOW;
+			break;;
+		"D802")
+			export KERNEL_CONFIG=dorimanx_d802_defconfig
+			KERNEL_CONFIG_FILE=dorimanx_d802_defconfig
+			BUILD_802=1;
+			BUILD_NOW;
+			break;;
+		"LS980")
+			export KERNEL_CONFIG=dorimanx_ls980_defconfig
+			KERNEL_CONFIG_FILE=dorimanx_ls980_defconfig
+			BUILD_LS_980=1;
+			BUILD_NOW;
+			break;;
+		"ALL")
+			CLEAN_KERNEL;
+			echo "starting build of D800 in 3"
+			sleep 1;
+			echo "starting build of D800 in 2"
+			sleep 1;
+			echo "starting build of D800 in 1"
+			sleep 1;
+			CLEANUP;
+			cp arch/arm/configs/dorimanx_d800_defconfig ./.config 
+			export KERNEL_CONFIG=dorimanx_d800_defconfig
+			KERNEL_CONFIG_FILE=dorimanx_d800_defconfig
+			BUILD_800=1;
+			BUILD_NOW;
+			echo "D800 is ready!"
+			cp READY-KERNEL/*.zip READY-RELEASES/;
+			echo "starting build of D801 in 3"
+			sleep 1;
+			echo "starting build of D801 in 2"
+			sleep 1;
+			echo "starting build of D801 in 1"
+			sleep 1;
+			CLEANUP;
+			export KERNEL_CONFIG=dorimanx_d801_defconfig
+			KERNEL_CONFIG_FILE=dorimanx_d801_defconfig
+			BUILD_801=1;
+			BUILD_NOW;
+			echo "D801 is ready!"
+			cp READY-KERNEL/*.zip READY-RELEASES/;
+			echo "starting build of D802 in 3"
+			sleep 1;
+			echo "starting build of D802 in 2"
+			sleep 1;
+			echo "starting build of D802 in 1"
+			sleep 1;
+			CLEANUP;
+			export KERNEL_CONFIG=dorimanx_d802_defconfig
+			KERNEL_CONFIG_FILE=dorimanx_d802_defconfig
+			BUILD_802=1;
+			BUILD_NOW;
+			echo "D802 is ready!"
+			cp READY-KERNEL/*.zip READY-RELEASES/;
+			echo "starting build of LS980 in 3"
+			sleep 1;
+			echo "starting build of LS980 in 2"
+			sleep 1;
+			echo "starting build of LS980 in 1"
+			sleep 1;
+			CLEANUP;
+			export KERNEL_CONFIG=dorimanx_ls980_defconfig
+			KERNEL_CONFIG_FILE=dorimanx_ls980_defconfig
+			BUILD_LS_980=1;
+			BUILD_NOW;
+			echo "LS980 is ready!"
+			cp READY-KERNEL/*.zip READY-RELEASES/;
+			break;;
+	esac;
+done;
