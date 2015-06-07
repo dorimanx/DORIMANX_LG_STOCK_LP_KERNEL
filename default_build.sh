@@ -184,6 +184,7 @@ BUILD_NOW()
 		fi;
 
 		cp arch/arm/boot/zImage READY-KERNEL/boot/
+		cp .config READY-KERNEL/.view_only_config
 
 		# strip not needed debugs from modules.
 		android-toolchain/bin/arm-eabi-strip --strip-unneeded ../ramdisk-lp-tmp/lib/modules/* 2>/dev/null
@@ -265,10 +266,16 @@ CLEAN_KERNEL()
 		echo "Python2 is used! all good, building!";
 	fi;
 
-	cp -pv .config .config.bkp;
+	if [ -e .config ]; then
+		cp -pv .config .config.bkp;
+	elif [ -e .config.bkp ]; then
+		rm .config.bkp
+	fi;
 	make ARCH=arm mrproper;
 	make clean;
-	cp -pv .config.bkp .config;
+	if [ -e .config.bkp ]; then
+		cp -pv .config.bkp .config;
+	fi;
 
 	if [ "$CLEAN_PYTHON_WAS_3" -eq "1" ]; then
 		rm /usr/bin/python
