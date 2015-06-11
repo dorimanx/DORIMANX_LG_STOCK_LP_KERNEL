@@ -214,6 +214,23 @@ static inline int has_pushable_dl_tasks(struct rq *rq)
 
 static int push_dl_task(struct rq *rq);
 
+static inline bool need_pull_dl_task(struct rq *rq, struct task_struct *prev)
+{
+	return dl_task(prev);
+}
+
+static DEFINE_PER_CPU(struct callback_head, dl_balance_head);
+
+static void push_dl_tasks(struct rq *);
+
+static inline void queue_push_tasks(struct rq *rq)
+{
+	if (!has_pushable_dl_tasks(rq))
+		return;
+
+	queue_balance_callback(rq, &per_cpu(dl_balance_head, rq->cpu), push_dl_tasks);
+}
+
 static struct rq *find_lock_later_rq(struct task_struct *task, struct rq *rq);
 
 static struct rq *dl_task_offline_migration(struct rq *rq, struct task_struct *p)
@@ -284,6 +301,20 @@ void inc_dl_migration(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
 
 static inline
 void dec_dl_migration(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
+{
+}
+
+static inline bool need_pull_dl_task(struct rq *rq, struct task_struct *prev)
+{
+	return false;
+}
+
+static inline int pull_dl_task(struct rq *rq)
+{
+	return 0;
+}
+
+static inline void queue_push_tasks(struct rq *rq)
 {
 }
 
@@ -1120,9 +1151,7 @@ struct task_struct *pick_next_task_dl(struct rq *rq, struct task_struct *prev)
 	if (hrtick_enabled(rq))
 		start_hrtick_dl(rq, p);
 
-#ifdef CONFIG_SMP
-	rq->post_schedule = has_pushable_dl_tasks(rq);
-#endif /* CONFIG_SMP */
+	queue_push_tasks(rq);
 
 	return p;
 }
@@ -1558,13 +1587,8 @@ skip:
 static void pre_schedule_dl(struct rq *rq, struct task_struct *prev)
 {
 	/* Try to pull other tasks here */
-	if (dl_task(prev))
+	if (need_pull_dl_task(rq, prev))
 		pull_dl_task(rq);
-}
-
-static void post_schedule_dl(struct rq *rq)
-{
-	push_dl_tasks(rq);
 }
 
 /*
@@ -1782,7 +1806,6 @@ const struct sched_class dl_sched_class = {
 	.rq_online              = rq_online_dl,
 	.rq_offline             = rq_offline_dl,
 	.pre_schedule		= pre_schedule_dl,
-	.post_schedule		= post_schedule_dl,
 	.task_woken		= task_woken_dl,
 #endif
 
