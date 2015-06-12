@@ -333,21 +333,19 @@ static void vzw_drv_check_work(struct work_struct *w)
 {
 	struct dwc3_msm *mdwc = container_of(w, struct dwc3_msm, drv_check_work.work);
 	bool tmout = false;
-	unsigned long delay;
+	unsigned long delay = 0;
 
 	pr_debug("%s: drv_state: %d\n", __func__, mdwc->drv_state);
 	switch (mdwc->drv_state) {
 	case USB_DRV_STATE_UNDEFINED:
 		mdwc->drv_state = USB_DRV_STATE_WAIT_FOR_CONNECTED;
 		mdwc->drv_check_retries = 0;
-		delay = 0;
 		break;
 
 	case USB_DRV_STATE_WAIT_FOR_CONNECTED:
 		tmout = mdwc->drv_check_retries++ == DWC3_VZW_FC_CHECK_MAX_RETRIES;
 		if (mdwc->charger.chg_type == DWC3_CDP_CHARGER) {
 			mdwc->drv_state = USB_DRV_STATE_DONE;
-			delay = 0;
 		} else if (mdwc->charger.vzw_usb_config_state == VZW_USB_STATE_UNDEFINED) {
 			if (mdwc->charger.chg_type == DWC3_FLOATED_CHARGER) {
 				pr_info("%s: %s Send driver uninstalled uevent.\n",
@@ -355,20 +353,17 @@ static void vzw_drv_check_work(struct work_struct *w)
 				power_supply_set_online(&mdwc->usb_psy, 1);
 				power_supply_set_floated_charger(&mdwc->usb_psy, 1);
 				mdwc->drv_state = USB_DRV_STATE_DONE;
-				delay = 0;
 			} else if (tmout) {
 				pr_info("%s: %s Send driver uninstalled uevent.\n",
 						__func__, "SDP? charger Connected, but not connected");
 				power_supply_set_usb_driver_uninstall(&mdwc->usb_psy, 1);
 				mdwc->drv_state = USB_DRV_STATE_DONE;
-				delay = 0;
 			} else {
 				delay = DWC3_VZW_DRV_CHECK_DELAY;
 			}
 		} else {
 			mdwc->drv_state = USB_DRV_STATE_WAIT_FOR_CONFIGURED;
 			mdwc->drv_check_retries = 0;
-			delay = 0;
 		}
 		break;
 
@@ -379,12 +374,10 @@ static void vzw_drv_check_work(struct work_struct *w)
 					__func__, "USB connected, but not configured.");
 			power_supply_set_usb_driver_uninstall(&mdwc->usb_psy, 1);
 			mdwc->drv_state = USB_DRV_STATE_DONE;
-			delay = 0;
 		} else if (mdwc->charger.vzw_usb_config_state == VZW_USB_STATE_CONFIGURED) {
 			pr_info("%s: USB configured. Send driver installed uevent.\n", __func__);
 			power_supply_set_usb_driver_uninstall(&mdwc->usb_psy, 0);
 			mdwc->drv_state = USB_DRV_STATE_DONE;
-			delay = 0;
 		} else
 			delay = DWC3_VZW_DRV_CHECK_DELAY;
 		break;
@@ -395,7 +388,6 @@ static void vzw_drv_check_work(struct work_struct *w)
 		power_supply_set_online(&mdwc->usb_psy, 0);
 		power_supply_set_floated_charger(&mdwc->usb_psy, 0);
 		mdwc->drv_state = USB_DRV_STATE_DONE;
-		delay = 0;
 
 	case USB_DRV_STATE_DONE:
 		return;
