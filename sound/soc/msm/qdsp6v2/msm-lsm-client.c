@@ -30,6 +30,8 @@
 #include <sound/lsm_params.h>
 #include "msm-pcm-routing-v2.h"
 
+#define LISTEN_MAX_STATUS_PAYLOAD_SIZE 256
+
 struct lsm_priv {
 	struct snd_pcm_substream *substream;
 	struct lsm_client *lsm_client;
@@ -401,6 +403,15 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 			__func__, "SNDRV_LSM_EVENT_STATUS32");
 			return -EFAULT;
 		}
+
+		if (userarg32.payload_size >
+		    LISTEN_MAX_STATUS_PAYLOAD_SIZE) {
+			pr_err("%s: payload_size %d is invalid, max allowed = %d\n",
+				__func__, userarg32.payload_size,
+				LISTEN_MAX_STATUS_PAYLOAD_SIZE);
+			return -EINVAL;
+		}
+
 		size = sizeof(*user) + userarg32.payload_size;
 		user = kmalloc(size, GFP_KERNEL);
 		if (!user) {
@@ -561,6 +572,15 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 			__func__);
 			return -EFAULT;
 		}
+
+		if (userarg.payload_size >
+		    LISTEN_MAX_STATUS_PAYLOAD_SIZE) {
+			pr_err("%s: payload_size %d is invalid, max allowed = %d\n",
+				__func__, userarg.payload_size,
+				LISTEN_MAX_STATUS_PAYLOAD_SIZE);
+			return -EINVAL;
+		}
+
 		size = sizeof(struct snd_lsm_event_status) +
 		userarg.payload_size;
 		user = kmalloc(size, GFP_KERNEL);
