@@ -55,6 +55,7 @@ CLEANUP()
 	BUILD_801=0
 	BUILD_802=0
 	BUILD_LS_980=0
+	BUILD_VS_980=0
 }
 CLEANUP;
 
@@ -88,6 +89,8 @@ BUILD_NOW()
 			cp arch/arm/configs/dorimanx_d802_defconfig .config
 		elif [ "$BUILD_LS_980" -eq "1" ]; then
 			cp arch/arm/configs/dorimanx_ls980_defconfig .config
+		elif [ "$BUILD_VS_980" -eq "1" ]; then
+			cp arch/arm/configs/dorimanx_vs980_defconfig .config
 		fi;
 	fi;
 
@@ -96,6 +99,7 @@ BUILD_NOW()
 		BRANCH_801=$(grep -R "CONFIG_MACH_MSM8974_G2_TMO_US=y" .config | wc -l)
 		BRANCH_802=$(grep -R "CONFIG_MACH_MSM8974_G2_OPEN_COM=y" .config | wc -l)
 		BRANCH_LS_980=$(grep -R "CONFIG_MACH_MSM8974_G2_SPR=y" .config | wc -l)
+		BRANCH_VS_980=$(grep -R "CONFIG_MACH_MSM8974_G2_VZW=y" .config | wc -l)
 		if [ "$BRANCH_800" -eq "0" ] && [ "$BUILD_800" -eq "1" ]; then
 			cp arch/arm/configs/dorimanx_d800_defconfig ./.config
 		fi;
@@ -107,6 +111,9 @@ BUILD_NOW()
 		fi;
 		if [ "$BRANCH_LS_980" -eq "0" ] && [ "$BUILD_LS_980" -eq "1" ]; then
 			cp arch/arm/configs/dorimanx_ls980_defconfig ./.config
+		fi;
+		if [ "$BRANCH_VS_980" -eq "0" ] && [ "$BUILD_VS_980" -eq "1" ]; then
+			cp arch/arm/configs/dorimanx_vs980_defconfig ./.config
 		fi;
 	fi;
 
@@ -164,6 +171,8 @@ BUILD_NOW()
 		cp -a ../lp_ramdisk_dorimanx/D802-RAMDISK/* ../ramdisk-lp-tmp/
 	elif [ "$BUILD_LS_980" == "1" ]; then
 		cp -a ../lp_ramdisk_dorimanx/LS980-RAMDISK/* ../ramdisk-lp-tmp/
+	elif [ "$BUILD_VS_980" == "1" ]; then
+		cp -a ../lp_ramdisk_dorimanx/VS980-RAMDISK/* ../ramdisk-lp-tmp/
 	fi;
 
 	for i in $(find "$KERNELDIR" -name '*.ko'); do
@@ -284,7 +293,7 @@ CLEAN_KERNEL()
 }
 
 echo "What to cook for you?!";
-select CHOICE in D800 D801 D802 LS980 ALL; do
+select CHOICE in D800 D801 D802 LS980 VS980 ALL; do
 	case "$CHOICE" in
 		"D800")
 			export KERNEL_CONFIG=dorimanx_d800_defconfig
@@ -308,6 +317,12 @@ select CHOICE in D800 D801 D802 LS980 ALL; do
 			export KERNEL_CONFIG=dorimanx_ls980_defconfig
 			KERNEL_CONFIG_FILE=dorimanx_ls980_defconfig
 			BUILD_LS_980=1;
+			BUILD_NOW;
+			break;;
+		"VS980")
+			export KERNEL_CONFIG=dorimanx_vs980_defconfig
+			KERNEL_CONFIG_FILE=dorimanx_vs980_defconfig
+			BUILD_VS_980=1;
 			BUILD_NOW;
 			break;;
 		"ALL")
@@ -364,6 +379,19 @@ select CHOICE in D800 D801 D802 LS980 ALL; do
 			BUILD_LS_980=1;
 			BUILD_NOW;
 			echo "LS980 is ready!"
+			cp READY-KERNEL/*.zip READY-RELEASES/;
+			echo "starting build of VS980 in 3"
+			sleep 1;
+			echo "starting build of VS980 in 2"
+			sleep 1;
+			echo "starting build of VS980 in 1"
+			sleep 1;
+			CLEANUP;
+			export KERNEL_CONFIG=dorimanx_vs980_defconfig
+			KERNEL_CONFIG_FILE=dorimanx_vs980_defconfig
+			BUILD_VS_980=1;
+			BUILD_NOW;
+			echo "VS980 is ready!"
 			cp READY-KERNEL/*.zip READY-RELEASES/;
 			break;;
 	esac;
