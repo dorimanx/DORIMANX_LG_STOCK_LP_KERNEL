@@ -3963,7 +3963,7 @@ kgsl_get_unmapped_area(struct file *file, unsigned long addr,
 	} while (!(flags & MAP_FIXED) && mmap_range_valid(addr, len));
 
 	if (IS_ERR_VALUE(ret))
-		KGSL_MEM_ERR(device,
+		KGSL_MEM_ERR_RATELIMITED(device,
 				"pid %d pgoff %lx len %ld failed error %ld\n",
 				private->pid, pgoff, len, ret);
 put:
