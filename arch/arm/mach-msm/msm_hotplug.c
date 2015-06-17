@@ -798,11 +798,19 @@ static int __ref msm_hotplug_start(void)
 	INIT_DELAYED_WORK(&hotplug.suspend_work, msm_hotplug_suspend);
 	INIT_WORK(&hotplug.resume_work, msm_hotplug_resume);
 
-	/* Put all sibling cores to sleep */
+	/* Put all sibling cores to sleep to release all locks */
 	for_each_online_cpu(cpu) {
 		if (cpu == 0)
 			continue;
 		cpu_down(cpu);
+	}
+
+	/* Fire up all CPUs to boost performance */
+	for_each_cpu_not(cpu, cpu_online_mask) {
+		if (cpu == 0)
+			continue;
+		cpu_up(cpu);
+		apply_down_lock(cpu);
 	}
 
 	mod_delayed_work_on(0, hotplug_wq, &hotplug_work,
@@ -847,6 +855,13 @@ static void msm_hotplug_stop(void)
 
 	destroy_workqueue(susp_wq);
 	destroy_workqueue(hotplug_wq);
+
+	/* Put all sibling cores to sleep */
+	for_each_online_cpu(cpu) {
+		if (cpu == 0)
+			continue;
+		cpu_down(cpu);
+	}
 }
 
 static unsigned int *get_tokenized_data(const char *buf, int *num_tokens)
