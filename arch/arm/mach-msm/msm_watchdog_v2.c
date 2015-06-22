@@ -426,8 +426,10 @@ static irqreturn_t wdog_bark_handler(int irq, void *dev_id)
 
 #ifdef CONFIG_MACH_LGE
 	/* do not bark on your self! watchdog uses IRQ 35 with LG G2 */
-	if (irq == 35)
+	if (irq == 35) {
+		wdog_dd->last_pet = sched_clock();
 		return IRQ_HANDLED;
+	}
 #endif
 
 	nanosec_rem = do_div(t, 1000000000);
