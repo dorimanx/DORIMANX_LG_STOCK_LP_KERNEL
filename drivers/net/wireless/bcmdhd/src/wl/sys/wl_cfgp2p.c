@@ -1686,11 +1686,13 @@ wl_cfgp2p_listen_complete(struct bcm_cfg80211 *cfg, bcm_struct_cfgdev *cfgdev,
 #endif /* WL_CFG80211_VSDB_PRIORITIZE_SCAN_REQUEST */
 			if (ndev && (ndev->ieee80211_ptr != NULL)) {
 #if defined(WL_CFG80211_P2P_DEV_IF)
-				cfg80211_remain_on_channel_expired(bcmcfg_to_p2p_wdev(cfg),
-					cfg->last_roc_id, &cfg->remain_on_chan, GFP_KERNEL);
+				if (bcmcfg_to_p2p_wdev(cfg))
+					cfg80211_remain_on_channel_expired(bcmcfg_to_p2p_wdev(cfg),
+						cfg->last_roc_id, &cfg->remain_on_chan, GFP_KERNEL);
 #else
-				cfg80211_remain_on_channel_expired(cfgdev, cfg->last_roc_id,
-					&cfg->remain_on_chan, cfg->remain_on_chan_type, GFP_KERNEL);
+				if (cfgdev)
+					cfg80211_remain_on_channel_expired(cfgdev, cfg->last_roc_id,
+						&cfg->remain_on_chan, cfg->remain_on_chan_type, GFP_KERNEL);
 #endif /* WL_CFG80211_P2P_DEV_IF */
 			}
 		}
@@ -1749,7 +1751,7 @@ wl_cfgp2p_cancel_listen(struct bcm_cfg80211 *cfg, struct net_device *ndev,
 			if (wdev == NULL)
 				wdev = bcmcfg_to_p2p_wdev(cfg);
 #endif
-			if (wdev)
+			if (bcmcfg_to_p2p_wdev(cfg))
 				cfg80211_remain_on_channel_expired(bcmcfg_to_p2p_wdev(cfg),
 					cfg->last_roc_id, &cfg->remain_on_chan, GFP_KERNEL);
 #else
