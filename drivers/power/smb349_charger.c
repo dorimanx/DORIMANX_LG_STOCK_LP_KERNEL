@@ -684,10 +684,6 @@ static bool smb349_is_charger_present_rt(struct i2c_client *client)
 		pr_err("DC is present. DC_IN volt:%d\n", voltage);
 	} else {
 		pr_err("DC is missing.\n");
-#ifdef CONFIG_LGE_THERMALE_CHG_CONTROL
-		if (wake_lock_active(&smb349_chg->lcs_wake_lock))
-			wake_unlock(&smb349_chg->lcs_wake_lock);
-#endif
 	}
 
 	return power_ok;
