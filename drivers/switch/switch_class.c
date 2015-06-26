@@ -22,9 +22,11 @@
 #include <linux/fs.h>
 #include <linux/err.h>
 #include <linux/switch.h>
+#include <linux/mutex.h>
 
 struct class *switch_class;
 static atomic_t device_count;
+DEFINE_MUTEX(switch_class_lock) ;
 
 static ssize_t state_show(struct device *dev, struct device_attribute *attr,
 		char *buf)
@@ -100,12 +102,17 @@ EXPORT_SYMBOL_GPL(switch_set_state);
 
 static int create_switch_class(void)
 {
+	mutex_lock(&switch_class_lock) ;
 	if (!switch_class) {
 		switch_class = class_create(THIS_MODULE, "switch");
 		if (IS_ERR(switch_class))
+		{
+			mutex_unlock(&switch_class_lock) ;
 			return PTR_ERR(switch_class);
+		}
 		atomic_set(&device_count, 0);
 	}
+	mutex_unlock(&switch_class_lock) ;
 
 	return 0;
 }
