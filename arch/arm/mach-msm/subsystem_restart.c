@@ -169,7 +169,7 @@ struct subsys_device {
 };
 
 #ifdef CONFIG_MACH_LGE
-static int modem_reboot_cnt;
+static int modem_reboot_cnt = 0;
 module_param(modem_reboot_cnt, int, S_IRUGO | S_IWUSR);
 #endif
 
@@ -642,9 +642,29 @@ void subsystem_put(void *subsystem)
 			subsys->desc->name, __func__))
 		goto err_out;
 	if (!--subsys->count) {
+/* [LGE_S]QCT Debug code for modem stuck issue,
+ * secheol.pyo@lge.com, 2013-05-01
+ */
+		pr_info("[LGE DEBUG]subsys: %s put stop %d by %d[%s]\n",
+			 subsys->desc->name, subsys->count,
+			 current->pid, current->comm);
+#if 0
 		subsys_stop(subsys);
 		if (subsys->do_ramdump_on_put)
 			subsystem_ramdump(subsys, NULL);
+#else
+		if (strncmp(subsys->desc->name, "modem", 5)) {
+			subsys_stop(subsys);
+			if (subsys->do_ramdump_on_put)
+				subsystem_ramdump(subsys, NULL);
+		} else {
+			pr_info("[LGE DEBUG]subsys: block modem put stop for stabilty\n");
+			subsys->count++;
+		}
+#endif
+/* [LGE_E]QCT Debug code for modem stuck issue,
+ * secheol.pyo@lge.com, 2013-05-01
+ */
 	}
 	mutex_unlock(&track->lock);
 
@@ -862,7 +882,7 @@ int subsys_modem_restart(void)
 	ret = subsystem_restart_dev(dev);
 	dev->restart_level = rsl;
 #ifdef CONFIG_MACH_LGE
-	//modem_reboot_cnt--;
+	modem_reboot_cnt--;
 #endif
 	put_device(&dev->dev);
 	return ret;
