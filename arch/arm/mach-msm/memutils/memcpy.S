@@ -61,6 +61,7 @@
 
 /* Prototype: void *memcpy(void *dest, const void *src, size_t n); */
 
+ENTRY(mmiocpy)
 ENTRY(memcpy)
 
 #ifdef CONFIG_ARCH_MSM8974
@@ -70,3 +71,4 @@ ENTRY(memcpy)
 #endif
 
 ENDPROC(memcpy)
+ENDPROC(mmiocpy)
