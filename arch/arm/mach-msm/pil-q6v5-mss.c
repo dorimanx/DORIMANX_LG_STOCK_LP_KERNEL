@@ -379,6 +379,7 @@ static struct notifier_block adsp_state_notifier_block = {
 static irqreturn_t modem_wdog_bite_intr_handler(int irq, void *dev_id)
 {
 	struct modem_data *drv = subsys_to_drv(dev_id);
+#ifdef CONFIG_MACH_MSM8974_G2_SPR
 	struct lge_hw_smem_id2_type *smem_id2;
 
 	/* [START] hanwool.lee@lge.com, subsys_modem_restart */
@@ -400,6 +401,7 @@ static irqreturn_t modem_wdog_bite_intr_handler(int irq, void *dev_id)
 		return ret;
 	}
 	/* [END] hanwool.lee@lge.com, subsys_modem_restart */
+#endif
 
 	if (drv->ignore_errors)
 		return IRQ_HANDLED;
