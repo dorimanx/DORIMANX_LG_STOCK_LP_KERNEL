@@ -100,7 +100,8 @@ BUILD_NOW()
 	if [ -f "$KERNELDIR"/.config ]; then
 		BRANCH_800=$(grep -R "CONFIG_MACH_MSM8974_G2_ATT=y" .config | wc -l)
 		BRANCH_801=$(grep -R "CONFIG_MACH_MSM8974_G2_TMO_US=y" .config | wc -l)
-		BRANCH_802=$(grep -R "CONFIG_MACH_MSM8974_G2_OPEN_COM=y" .config | wc -l)
+		BRANCH_802=$(grep -R "D802" .config | wc -l)
+		BRANCH_805=$(grep -R "D805" .config | wc -l)
 		BRANCH_LS_980=$(grep -R "CONFIG_MACH_MSM8974_G2_SPR=y" .config | wc -l)
 		BRANCH_VS_980=$(grep -R "CONFIG_MACH_MSM8974_G2_VZW=y" .config | wc -l)
 		if [ "$BRANCH_800" -eq "0" ] && [ "$BUILD_800" -eq "1" ]; then
@@ -112,7 +113,7 @@ BUILD_NOW()
 		if [ "$BRANCH_802" -eq "0" ] && [ "$BUILD_802" -eq "1" ]; then
 			cp arch/arm/configs/dorimanx_d802_defconfig ./.config
 		fi;
-		if [ "$BRANCH_802" -eq "0" ] && [ "$BUILD_805" -eq "1" ]; then
+		if [ "$BRANCH_805" -eq "0" ] && [ "$BUILD_805" -eq "1" ]; then
 			cp arch/arm/configs/dorimanx_d805_defconfig ./.config
 		fi;
 		if [ "$BRANCH_LS_980" -eq "0" ] && [ "$BUILD_LS_980" -eq "1" ]; then
