@@ -338,6 +338,7 @@ struct itimerval {
 #define CLOCK_BOOTTIME_ALARM		9
 #define CLOCK_SGI_CYCLE			10	/* Hardware specific */
 #define CLOCK_TAI			11
+#define CLOCK_POWEROFF_ALARM		12
 
 /*
  * The IDs of various hardware clocks:
