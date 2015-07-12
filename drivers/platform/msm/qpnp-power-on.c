@@ -69,11 +69,6 @@
 #define QPNP_PON_S3_DBC_CTL(base)		(base + 0x75)
 #define QPNP_PON_TRIGGER_EN(base)		(base + 0x80)
 
-#define QPNP_PON_S3_SRC_KPDPWR			0
-#define QPNP_PON_S3_SRC_RESIN			1
-#define QPNP_PON_S3_SRC_KPDPWR_AND_RESIN	2
-#define QPNP_PON_S3_SRC_KPDPWR_OR_RESIN		3
-#define QPNP_PON_S3_SRC_MASK			0x3
 #define QPNP_PON_XVDD_RB_SPARE(base)		(base + 0x8E)
 
 /* spared registers for storing extra reset information */
