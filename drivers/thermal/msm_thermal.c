@@ -84,10 +84,13 @@ static struct msm_thermal_data_intelli msm_thermal_info_local = {
 };
 
 static struct delayed_work check_temp_work;
-bool core_control;
+
+/* Always enable Intelli Thermal and core control on boot */
+static int intelli_enabled = 1;
+bool core_control = true;
 
 /* dummy parameter for rom thermal and apps */
-static bool enabled = 1;
+static bool enabled = true;
 
 static unsigned int debug_mode = 0;
 static uint32_t cpus_offlined;
@@ -99,9 +102,6 @@ static struct task_struct *thermal_monitor_task;
 static struct completion hotplug_notify_complete;
 static struct completion freq_mitigation_complete;
 static struct completion thermal_monitor_complete;
-
-/* Always enable Intelli Thermal on boot */
-static int intelli_enabled;
 
 static int psm_rails_cnt;
 static int limit_idx;
@@ -1542,12 +1542,12 @@ static ssize_t __ref store_cc_enabled_dummy(struct kobject *kobj,
 
 	ret = kstrtoint(buf, 10, &val);
 	if (ret)
-		pr_err("%s: Invalid input %s\n", KBUILD_MODNAME, buf);
+		pr_err("Invalid input %s. err:%d\n", buf, ret);
 
-	if (enabled == val)
+	if (enabled == !!val)
 		return count;
 
-	enabled = val;
+	enabled = !!val;
 
 	return count;
 }
@@ -1577,7 +1577,7 @@ static ssize_t __ref store_cc_enabled(struct kobject *kobj,
 	if (core_control) {
 		pr_info("Core control enabled\n");
 		register_cpu_notifier(&msm_thermal_cpu_notifier);
-		enabled = 1;
+		enabled = true;
 		if (hotplug_task)
 			complete(&hotplug_notify_complete);
 		else
@@ -1585,7 +1585,7 @@ static ssize_t __ref store_cc_enabled(struct kobject *kobj,
 	} else {
 		pr_info("Core control disabled\n");
 		unregister_cpu_notifier(&msm_thermal_cpu_notifier);
-		enabled = 0;
+		enabled = false;
 	}
 
 done_store_cc:
@@ -1743,10 +1743,6 @@ int msm_thermal_init(struct msm_thermal_data *pdata)
 
 	pr_info("%s: polling enabled!\n", KBUILD_MODNAME);
 
-	if (num_possible_cpus() > 1)
-		core_control = 1;
-	enabled = 1;
-	intelli_enabled = 1;
 	ret = cpufreq_register_notifier(&msm_thermal_cpufreq_notifier,
 			CPUFREQ_POLICY_NOTIFIER);
 	if (ret)
@@ -1948,10 +1944,8 @@ static int probe_cc(struct device_node *node, struct msm_thermal_data *data,
 	int ret = 0;
 	uint32_t cpu = 0;
 
-	if (num_possible_cpus() > 1) {
-		core_control = 1;
+	if (num_possible_cpus() > 1)
 		hotplug_enabled = 1;
-	}
 
 	key = "qcom,hotplug-temp";
 	ret = of_property_read_u32(node, key, &data->hotplug_temp_degC);
