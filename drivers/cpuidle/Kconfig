@@ -23,11 +23,20 @@ config CPU_IDLE_MULTIPLE_DRIVERS
 
 config CPU_IDLE_GOV_LADDER
 	bool "Ladder governor (for periodic timer tick)"
+	depends on CPU_IDLE
 	default y
 
 config CPU_IDLE_GOV_MENU
+	depends on CPU_IDLE && NO_HZ
 	bool "Menu governor (for tickless system)"
 	default y
+
+config CPU_IDLE_GOV_NULL
+	bool "Null idle governor"
+	depends on CPU_IDLE
+	default y
+	help
+	  Do not use - except with qct lpm idle driver which neglects governor input.
 
 config CPU_IDLE_CALXEDA
 	bool "CPU Idle Driver for Calxeda processors"
