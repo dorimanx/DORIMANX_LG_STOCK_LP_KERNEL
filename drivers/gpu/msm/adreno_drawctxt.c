@@ -180,7 +180,7 @@ void adreno_drawctxt_dump(struct kgsl_device *device,
 	if (!test_bit(ADRENO_CONTEXT_CMDBATCH_FLAG_FENCE_LOG,
 			&drawctxt->flags)) {
 		locked = 1;
- 		spin_lock(&drawctxt->lock);
+ 		spin_lock_bh(&drawctxt->lock);
 	}
 	dev_err(device->dev,
 		"  context[%d]: queue=%d, submit=%d, start=%d, retire=%d\n",
@@ -216,7 +216,7 @@ void adreno_drawctxt_dump(struct kgsl_device *device,
 	}
 done:
 	if (locked)
-		spin_unlock(&drawctxt->lock);
+		spin_unlock_bh(&drawctxt->lock);
 }
 
 /**
