@@ -43,10 +43,14 @@
 #ifdef CONFIG_LGE_HANDLE_PANIC
 #include <mach/lge_handle_panic.h>
 #endif
-
 #include "smd_private.h"
 
 static int enable_debug;
+
+/* START : subsys_modem_restart : testmode */
+extern bool ignore_errors_by_subsys_modem_restart;
+/* END : subsys_modem_restart : testmode */
+
 module_param(enable_debug, int, S_IRUGO | S_IWUSR);
 
 /**
@@ -484,9 +488,8 @@ static void subsystem_powerup(struct subsys_device *dev, void *data)
 	init_completion(&dev->err_ready);
 
 	if (dev->desc->powerup(dev->desc) < 0) {
-
 #ifdef CONFIG_LGE_HANDLE_PANIC
-        lge_set_magic_subsystem(name, LGE_ERR_SUB_PWR);
+		lge_set_magic_subsystem(name, LGE_ERR_SUB_PWR);
 #endif
 		notify_each_subsys_device(&dev, 1, SUBSYS_POWERUP_FAILURE,
 								NULL);
@@ -615,6 +618,9 @@ void *subsystem_get(const char *name)
 			retval = ERR_PTR(ret);
 			goto err_start;
 		}
+		pr_info("[LGE Debug] subsys: %s get start %d by %d[%s]\n",
+			name, subsys->count,
+			current->pid, current->comm);
 	}
 	subsys->count++;
 	mutex_unlock(&track->lock);
@@ -651,9 +657,23 @@ void subsystem_put(void *subsystem)
 			subsys->desc->name, __func__))
 		goto err_out;
 	if (!--subsys->count) {
+		pr_info("[LGE DEBUG]subsys: %s put stop %d by %d[%s]\n",
+			 subsys->desc->name, subsys->count,
+			 current->pid, current->comm);
+#if 0
 		subsys_stop(subsys);
 		if (subsys->do_ramdump_on_put)
 			subsystem_ramdump(subsys, NULL);
+#else
+		if (strncmp(subsys->desc->name, "modem", 5)) {
+			subsys_stop(subsys);
+			if (subsys->do_ramdump_on_put)
+				subsystem_ramdump(subsys, NULL);
+		} else {
+			pr_info("[LGE DEBUG]subsys: block modem put stop for stabilty\n");
+			subsys->count++;
+		}
+#endif
 	}
 	mutex_unlock(&track->lock);
 
@@ -870,11 +890,12 @@ int subsys_modem_restart(void)
 
 	rsl = dev->restart_level;
 	dev->restart_level = RESET_SUBSYS_COUPLED;
+	ignore_errors_by_subsys_modem_restart = true;
 	subsys_set_crash_status(dev, true);
 	ret = subsystem_restart_dev(dev);
 	dev->restart_level = rsl;
 #ifdef CONFIG_MACH_LGE
-	//modem_reboot_cnt--;
+	modem_reboot_cnt--;
 #endif
 	put_device(&dev->dev);
 	return ret;
