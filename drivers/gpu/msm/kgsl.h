@@ -255,6 +255,9 @@ int kgsl_cmdbatch_add_sync(struct kgsl_device *device,
 			struct kgsl_cmdbatch *cmdbatch,
 			struct kgsl_cmd_syncpoint *sync);
 
+int kgsl_cmdbatch_add_memobj(struct kgsl_cmdbatch *cmdbatch,
+			struct kgsl_ibdesc *ibdesc);
+
 void kgsl_mem_entry_destroy(struct kref *kref);
 int kgsl_postmortem_dump(struct kgsl_device *device, int manual);
 
@@ -286,7 +289,7 @@ void kgsl_trace_regwrite(struct kgsl_device *device, unsigned int offset,
 		unsigned int value);
 
 void kgsl_trace_issueibcmds(struct kgsl_device *device, int id,
-		struct kgsl_ibdesc *ibdesc, int numibs,
+		struct kgsl_cmdbatch *cmdbatch, unsigned int numibs,
 		unsigned int timestamp, unsigned int flags,
 		int result, unsigned int type);
 
