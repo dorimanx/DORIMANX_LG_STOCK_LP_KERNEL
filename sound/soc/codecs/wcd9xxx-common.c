@@ -1216,6 +1216,7 @@ static void wcd9xxx_clsh_state_hph_l(struct snd_soc_codec *codec,
 		wcd9xxx_chargepump_request(codec, true);
 		wcd9xxx_enable_anc_delay(codec, true);
 		wcd9xxx_clsh_comp_req(codec, clsh_d, CLSH_COMPUTE_HPH_L, true);
+		wcd9xxx_clsh_comp_req(codec, clsh_d, CLSH_COMPUTE_HPH_R, true);
 		pr_debug("%s class state: %d\n", __func__, clsh_d->state);
 		if (clsh_d->state & WCD9XXX_CLSH_STATE_LO)
 			wcd9xxx_set_buck_mode(codec, BUCK_VREF_2V);
@@ -1229,9 +1230,10 @@ static void wcd9xxx_clsh_state_hph_l(struct snd_soc_codec *codec,
 		wcd9xxx_set_fclk_put_ncp(codec, clsh_d, NCP_FCLK_LEVEL_8);
 		wcd9xxx_enable_buck(codec, clsh_d, false);
 		wcd9xxx_clsh_comp_req(codec, clsh_d, CLSH_COMPUTE_HPH_L, false);
-		wcd9xxx_chargepump_request(codec, false);
+		wcd9xxx_clsh_comp_req(codec, clsh_d, CLSH_COMPUTE_HPH_R, false);
 		wcd9xxx_enable_clsh_block(codec, clsh_d, false);
 		clsh_d->state &= ~WCD9XXX_CLSH_STATE_HPHL;
+		wcd9xxx_chargepump_request(codec, false);
 	}
 }
 
@@ -1247,6 +1249,7 @@ static void wcd9xxx_clsh_state_hph_r(struct snd_soc_codec *codec,
 		wcd9xxx_enable_clsh_block(codec, clsh_d, true);
 		wcd9xxx_chargepump_request(codec, true);
 		wcd9xxx_enable_anc_delay(codec, true);
+		wcd9xxx_clsh_comp_req(codec, clsh_d, CLSH_COMPUTE_HPH_L, true);
 		wcd9xxx_clsh_comp_req(codec, clsh_d, CLSH_COMPUTE_HPH_R, true);
 		pr_debug("%s class state: %d\n", __func__, clsh_d->state);
 		if (clsh_d->state & WCD9XXX_CLSH_STATE_LO)
@@ -1260,10 +1263,11 @@ static void wcd9xxx_clsh_state_hph_r(struct snd_soc_codec *codec,
 	} else {
 		wcd9xxx_set_fclk_put_ncp(codec, clsh_d, NCP_FCLK_LEVEL_8);
 		wcd9xxx_enable_buck(codec, clsh_d, false);
+		wcd9xxx_clsh_comp_req(codec, clsh_d, CLSH_COMPUTE_HPH_L, false);
 		wcd9xxx_clsh_comp_req(codec, clsh_d, CLSH_COMPUTE_HPH_R, false);
-		wcd9xxx_chargepump_request(codec, false);
 		wcd9xxx_enable_clsh_block(codec, clsh_d, false);
 		clsh_d->state &= ~WCD9XXX_CLSH_STATE_HPHR;
+		wcd9xxx_chargepump_request(codec, false);
 	}
 }
 
@@ -1274,23 +1278,12 @@ static void wcd9xxx_clsh_state_hph_st(struct snd_soc_codec *codec,
 	pr_debug("%s: enter %s\n", __func__, is_enable ? "enable" : "disable");
 
 	if (is_enable) {
-		if (req_state == WCD9XXX_CLSH_STATE_HPHL)
-			wcd9xxx_clsh_comp_req(codec, clsh_d,
-						CLSH_COMPUTE_HPH_L, true);
-		if (req_state == WCD9XXX_CLSH_STATE_HPHR)
-			wcd9xxx_clsh_comp_req(codec, clsh_d,
-						CLSH_COMPUTE_HPH_R, true);
+		dev_dbg(codec->dev, "%s: stub fallback to hph_st\n", __func__);
 		pr_debug("%s class state: %d\n", __func__, clsh_d->state);
 		if (clsh_d->state & WCD9XXX_CLSH_STATE_LO)
 			wcd9xxx_set_buck_mode(codec, BUCK_VREF_2V);
 	} else {
 		dev_dbg(codec->dev, "%s: stub fallback to hph_st\n", __func__);
-		if (req_state == WCD9XXX_CLSH_STATE_HPHL)
-			wcd9xxx_clsh_comp_req(codec, clsh_d,
-						CLSH_COMPUTE_HPH_L, false);
-		if (req_state == WCD9XXX_CLSH_STATE_HPHR)
-			wcd9xxx_clsh_comp_req(codec, clsh_d,
-						CLSH_COMPUTE_HPH_R, false);
 		clsh_d->state &= ~WCD9XXX_CLSH_STATE_HPH_ST;
 	}
 }
