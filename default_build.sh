@@ -1,6 +1,8 @@
 #!/bin/sh
 clear
 
+LANG=C
+
 # What you need installed to compile
 # gcc, gpp, cpp, c++, g++, lzma, lzop, ia32-libs flex
 
