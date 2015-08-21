@@ -1,4 +1,4 @@
-obj-y += update.o srcu.o
+obj-y += update.o srcu.o sync.o
 obj-$(CONFIG_RCU_TORTURE_TEST) += torture.o
 obj-$(CONFIG_TREE_RCU) += tree.o
 obj-$(CONFIG_TREE_PREEMPT_RCU) += tree.o
