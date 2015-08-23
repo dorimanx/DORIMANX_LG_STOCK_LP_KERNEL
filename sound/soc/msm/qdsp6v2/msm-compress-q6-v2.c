@@ -1187,6 +1187,7 @@ static int msm_compr_set_params(struct snd_compr_stream *cstream,
 		prtd->codec = FORMAT_LINEAR_PCM;
 		prtd->bits_per_sample = prtd->codec_param.codec.format;
 		frame_sz = AAC_OUTPUT_FRAME_SZ;
+		is_format_gapless = true;
 		break;
 	}
 #else
