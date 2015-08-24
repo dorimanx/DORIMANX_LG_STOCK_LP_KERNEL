@@ -454,7 +454,9 @@ void __enable_irq(struct irq_desc *desc, unsigned int irq, bool resume)
 	switch (desc->depth) {
 	case 0:
  err_out:
-		WARN(1, KERN_WARNING "Unbalanced enable for IRQ %d\n", irq);
+		/* dorimanx Note: ignore IRQ 61 SPS (Modem Data wakeup */
+		if (irq != 61)
+			WARN(1, KERN_WARNING "Unbalanced enable for IRQ %d\n", irq);
 		break;
 	case 1: {
 		if (desc->istate & IRQS_SUSPENDED)
