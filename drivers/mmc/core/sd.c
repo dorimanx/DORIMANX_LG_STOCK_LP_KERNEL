@@ -910,15 +910,15 @@ int mmc_sd_setup_card(struct mmc_host *host, struct mmc_card *card,
 			err = mmc_read_switch(card);
 			if (!err) {
 				if (retries > 1) {
-                    printk(KERN_WARNING
-                            "%s: recovered\n",
-                            mmc_hostname(host));
+					printk(KERN_WARNING
+					       "%s: recovered\n", 
+					       mmc_hostname(host));
 				}
 				break;
 			} else {
-                    printk(KERN_WARNING
-                            "%s: read switch failed (attempt %d)\n",
-                            mmc_hostname(host), retries);
+				printk(KERN_WARNING
+				       "%s: read switch failed (attempt %d)\n",
+				       mmc_hostname(host), retries);
 			}
 		}
 #else
@@ -1157,14 +1157,8 @@ static int mmc_sd_alive(struct mmc_host *host)
 static void mmc_sd_detect(struct mmc_host *host)
 {
 	int err = 0;
-#ifdef CONFIG_MACH_LGE
-	/* LGE_UPDATE
-	 * for fixing compile-warning
-	 * 2014-01/16, B2-BSP-FS@lge.com
-	 */
 #ifdef CONFIG_MMC_PARANOID_SD_INIT
 	int retries = 5;
-#endif
 #endif
 
 	BUG_ON(!host);
@@ -1176,7 +1170,6 @@ static void mmc_sd_detect(struct mmc_host *host)
 	/*
 	 * Just check if our card has been removed.
 	 */
-
 #ifdef CONFIG_MMC_PARANOID_SD_INIT
 	while(retries) {
 		err = mmc_send_status(host->card, NULL);
@@ -1188,7 +1181,7 @@ static void mmc_sd_detect(struct mmc_host *host)
 		break;
 	}
 	if (!retries) {
-        printk(KERN_ERR "%s(%s): Unable to re-detect card (%d)\n",
+		printk(KERN_ERR "%s(%s): Unable to re-detect card (%d)\n",
 		       __func__, mmc_hostname(host), err);
 		err = _mmc_detect_card_removed(host);
 	}
@@ -1275,7 +1268,7 @@ static int mmc_sd_resume(struct mmc_host *host)
 #endif
 
 		if (err) {
-            printk(KERN_ERR "%s: Re-init card rc = %d (retries = %d)\n",
+			printk(KERN_ERR "%s: Re-init card rc = %d (retries = %d)\n",
 			       mmc_hostname(host), err, retries);
 			retries--;
 			mmc_power_off(host);
@@ -1456,7 +1449,7 @@ int mmc_attach_sd(struct mmc_host *host)
 	}
 
 	if (!retries) {
-        printk(KERN_ERR "%s: mmc_sd_init_card() failure (err = %d)\n",
+		printk(KERN_ERR "%s: mmc_sd_init_card() failure (err = %d)\n",
 		       mmc_hostname(host), err);
 		goto err;
 	}
