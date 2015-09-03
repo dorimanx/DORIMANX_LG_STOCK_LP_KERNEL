@@ -344,6 +344,7 @@ select CHOICE in D800 D801 D802 D805 LS980 VS980 ALL; do
 			break;;
 		"ALL")
 			CLEAN_KERNEL;
+			rm READY-RELEASES/*.zip
 			echo "starting build of D800 in 3"
 			sleep 1;
 			echo "starting build of D800 in 2"
@@ -423,6 +424,7 @@ select CHOICE in D800 D801 D802 D805 LS980 VS980 ALL; do
 			BUILD_NOW;
 			echo "VS980 is ready!"
 			cp READY-KERNEL/*.zip READY-RELEASES/;
+			sh upload_release.sh
 			break;;
 	esac;
 done;
