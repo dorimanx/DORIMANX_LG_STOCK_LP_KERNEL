@@ -17,6 +17,10 @@
  *  v1.5 - Remove hybrid mode! as it's calling too early wakeup and mdss stuck!
  *         screen may not turn on for LG G2 kernel in random cases.
  *
+ *  v1.6 - remove autosleep and hybrid modes (autosleep not working on LP)
+ *
+ *  v1.7 - do only run state change if change actually requests a new state
+ *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
  * may be copied, distributed, and modified under those terms.
@@ -34,7 +38,7 @@
 #include <linux/workqueue.h>
 
 #define MAJOR_VERSION	1
-#define MINOR_VERSION	6
+#define MINOR_VERSION	7
 
 /*
  * debug = 1 will print all
@@ -133,47 +137,37 @@ static void power_resume(struct work_struct *work)
 		goto abort_resume;
 
 	dprintk("[POWERSUSPEND] resuming...\n");
-	sleep_state = 0;
 	list_for_each_entry_reverse(pos, &power_suspend_handlers, link) {
 		if (pos->resume != NULL) {
 			pos->resume(pos);
 		}
 	}
 	dprintk("[POWERSUSPEND] resume completed.\n");
+	sleep_state = 0;
 abort_resume:
 	mutex_unlock(&power_suspend_lock);
 }
-
-bool power_suspended = false;
 
 void set_power_suspend_state(int new_state)
 {
 	unsigned long irqflags;
 
-	spin_lock_irqsave(&state_lock, irqflags);
-	if (state == POWER_SUSPEND_INACTIVE && new_state == POWER_SUSPEND_ACTIVE) {
-		dprintk("[POWERSUSPEND] state activated.\n");
-		state = new_state;
-		power_suspended = true;
-		queue_work(suspend_work_queue, &power_suspend_work);
-	} else if (state == POWER_SUSPEND_ACTIVE && new_state == POWER_SUSPEND_INACTIVE) {
-		dprintk("[POWERSUSPEND] state deactivated.\n");
-		state = new_state;
-		power_suspended = false;
-		queue_work(suspend_work_queue, &power_resume_work);
+	if (state != new_state) {
+		spin_lock_irqsave(&state_lock, irqflags);
+		if (state == POWER_SUSPEND_INACTIVE && new_state == POWER_SUSPEND_ACTIVE) {
+			dprintk("[POWERSUSPEND] state activated.\n");
+			state = new_state;
+			queue_work(suspend_work_queue, &power_suspend_work);
+		} else if (state == POWER_SUSPEND_ACTIVE && new_state == POWER_SUSPEND_INACTIVE) {
+			dprintk("[POWERSUSPEND] state deactivated.\n");
+			state = new_state;
+			queue_work(suspend_work_queue, &power_resume_work);
+		}
+		spin_unlock_irqrestore(&state_lock, irqflags);
+	} else {
+		dprintk("[POWERSUSPEND] state change requested, but unchanged ?! Ignored !\n");
 	}
-	spin_unlock_irqrestore(&state_lock, irqflags);
 }
-
-void set_power_suspend_state_autosleep_hook(int new_state)
-{
-	dprintk("[POWERSUSPEND] autosleep resquests %s.\n", new_state == POWER_SUSPEND_ACTIVE ? "sleep" : "wakeup");
-	/* Yank555.lu : Only allow autosleep hook changes in autosleep */
-	if (suspend_mode == POWER_SUSPEND_AUTOSLEEP)
-		set_power_suspend_state(new_state);
-}
-
-EXPORT_SYMBOL(set_power_suspend_state_autosleep_hook);
 
 void set_power_suspend_state_panel_hook(int new_state)
 {
@@ -231,7 +225,6 @@ static ssize_t power_suspend_mode_store(struct kobject *kobj,
 
 #if 0 /* do not allow user/app to mess with this control */
 	switch (data) {
-		case POWER_SUSPEND_AUTOSLEEP:
 		case POWER_SUSPEND_PANEL:
 		case POWER_SUSPEND_USERSPACE:
 			suspend_mode = data;
@@ -304,9 +297,8 @@ static int __init power_suspend_init(void)
 
 #if 0 /* INFO */
 	suspend_mode = POWER_SUSPEND_USERSPACE;	/* Yank555.lu : Default to userspace suspend_mode */
-	suspend_mode = POWER_SUSPEND_PANEL;	/* Yank555.lu : Default to display panel suspend_mode */
 #endif
-	suspend_mode = POWER_SUSPEND_AUTOSLEEP; /* Yank555.lu : Default to autosleep suspend_mode */
+	suspend_mode = POWER_SUSPEND_PANEL; /* Yank555.lu : Default to display panel suspend_mode */
 
 	return 0;
 }
@@ -315,6 +307,7 @@ static void __exit power_suspend_exit(void)
 {
 	if (power_suspend_kobj != NULL)
 		kobject_put(power_suspend_kobj);
+
 	destroy_workqueue(suspend_work_queue);
 } 
 
