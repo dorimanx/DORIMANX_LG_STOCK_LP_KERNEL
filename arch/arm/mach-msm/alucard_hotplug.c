@@ -62,10 +62,11 @@ static struct hotplug_tuners {
 	bool suspended;
 	bool force_cpu_up;
 } hotplug_tuners_ins = {
-	.hotplug_sampling_rate = 30,
 #ifdef CONFIG_MACH_JF
+	.hotplug_sampling_rate = 50,
 	.hotplug_enable = 1,
 #else
+	.hotplug_sampling_rate = 30,
 	.hotplug_enable = 0,
 #endif
 	.min_cpus_online = 1,
@@ -140,9 +141,6 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 			/* get the cpu current frequency */
 			cur_freq = cpufreq_quick_get(cpu);
 
-			/* get nr online cpus */
-			online_cpus = num_online_cpus();
-
 			if (cpu > 0	&& 
 				 online_cpus > upmaxcoreslimit) {
 					ret = cpu_down(cpu);
@@ -151,7 +149,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 					}
 			} else if (online_cpus < min_cpus_online
 						&& upcpu < upmaxcoreslimit) {
-					if (cpu_is_offline(upcpu)) {
+					if (!cpu_online(upcpu)) {
 						ret = cpu_up(upcpu);
 						if (!ret) {
 							pcpu_info->cur_up_rate = 1;
@@ -161,7 +159,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 					}
 			} else if (upcpu > 0
 				&& upcpu < upmaxcoreslimit
-				&& (cpu_is_offline(upcpu))
+				&& (!cpu_online(upcpu))
 				&& online_cpus < upmaxcoreslimit
 				&& cur_load >= pcpu_info->up_load
 				&& cur_freq >= pcpu_info->up_freq
@@ -308,8 +306,8 @@ static int fb_notifier_callback(struct notifier_block *self,
 static int alucard_hotplug_callback(struct notifier_block *nb,
 			unsigned long action, void *data)
 {
+	unsigned int cpu = (unsigned long)data;
 	struct hotplug_cpuinfo *pcpu_info;
-	unsigned int cpu = (int)data;
 
 	switch (action) {
 	case CPU_ONLINE:
@@ -317,6 +315,9 @@ static int alucard_hotplug_callback(struct notifier_block *nb,
 		pcpu_info->prev_cpu_idle = get_cpu_idle_time(cpu,
 				&pcpu_info->prev_cpu_wall,
 				hotplug_tuners_ins.hp_io_is_busy);
+		break;
+	case CPU_STARTING:
+		pcpu_info = &per_cpu(od_hotplug_cpuinfo, cpu);
 		pcpu_info->cur_up_rate = 1;
 		pcpu_info->cur_down_rate = 1;
 		break;
