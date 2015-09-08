@@ -424,7 +424,9 @@ select CHOICE in D800 D801 D802 D805 LS980 VS980 ALL; do
 			BUILD_NOW;
 			echo "VS980 is ready!"
 			cp READY-KERNEL/*.zip READY-RELEASES/;
-			sh upload_release.sh
+			if [ -e /root/ftp_login_mirror1.cfg ] && [ -e /root/ftp_login_mirror2.cfg ]; then
+				sh upload_release.sh
+			fi;
 			break;;
 	esac;
 done;
