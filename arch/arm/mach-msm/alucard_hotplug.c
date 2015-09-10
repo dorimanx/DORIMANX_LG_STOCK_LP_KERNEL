@@ -222,7 +222,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 		}
 	} else {
 		for_each_cpu_not(cpu, cpus) {
-			if (cpu < (upmaxcoreslimit - 1)) {
+			if (cpu < upmaxcoreslimit) {
 				cpu_up(cpu);
 			}
 		}
