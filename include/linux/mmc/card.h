@@ -378,12 +378,13 @@ struct mmc_card {
 #define MMC_QUIRK_LONG_READ_TIME (1<<9)		/* Data read time > CSD says */
 #define MMC_QUIRK_SEC_ERASE_TRIM_BROKEN (1<<10)	/* Skip secure for erase/trim */
 						/* byte mode */
-#define MMC_QUIRK_INAND_DATA_TIMEOUT  (1<<11)   /* For incorrect data timeout */
+#define MMC_QUIRK_INAND_DATA_TIMEOUT  (1<<11)	/* For incorrect data timeout */
+#define MMC_QUIRK_BLK_NEED_DUMMY_READ  (1<<12)	/* Issue dummy read in some cases */
 /* To avoid eMMC device getting broken permanently due to HPI feature */
-#define MMC_QUIRK_BROKEN_HPI (1 << 12)
+#define MMC_QUIRK_BROKEN_HPI (1 << 13)
  /* Skip data-timeout advertised by card */
-#define MMC_QUIRK_BROKEN_DATA_TIMEOUT	(1<<13)
-#define MMC_QUIRK_CACHE_DISABLE (1 << 14)       /* prevent cache enable */
+#define MMC_QUIRK_BROKEN_DATA_TIMEOUT	(1<<14)
+#define MMC_QUIRK_CACHE_DISABLE (1 << 15)       /* prevent cache enable */
 #define MMC_QUIRK_RETRY_FLUSH_TIMEOUT (1 << 31) /* requeue flush command timeouts */
 
 	unsigned int		erase_size;	/* erase size in sectors */
@@ -482,6 +483,7 @@ struct mmc_fixup {
 #define CID_MANFID_TOSHIBA	0x11
 #define CID_MANFID_MICRON	0x13
 #define CID_MANFID_SAMSUNG	0x15
+#define CID_MANFID_SANDISK_SEM	0x45
 #define CID_MANFID_KINGSTON	0x70
 #define CID_MANFID_HYNIX	0x90
 
