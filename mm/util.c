@@ -348,39 +348,6 @@ int __attribute__((weak)) get_user_pages_fast(unsigned long start,
 }
 EXPORT_SYMBOL_GPL(get_user_pages_fast);
 
-/**
- * do_vfree - workqueue routine for freeing vmalloced memory
- * @work: data to be freed
- *
- * The work_struct is overlaid to the data being freed, as at the point
- * the work is scheduled the data is no longer valid, be its freeing
- * needs to be delayed until safe.
- */
-static void do_vfree(struct work_struct *work)
-{
-	vfree(work);
-}
-
-/**
- * kvfree - free an allocation do by kvmalloc
- * @buffer: buffer to free (MAYBE_NULL)
- *
- * Free a buffer allocated by kvmalloc
- */
-void kvfree(void *buffer)
-{
-	if (is_vmalloc_addr(buffer)) {
-		/* Data is no longer valid so just use the allocated space
-		 * as the work_struct
-		 */
-		struct work_struct *work = (struct work_struct *) buffer;
-		INIT_WORK(work, do_vfree);
-		schedule_work(work);
-	} else
-		kfree(buffer);
-}
-EXPORT_SYMBOL(kvfree);
-
 unsigned long vm_mmap_pgoff(struct file *file, unsigned long addr,
 	unsigned long len, unsigned long prot,
 	unsigned long flag, unsigned long pgoff)
@@ -413,6 +380,15 @@ unsigned long vm_mmap(struct file *file, unsigned long addr,
 	return vm_mmap_pgoff(file, addr, len, prot, flag, offset >> PAGE_SHIFT);
 }
 EXPORT_SYMBOL(vm_mmap);
+
+void kvfree(const void *addr)
+{
+	if (is_vmalloc_addr(addr))
+		vfree(addr);
+	else
+		kfree(addr);
+}
+EXPORT_SYMBOL(kvfree);
 
 struct address_space *page_mapping(struct page *page)
 {
