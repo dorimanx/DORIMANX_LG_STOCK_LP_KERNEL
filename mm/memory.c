@@ -152,7 +152,6 @@ static int __init init_zero_pfn(void)
 core_initcall(init_zero_pfn);
 
 
-
 #if defined(SPLIT_RSS_COUNTING)
 
 void sync_mm_rss(struct mm_struct *mm)
@@ -2799,28 +2798,21 @@ reuse:
 		if (!dirty_page)
 			return ret;
 
+		/*
+		 * Yes, Virginia, this is actually required to prevent a race
+		 * with clear_page_dirty_for_io() from clearing the page dirty
+		 * bit after it clear all dirty ptes, but before a racing
+		 * do_wp_page installs a dirty pte.
+		 *
+		 * __do_fault is protected similarly.
+		 */
 		if (!page_mkwrite) {
-			struct address_space *mapping;
-			int dirtied;
-
-			lock_page(dirty_page);
-			dirtied = set_page_dirty(dirty_page);
-			VM_BUG_ON(dirty_page);
-			mapping = dirty_page->mapping;
-			unlock_page(dirty_page);
-
-			if (dirtied && mapping) {
-				/*
-				 * Some device drivers do not set page.mapping
-				 * but still dirty their pages
-				 */
-				balance_dirty_pages_ratelimited(mapping);
-			}
+			wait_on_page_locked(dirty_page);
+			set_page_dirty_balance(dirty_page, page_mkwrite);
 			/* file_update_time outside page_lock */
 			if (vma->vm_file)
 				file_update_time(vma->vm_file);
 		}
-
 		put_page(dirty_page);
 		if (page_mkwrite) {
 			struct address_space *mapping = dirty_page->mapping;
