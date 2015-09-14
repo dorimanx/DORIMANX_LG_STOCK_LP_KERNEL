@@ -1163,7 +1163,7 @@ static int msm_routing_get_channel_map_mixer(struct snd_kcontrol *kcontrol,
 	char channel_map[PCM_FORMAT_MAX_NUM_CHANNEL];
 	int i;
 
-	adm_get_multi_ch_map(channel_map);
+	adm_get_multi_ch_map(channel_map, ADM_PATH_PLAYBACK);
 	for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL; i++)
 		ucontrol->value.integer.value[i] = (unsigned) channel_map[i];
 	return 0;
@@ -1177,7 +1177,7 @@ static int msm_routing_put_channel_map_mixer(struct snd_kcontrol *kcontrol,
 
 	for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL; i++)
 		channel_map[i] = (char)(ucontrol->value.integer.value[i]);
-	adm_set_multi_ch_map(channel_map);
+	adm_set_multi_ch_map(channel_map, ADM_PATH_PLAYBACK);
 
 	return 0;
 }
