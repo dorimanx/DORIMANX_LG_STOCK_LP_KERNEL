@@ -821,7 +821,7 @@ static ssize_t environ_read(struct file *file, char __user *buf,
 		goto out;
 
 
-	mm = mm_for_maps(task);
+	mm = mm_access(task, PTRACE_MODE_READ);
 	ret = PTR_ERR(mm);
 	if (!mm || IS_ERR(mm))
 		goto out_free;
