@@ -979,7 +979,7 @@ SYSCALL_DEFINE3(shmctl, int, shmid, int, cmd, struct shmid_ds __user *, buf)
 		if (!ns_capable(ns->user_ns, CAP_IPC_LOCK)) {
 			uid_t euid = current_euid();
 			if (euid != shp->shm_perm.uid &&
-			    euid != shp->shm_perm.cuid)
+			    euid != shp->shm_perm.cuid) {
 				err = -EPERM;
 				goto out_unlock0;
 			}
