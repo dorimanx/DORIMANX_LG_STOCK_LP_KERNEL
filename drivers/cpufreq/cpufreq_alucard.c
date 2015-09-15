@@ -526,7 +526,6 @@ static void alucard_check_cpu(struct cpufreq_alucard_cpuinfo *this_alucard_cpuin
 	unsigned int cpus_up_rate = alucard_tuners_ins.cpus_up_rate;
 	unsigned int cpus_down_rate = alucard_tuners_ins.cpus_down_rate;
 	unsigned int index = 0;
-	unsigned int cpu = this_alucard_cpuinfo->cpu;
 	unsigned int j;
 
 	policy = this_alucard_cpuinfo->cur_policy;
@@ -539,27 +538,20 @@ static void alucard_check_cpu(struct cpufreq_alucard_cpuinfo *this_alucard_cpuin
 				&index);
 
 	for_each_cpu(j, policy->cpus) {
-		struct cpufreq_alucard_cpuinfo *j_alucard_cpuinfo;
+		struct cpufreq_alucard_cpuinfo *j_alucard_cpuinfo = &per_cpu(od_alucard_cpuinfo, j);
 		u64 cur_wall_time, cur_idle_time;
 		unsigned int idle_time, wall_time;
 		unsigned int load;
 		
-		j_alucard_cpuinfo = &per_cpu(od_alucard_cpuinfo, j);
-
-		if (!j_alucard_cpuinfo->governor_enabled)
-			continue;
-
 		cur_idle_time = get_cpu_idle_time(j, &cur_wall_time, io_busy);
 
 		wall_time = (unsigned int)
 			(cur_wall_time - j_alucard_cpuinfo->prev_cpu_wall);
+		j_alucard_cpuinfo->prev_cpu_wall = cur_wall_time;
+
 		idle_time = (unsigned int)
 			(cur_idle_time - j_alucard_cpuinfo->prev_cpu_idle);
-
-		if (j == cpu) {
-			j_alucard_cpuinfo->prev_cpu_wall = cur_wall_time;
-			j_alucard_cpuinfo->prev_cpu_idle = cur_idle_time;
-		}
+		j_alucard_cpuinfo->prev_cpu_idle = cur_idle_time;
 
 		if (unlikely(!wall_time || wall_time < idle_time))
 			continue;
@@ -648,7 +640,7 @@ static int cpufreq_governor_alucard(struct cpufreq_policy *policy,
 				unsigned int event)
 {
 	struct cpufreq_alucard_cpuinfo *this_alucard_cpuinfo;
-	unsigned int cpu = policy->cpu;
+	unsigned int cpu = policy->cpu, j;
 	int io_busy = alucard_tuners_ins.io_is_busy;
 	int rc, delay;
 
@@ -671,8 +663,12 @@ static int cpufreq_governor_alucard(struct cpufreq_policy *policy,
 
 		this_alucard_cpuinfo->cur_policy = policy;
 	
-		this_alucard_cpuinfo->prev_cpu_idle = get_cpu_idle_time(cpu,
-			&this_alucard_cpuinfo->prev_cpu_wall, io_busy);
+		for_each_cpu(j, policy->cpus) {
+			struct cpufreq_alucard_cpuinfo *j_alucard_cpuinfo = &per_cpu(od_alucard_cpuinfo, j);
+
+			j_alucard_cpuinfo->prev_cpu_idle = get_cpu_idle_time(j,
+				&j_alucard_cpuinfo->prev_cpu_wall, io_busy);
+		}
 
 		alucard_enable++;
 		/*

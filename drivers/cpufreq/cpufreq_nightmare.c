@@ -498,7 +498,6 @@ static void nightmare_check_cpu(struct cpufreq_nightmare_cpuinfo *this_nightmare
 	unsigned int max_load = 0;
 	unsigned int tmp_freq = 0;
 	int io_busy = nightmare_tuners_ins.io_is_busy;
-	unsigned int cpu = this_nightmare_cpuinfo->cpu;
 	unsigned int j;
 
 	policy = this_nightmare_cpuinfo->cur_policy;
@@ -506,27 +505,20 @@ static void nightmare_check_cpu(struct cpufreq_nightmare_cpuinfo *this_nightmare
 		return;
 
 	for_each_cpu(j, policy->cpus) {
-		struct cpufreq_nightmare_cpuinfo *j_nightmare_cpuinfo;
+		struct cpufreq_nightmare_cpuinfo *j_nightmare_cpuinfo = &per_cpu(od_nightmare_cpuinfo, j);
 		u64 cur_wall_time, cur_idle_time;
 		unsigned int idle_time, wall_time;
 		unsigned int load;
 		
-		j_nightmare_cpuinfo = &per_cpu(od_nightmare_cpuinfo, j);
-
-		if (!j_nightmare_cpuinfo->governor_enabled)
-			continue;
-
 		cur_idle_time = get_cpu_idle_time(j, &cur_wall_time, io_busy);
 
 		wall_time = (unsigned int)
 			(cur_wall_time - j_nightmare_cpuinfo->prev_cpu_wall);
+		j_nightmare_cpuinfo->prev_cpu_wall = cur_wall_time;
+
 		idle_time = (unsigned int)
 			(cur_idle_time - j_nightmare_cpuinfo->prev_cpu_idle);
-
-		if (j == cpu) {
-			j_nightmare_cpuinfo->prev_cpu_wall = cur_wall_time;
-			j_nightmare_cpuinfo->prev_cpu_idle = cur_idle_time;
-		}
+		j_nightmare_cpuinfo->prev_cpu_idle = cur_idle_time;
 
 		if (unlikely(!wall_time || wall_time < idle_time))
 			continue;
@@ -592,7 +584,7 @@ static int cpufreq_governor_nightmare(struct cpufreq_policy *policy,
 				unsigned int event)
 {
 	struct cpufreq_nightmare_cpuinfo *this_nightmare_cpuinfo;
-	unsigned int cpu = policy->cpu;
+	unsigned int cpu = policy->cpu, j;
 	int io_busy = nightmare_tuners_ins.io_is_busy;
 	int rc, delay;
 
@@ -613,8 +605,12 @@ static int cpufreq_governor_nightmare(struct cpufreq_policy *policy,
 
 		this_nightmare_cpuinfo->cur_policy = policy;
 
-		this_nightmare_cpuinfo->prev_cpu_idle = get_cpu_idle_time(cpu,
-			&this_nightmare_cpuinfo->prev_cpu_wall, io_busy);
+		for_each_cpu(j, policy->cpus) {
+			struct cpufreq_nightmare_cpuinfo *j_nightmare_cpuinfo = &per_cpu(od_nightmare_cpuinfo, j);
+
+			j_nightmare_cpuinfo->prev_cpu_idle = get_cpu_idle_time(j,
+				&j_nightmare_cpuinfo->prev_cpu_wall, io_busy);
+		}
 
 		nightmare_enable++;
 		/*
