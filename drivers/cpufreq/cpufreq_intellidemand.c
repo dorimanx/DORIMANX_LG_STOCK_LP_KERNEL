@@ -1489,6 +1489,9 @@ static void do_dbs_timer(struct work_struct *work)
 	int sample_type = dbs_info->sample_type;
 	int delay;
 
+	if (unlikely(!cpu_online(cpu) || !dbs_info->cur_policy))
+		return;
+
 	mutex_lock(&dbs_info->timer_mutex);
 
 	/* Common NORMAL_SAMPLE setup */
@@ -1509,7 +1512,7 @@ static void do_dbs_timer(struct work_struct *work)
 			dbs_info->freq_lo, CPUFREQ_RELATION_H);
 		delay = dbs_info->freq_lo_jiffies;
 	}
-	mod_delayed_work_on(cpu, dbs_wq, &dbs_info->work, delay);
+	queue_delayed_work_on(dbs_info->cpu, dbs_wq, &dbs_info->work, delay);
 	mutex_unlock(&dbs_info->timer_mutex);
 }
 
@@ -1517,14 +1520,13 @@ static inline void dbs_timer_init(struct cpu_dbs_info_s *dbs_info)
 {
 	/* We want all CPUs to do sampling nearly on same jiffy */
 	int delay = usecs_to_jiffies(dbs_tuners_ins.sampling_rate);
-	unsigned int cpu = dbs_info->cpu;
 
 	if (num_online_cpus() > 1)
 		delay -= jiffies % delay;
 
 	dbs_info->sample_type = DBS_NORMAL_SAMPLE;
 	INIT_DEFERRABLE_WORK(&dbs_info->work, do_dbs_timer);
-	mod_delayed_work_on(cpu, dbs_wq, &dbs_info->work, delay);
+	queue_delayed_work_on(dbs_info->cpu, dbs_wq, &dbs_info->work, delay);
 }
 
 static inline void dbs_timer_exit(struct cpu_dbs_info_s *dbs_info)
@@ -1541,7 +1543,6 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 	int rc;
 
 	this_dbs_info = &per_cpu(id_cpu_dbs_info, cpu);
-	this_dbs_info->cpu = cpu;
 
 	switch (event) {
 	case CPUFREQ_GOV_START:
@@ -1568,7 +1569,8 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 				j_dbs_info->prev_cpu_nice =
 						kcpustat_cpu(j).cpustat[CPUTIME_NICE];
 		}
-
+		cpu = policy->cpu;
+		this_dbs_info->cpu = cpu;
 		this_dbs_info->rate_mult = 1;
 		this_dbs_info->freq_stay_count = 1;
 		intellidemand_powersave_bias_init_cpu(cpu);

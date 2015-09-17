@@ -616,8 +616,11 @@ static void do_alucard_timer(struct work_struct *work)
 {
 	struct cpufreq_alucard_cpuinfo *this_alucard_cpuinfo = 
 		container_of(work, struct cpufreq_alucard_cpuinfo, work.work);
-	int delay;
 	unsigned int cpu = this_alucard_cpuinfo->cpu;
+	int delay;
+
+	if (unlikely(!cpu_online(cpu) || !this_alucard_cpuinfo->cur_policy))
+		return;
 
 	mutex_lock(&this_alucard_cpuinfo->timer_mutex);
 
@@ -631,7 +634,7 @@ static void do_alucard_timer(struct work_struct *work)
 		delay -= jiffies % delay;
 	}
 
-	mod_delayed_work_on(cpu, system_wq,
+	queue_delayed_work_on(this_alucard_cpuinfo->cpu, system_wq,
 			&this_alucard_cpuinfo->work, delay);
 	mutex_unlock(&this_alucard_cpuinfo->timer_mutex);
 }
@@ -645,7 +648,6 @@ static int cpufreq_governor_alucard(struct cpufreq_policy *policy,
 	int rc, delay;
 
 	this_alucard_cpuinfo = &per_cpu(od_alucard_cpuinfo, cpu);
-	this_alucard_cpuinfo->cpu = cpu;
 
 	switch (event) {
 	case CPUFREQ_GOV_START:
@@ -684,6 +686,8 @@ static int cpufreq_governor_alucard(struct cpufreq_policy *policy,
 				return rc;
 			}
 		}
+		cpu = policy->cpu;
+		this_alucard_cpuinfo->cpu = cpu;
 		this_alucard_cpuinfo->up_rate = 2;
 		this_alucard_cpuinfo->down_rate = 2;
 		this_alucard_cpuinfo->governor_enabled = true;
@@ -699,7 +703,7 @@ static int cpufreq_governor_alucard(struct cpufreq_policy *policy,
 		}
 
 		INIT_DEFERRABLE_WORK(&this_alucard_cpuinfo->work, do_alucard_timer);
-		mod_delayed_work_on(cpu,
+		queue_delayed_work_on(cpu,
 			system_wq, &this_alucard_cpuinfo->work, delay);
 
 		break;

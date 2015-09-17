@@ -684,6 +684,9 @@ static void do_dbs_timer(struct work_struct *work)
 	int sample_type = dbs_info->sample_type;
 	int delay;
 
+	if (unlikely(!cpu_online(cpu) || !dbs_info->cur_policy))
+		return;
+
 	mutex_lock(&dbs_info->timer_mutex);
 
 	/* Common NORMAL_SAMPLE setup */
@@ -703,7 +706,7 @@ static void do_dbs_timer(struct work_struct *work)
 			dbs_info->freq_lo, CPUFREQ_RELATION_H);
 		delay = dbs_info->freq_lo_jiffies;
 	}
-	queue_delayed_work_on(cpu, dbs_wq, &dbs_info->work, delay);
+	queue_delayed_work_on(dbs_info->cpu, dbs_wq, &dbs_info->work, delay);
 	mutex_unlock(&dbs_info->timer_mutex);
 }
 
