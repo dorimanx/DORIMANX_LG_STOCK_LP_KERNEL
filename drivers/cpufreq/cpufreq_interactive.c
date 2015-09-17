@@ -444,6 +444,8 @@ static void cpufreq_interactive_timer(unsigned long data)
 	boosted = boost_val || now < boostpulse_endtime;
 	boosted_freq = max(hispeed_freq, pcpu->policy->min);
 
+	cpufreq_notify_utilization(pcpu->policy, cpu_load);
+
 	if (cpu_load >= go_hispeed_load || boosted) {
 		if (pcpu->policy->cur < boosted_freq) {
 			new_freq = boosted_freq;

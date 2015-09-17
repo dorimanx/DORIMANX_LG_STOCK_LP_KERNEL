@@ -406,10 +406,9 @@ static void do_dbs_timer(struct work_struct *work)
 {
 	struct cpu_dbs_info_s *dbs_info =
 		container_of(work, struct cpu_dbs_info_s, work.work);
-	unsigned int cpu = dbs_info->cpu;
 	int delay;
 
-	if (unlikely(!cpu_online(cpu) || !dbs_info->cur_policy))
+	if (unlikely(!cpu_online(dbs_info->cpu) || !dbs_info->cur_policy))
 		return;
 
 	/* We want all CPUs to do sampling nearly on same jiffy */

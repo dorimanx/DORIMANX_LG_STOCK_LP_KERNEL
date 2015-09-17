@@ -775,12 +775,11 @@ static void do_dbs_timer(struct work_struct *work)
 {
 	struct cpu_dbs_info_s *dbs_info =
 		container_of(work, struct cpu_dbs_info_s, work.work);
-	unsigned int cpu = dbs_info->cpu;
 	int sample_type = dbs_info->sample_type;
 
 	int delay;
 
-	if (unlikely(!cpu_online(cpu) || !dbs_info->cur_policy))
+	if (unlikely(!cpu_online(dbs_info->cpu) || !dbs_info->cur_policy))
 		return;
 
 	mutex_lock(&dbs_info->timer_mutex);
@@ -789,7 +788,6 @@ static void do_dbs_timer(struct work_struct *work)
 	if (sample_type == DBS_NORMAL_SAMPLE) {
 		dbs_check_cpu(dbs_info);
 		if (dbs_info->freq_lo) {
-
 			dbs_info->sample_type = DBS_SUB_SAMPLE;
 			delay = dbs_info->freq_hi_jiffies;
 		} else {
