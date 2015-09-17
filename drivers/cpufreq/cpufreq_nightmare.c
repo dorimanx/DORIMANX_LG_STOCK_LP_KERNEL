@@ -63,6 +63,8 @@ static unsigned int nightmare_enable;	/* number of CPUs using this policy */
  */
 static DEFINE_MUTEX(nightmare_mutex);
 
+static struct workqueue_struct *nightmare_wq;
+
 /* nightmare tuners */
 static struct nightmare_tuners {
 	unsigned int sampling_rate;
@@ -521,10 +523,10 @@ static void do_nightmare_timer(struct work_struct *work)
 {
 	struct cpufreq_nightmare_cpuinfo *this_nightmare_cpuinfo =
 		container_of(work, struct cpufreq_nightmare_cpuinfo, work.work);
-	unsigned int cpu = this_nightmare_cpuinfo->cpu;
 	int delay;
 
-	if (unlikely(!cpu_online(cpu) || !this_nightmare_cpuinfo->cur_policy))
+	if (unlikely(!cpu_online(this_nightmare_cpuinfo->cpu) ||
+				!this_nightmare_cpuinfo->cur_policy))
 		return;
 
 	mutex_lock(&this_nightmare_cpuinfo->timer_mutex);
@@ -540,7 +542,7 @@ static void do_nightmare_timer(struct work_struct *work)
 		delay -= jiffies % delay;
 	}
 
-	queue_delayed_work_on(this_nightmare_cpuinfo->cpu, system_wq,
+	queue_delayed_work_on(this_nightmare_cpuinfo->cpu, nightmare_wq,
 			&this_nightmare_cpuinfo->work, delay);
 	mutex_unlock(&this_nightmare_cpuinfo->timer_mutex);
 }
@@ -566,8 +568,6 @@ static int cpufreq_governor_nightmare(struct cpufreq_policy *policy,
 			return -EINVAL;
 		}
 
-		this_nightmare_cpuinfo->cur_policy = policy;
-
 		for_each_cpu(j, policy->cpus) {
 			struct cpufreq_nightmare_cpuinfo *j_nightmare_cpuinfo = &per_cpu(od_nightmare_cpuinfo, j);
 
@@ -591,6 +591,7 @@ static int cpufreq_governor_nightmare(struct cpufreq_policy *policy,
 		}
 		cpu = policy->cpu;
 		this_nightmare_cpuinfo->cpu = cpu;
+		this_nightmare_cpuinfo->cur_policy = policy;
 		this_nightmare_cpuinfo->governor_enabled = true;
 		mutex_unlock(&nightmare_mutex);
 
@@ -605,7 +606,7 @@ static int cpufreq_governor_nightmare(struct cpufreq_policy *policy,
 
 		INIT_DEFERRABLE_WORK(&this_nightmare_cpuinfo->work, do_nightmare_timer);
 		queue_delayed_work_on(cpu,
-			system_wq, &this_nightmare_cpuinfo->work, delay);
+			nightmare_wq, &this_nightmare_cpuinfo->work, delay);
 
 		break;
 	case CPUFREQ_GOV_STOP:
@@ -653,6 +654,12 @@ struct cpufreq_governor cpufreq_gov_nightmare = {
 
 static int __init cpufreq_gov_nightmare_init(void)
 {
+	nightmare_wq = alloc_workqueue("nightmare_wq", WQ_HIGHPRI, 0);
+	if (!nightmare_wq) {
+		printk(KERN_ERR "Failed to create nightmare_wq workqueue\n");
+		return -EFAULT;
+	}
+
 	return cpufreq_register_governor(&cpufreq_gov_nightmare);
 }
 
@@ -662,7 +669,7 @@ static void __exit cpufreq_gov_nightmare_exit(void)
 }
 
 MODULE_AUTHOR("Alucard24@XDA");
-MODULE_DESCRIPTION("'cpufreq_nightmare' - A dynamic cpufreq/cpuhotplug governor v4.5 (SnapDragon)");
+MODULE_DESCRIPTION("'cpufreq_nightmare' - A dynamic cpufreq/cpuhotplug governor v5.0 (SnapDragon)");
 MODULE_LICENSE("GPL");
 
 #ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_NIGHTMARE

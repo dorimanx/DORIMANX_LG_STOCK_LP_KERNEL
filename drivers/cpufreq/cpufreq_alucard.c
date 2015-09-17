@@ -92,6 +92,8 @@ static unsigned int alucard_enable;	/* number of CPUs using this policy */
  */
 static DEFINE_MUTEX(alucard_mutex);
 
+static struct workqueue_struct *alucard_wq;
+
 /* alucard tuners */
 static struct alucard_tuners {
 	unsigned int sampling_rate;
@@ -578,10 +580,10 @@ static void do_alucard_timer(struct work_struct *work)
 {
 	struct cpufreq_alucard_cpuinfo *this_alucard_cpuinfo = 
 		container_of(work, struct cpufreq_alucard_cpuinfo, work.work);
-	unsigned int cpu = this_alucard_cpuinfo->cpu;
 	int delay;
 
-	if (unlikely(!cpu_online(cpu) || !this_alucard_cpuinfo->cur_policy))
+	if (unlikely(!cpu_online(this_alucard_cpuinfo->cpu) ||
+				!this_alucard_cpuinfo->cur_policy))
 		return;
 
 	mutex_lock(&this_alucard_cpuinfo->timer_mutex);
@@ -596,7 +598,7 @@ static void do_alucard_timer(struct work_struct *work)
 		delay -= jiffies % delay;
 	}
 
-	queue_delayed_work_on(this_alucard_cpuinfo->cpu, system_wq,
+	queue_delayed_work_on(this_alucard_cpuinfo->cpu, alucard_wq,
 			&this_alucard_cpuinfo->work, delay);
 	mutex_unlock(&this_alucard_cpuinfo->timer_mutex);
 }
@@ -624,8 +626,6 @@ static int cpufreq_governor_alucard(struct cpufreq_policy *policy,
 		cpufreq_frequency_table_policy_minmax_limits(policy,
 				this_alucard_cpuinfo);	
 
-		this_alucard_cpuinfo->cur_policy = policy;
-	
 		for_each_cpu(j, policy->cpus) {
 			struct cpufreq_alucard_cpuinfo *j_alucard_cpuinfo = &per_cpu(od_alucard_cpuinfo, j);
 
@@ -649,6 +649,7 @@ static int cpufreq_governor_alucard(struct cpufreq_policy *policy,
 		}
 		cpu = policy->cpu;
 		this_alucard_cpuinfo->cpu = cpu;
+		this_alucard_cpuinfo->cur_policy = policy;
 		this_alucard_cpuinfo->up_rate = 2;
 		this_alucard_cpuinfo->down_rate = 2;
 		this_alucard_cpuinfo->governor_enabled = true;
@@ -665,7 +666,7 @@ static int cpufreq_governor_alucard(struct cpufreq_policy *policy,
 
 		INIT_DEFERRABLE_WORK(&this_alucard_cpuinfo->work, do_alucard_timer);
 		queue_delayed_work_on(cpu,
-			system_wq, &this_alucard_cpuinfo->work, delay);
+			alucard_wq, &this_alucard_cpuinfo->work, delay);
 
 		break;
 	case CPUFREQ_GOV_STOP:
@@ -728,6 +729,12 @@ static int __init cpufreq_gov_alucard_init(void)
 		this_alucard_cpuinfo->pump_dec_step = PUMP_DEC_STEP;
 	}
 
+	alucard_wq = alloc_workqueue("alucard_wq", WQ_HIGHPRI, 0);
+	if (!alucard_wq) {
+		printk(KERN_ERR "Failed to create alucard_wq workqueue\n");
+		return -EFAULT;
+	}
+
 	return cpufreq_register_governor(&cpufreq_gov_alucard);
 }
 
@@ -737,7 +744,7 @@ static void __exit cpufreq_gov_alucard_exit(void)
 }
 
 MODULE_AUTHOR("Alucard24@XDA");
-MODULE_DESCRIPTION("'cpufreq_alucard' - A dynamic cpufreq governor v2.1 (SnapDragon)");
+MODULE_DESCRIPTION("'cpufreq_alucard' - A dynamic cpufreq governor v3.0 (SnapDragon)");
 MODULE_LICENSE("GPL");
 
 #ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_ALUCARD
