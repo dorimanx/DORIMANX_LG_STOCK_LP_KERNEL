@@ -57,7 +57,6 @@ static struct hotplug_tuners {
 	unsigned int min_cpus_online;
 	unsigned int maxcoreslimit;
 	unsigned int maxcoreslimit_sleep;
-	unsigned int hp_io_is_busy;
 	unsigned int hotplug_suspend;
 	bool suspended;
 	bool force_cpu_up;
@@ -72,7 +71,6 @@ static struct hotplug_tuners {
 	.min_cpus_online = 1,
 	.maxcoreslimit = NR_CPUS,
 	.maxcoreslimit_sleep = 3,
-	.hp_io_is_busy = 0,
 	.hotplug_suspend = 0,
 	.suspended = false,
 	.force_cpu_up = false,
@@ -120,7 +118,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 
 			cur_idle_time = get_cpu_idle_time(
 					cpu, &cur_wall_time,
-					hotplug_tuners_ins.hp_io_is_busy);
+					0);
 
 			wall_time = (unsigned int)
 					(cur_wall_time -
@@ -314,7 +312,7 @@ static int alucard_hotplug_callback(struct notifier_block *nb,
 		pcpu_info = &per_cpu(od_hotplug_cpuinfo, cpu);
 		pcpu_info->prev_cpu_idle = get_cpu_idle_time(cpu,
 				&pcpu_info->prev_cpu_wall,
-				hotplug_tuners_ins.hp_io_is_busy);
+				0);
 		break;
 	case CPU_STARTING:
 		pcpu_info = &per_cpu(od_hotplug_cpuinfo, cpu);
@@ -346,7 +344,7 @@ static void hotplug_start(void)
 
 		pcpu_info->prev_cpu_idle = get_cpu_idle_time(cpu,
 				&pcpu_info->prev_cpu_wall,
-				hotplug_tuners_ins.hp_io_is_busy);
+				0);
 		pcpu_info->cur_up_rate = 1;
 		pcpu_info->cur_down_rate = 1;
 	}
@@ -394,7 +392,6 @@ show_one(hotplug_enable, hotplug_enable);
 show_one(min_cpus_online, min_cpus_online);
 show_one(maxcoreslimit, maxcoreslimit);
 show_one(maxcoreslimit_sleep, maxcoreslimit_sleep);
-show_one(hp_io_is_busy, hp_io_is_busy);
 show_one(hotplug_suspend, hotplug_suspend);
 
 #define show_pcpu_param(file_name, var_name, num_core)			\
@@ -635,38 +632,6 @@ static ssize_t store_maxcoreslimit_sleep(struct kobject *a,
 	return count;
 }
 
-/* hp_io_is_busy */
-static ssize_t store_hp_io_is_busy(struct kobject *a, struct attribute *b,
-				   const char *buf, size_t count)
-{
-	unsigned int input, j;
-	int ret;
-
-	ret = sscanf(buf, "%u", &input);
-	if (ret != 1)
-		return -EINVAL;
-
-	if (input > 1)
-		input = 1;
-
-	if (input == hotplug_tuners_ins.hp_io_is_busy)
-		return count;
-
-	hotplug_tuners_ins.hp_io_is_busy = !!input;
-	/* we need to re-evaluate prev_cpu_idle */
-	if (hotplug_tuners_ins.hotplug_enable > 0) {
-		for_each_online_cpu(j) {
-			struct hotplug_cpuinfo *pcpu_info =
-					&per_cpu(od_hotplug_cpuinfo, j);
-			pcpu_info->prev_cpu_idle = get_cpu_idle_time(j,
-					&pcpu_info->prev_cpu_wall,
-					hotplug_tuners_ins.hp_io_is_busy);
-		}
-	}
-
-	return count;
-}
-
 /*
  * hotplug_suspend control
  * if set = 1 hotplug will sleep,
@@ -701,7 +666,6 @@ define_one_global_rw(hotplug_enable);
 define_one_global_rw(min_cpus_online);
 define_one_global_rw(maxcoreslimit);
 define_one_global_rw(maxcoreslimit_sleep);
-define_one_global_rw(hp_io_is_busy);
 define_one_global_rw(hotplug_suspend);
 
 static struct attribute *alucard_hotplug_attributes[] = {
@@ -734,7 +698,6 @@ static struct attribute *alucard_hotplug_attributes[] = {
 	&min_cpus_online.attr,
 	&maxcoreslimit.attr,
 	&maxcoreslimit_sleep.attr,
-	&hp_io_is_busy.attr,
 	&hotplug_suspend.attr,
 	NULL
 };
