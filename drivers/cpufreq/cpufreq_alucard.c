@@ -100,7 +100,6 @@ static struct alucard_tuners {
 	int dec_cpu_load_at_min_freq;
 	int dec_cpu_load;
 	int freq_responsiveness;
-	unsigned int io_is_busy;
 	unsigned int cpus_up_rate;
 	unsigned int cpus_down_rate;
 } alucard_tuners_ins = {
@@ -110,7 +109,6 @@ static struct alucard_tuners {
 	.dec_cpu_load_at_min_freq = DEC_CPU_LOAD_AT_MIN_FREQ,
 	.dec_cpu_load = DEC_CPU_LOAD,
 	.freq_responsiveness = FREQ_RESPONSIVENESS,
-	.io_is_busy = 0,
 	.cpus_up_rate = CPUS_UP_RATE,
 	.cpus_down_rate = CPUS_DOWN_RATE,
 };
@@ -130,7 +128,6 @@ show_one(inc_cpu_load, inc_cpu_load);
 show_one(dec_cpu_load_at_min_freq, dec_cpu_load_at_min_freq);
 show_one(dec_cpu_load, dec_cpu_load);
 show_one(freq_responsiveness, freq_responsiveness);
-show_one(io_is_busy, io_is_busy);
 show_one(cpus_up_rate, cpus_up_rate);
 show_one(cpus_down_rate, cpus_down_rate);
 
@@ -361,38 +358,6 @@ static ssize_t store_freq_responsiveness(struct kobject *a, struct attribute *b,
 	return count;
 }
 
-/* io_is_busy */
-static ssize_t store_io_is_busy(struct kobject *a, struct attribute *b,
-				   const char *buf, size_t count)
-{
-	unsigned int input, cpu;
-	int ret;
-
-	ret = sscanf(buf, "%u", &input);
-	if (ret != 1)
-		return -EINVAL;
-
-	if (input > 1)
-		input = 1;
-
-	if (input == alucard_tuners_ins.io_is_busy)
-		return count;
-
-	alucard_tuners_ins.io_is_busy = !!input;
-
-	/* we need to re-evaluate prev_cpu_idle */
-	get_online_cpus();
-	for_each_online_cpu(cpu) {
-		struct cpufreq_alucard_cpuinfo *this_alucard_cpuinfo = 
-			&per_cpu(od_alucard_cpuinfo, cpu);
-
-		this_alucard_cpuinfo->prev_cpu_idle = get_cpu_idle_time(cpu,
-			&this_alucard_cpuinfo->prev_cpu_wall, alucard_tuners_ins.io_is_busy);
-	}
-	put_online_cpus();
-	return count;
-}
-
 /* cpus_up_rate */
 static ssize_t store_cpus_up_rate(struct kobject *a, struct attribute *b,
 				   const char *buf, size_t count)
@@ -437,7 +402,6 @@ define_one_global_rw(inc_cpu_load);
 define_one_global_rw(dec_cpu_load_at_min_freq);
 define_one_global_rw(dec_cpu_load);
 define_one_global_rw(freq_responsiveness);
-define_one_global_rw(io_is_busy);
 define_one_global_rw(cpus_up_rate);
 define_one_global_rw(cpus_down_rate);
 
@@ -448,7 +412,6 @@ static struct attribute *alucard_attributes[] = {
 	&dec_cpu_load_at_min_freq.attr,
 	&dec_cpu_load.attr,
 	&freq_responsiveness.attr,
-	&io_is_busy.attr,
 	&pump_inc_step_at_min_freq_1.attr,
 	&pump_inc_step_at_min_freq_2.attr,
 	&pump_inc_step_at_min_freq_3.attr,
@@ -522,7 +485,6 @@ static void alucard_check_cpu(struct cpufreq_alucard_cpuinfo *this_alucard_cpuin
 	int pump_inc_step = this_alucard_cpuinfo->pump_inc_step;
 	int pump_dec_step = this_alucard_cpuinfo->pump_dec_step;
 	unsigned int max_load = 0;
-	int io_busy = alucard_tuners_ins.io_is_busy;
 	unsigned int cpus_up_rate = alucard_tuners_ins.cpus_up_rate;
 	unsigned int cpus_down_rate = alucard_tuners_ins.cpus_down_rate;
 	unsigned int index = 0;
@@ -543,7 +505,7 @@ static void alucard_check_cpu(struct cpufreq_alucard_cpuinfo *this_alucard_cpuin
 		unsigned int idle_time, wall_time;
 		unsigned int load;
 		
-		cur_idle_time = get_cpu_idle_time(j, &cur_wall_time, io_busy);
+		cur_idle_time = get_cpu_idle_time(j, &cur_wall_time, 0);
 
 		wall_time = (unsigned int)
 			(cur_wall_time - j_alucard_cpuinfo->prev_cpu_wall);
@@ -644,7 +606,6 @@ static int cpufreq_governor_alucard(struct cpufreq_policy *policy,
 {
 	struct cpufreq_alucard_cpuinfo *this_alucard_cpuinfo;
 	unsigned int cpu = policy->cpu, j;
-	int io_busy = alucard_tuners_ins.io_is_busy;
 	int rc, delay;
 
 	this_alucard_cpuinfo = &per_cpu(od_alucard_cpuinfo, cpu);
@@ -669,7 +630,7 @@ static int cpufreq_governor_alucard(struct cpufreq_policy *policy,
 			struct cpufreq_alucard_cpuinfo *j_alucard_cpuinfo = &per_cpu(od_alucard_cpuinfo, j);
 
 			j_alucard_cpuinfo->prev_cpu_idle = get_cpu_idle_time(j,
-				&j_alucard_cpuinfo->prev_cpu_wall, io_busy);
+				&j_alucard_cpuinfo->prev_cpu_wall, 0);
 		}
 
 		alucard_enable++;

@@ -140,11 +140,6 @@ static spinlock_t timer_slack_lock;
 static int *timer_slack_vals = default_timer_slack_val;
 static int ntimer_slack_vals = ARRAY_SIZE(default_timer_slack_val);
 
-static bool io_is_busy = 0;
-
-/* Improves frequency selection for more energy */
-static bool powersave_bias;
-
 /*
  * If the max load among other CPUs is higher than up_threshold_any_cpu_load
  * or if the highest frequency among the other CPUs is higher than
@@ -165,7 +160,7 @@ static void cpufreq_yankactive_timer_resched(
 	pcpu->time_in_idle =
 		get_cpu_idle_time(smp_processor_id(),
 					&pcpu->time_in_idle_timestamp,
-					io_is_busy);
+					0);
 	pcpu->cputime_speedadj = 0;
 	pcpu->cputime_speedadj_timestamp = pcpu->time_in_idle_timestamp;
 	expires = jiffies + usecs_to_jiffies(pcpu->timer_rate);
@@ -208,7 +203,7 @@ static void cpufreq_yankactive_timer_start(int cpu, int time_override)
 	spin_lock_irqsave(&pcpu->load_lock, flags);
 	pcpu->time_in_idle =
 		get_cpu_idle_time(cpu, &pcpu->time_in_idle_timestamp,
-				io_is_busy);
+				0);
 	pcpu->cputime_speedadj = 0;
 	pcpu->cputime_speedadj_timestamp = pcpu->time_in_idle_timestamp;
 	spin_unlock_irqrestore(&pcpu->load_lock, flags);
@@ -398,7 +393,7 @@ static u64 update_load(int cpu)
 	unsigned int delta_time;
 	u64 active_time;
 
-	now_idle = get_cpu_idle_time(cpu, &now, io_is_busy);
+	now_idle = get_cpu_idle_time(cpu, &now, 0);
 	delta_idle = (unsigned int)(now_idle - pcpu->time_in_idle);
 	delta_time = (unsigned int)(now - pcpu->time_in_idle_timestamp);
 
@@ -707,15 +702,9 @@ static int cpufreq_yankactive_speedchange_task(void *data)
 			}
 
 			if (max_freq != pcpu->policy->cur) {
-				if (!powersave_bias)
 					__cpufreq_driver_target(pcpu->policy,
 								max_freq,
 								CPUFREQ_RELATION_H);
-				else
-					__cpufreq_driver_target(pcpu->policy,
-								max_freq,
-								CPUFREQ_RELATION_C);
-
 			}
 
 			up_read(&pcpu->enable_sem);
@@ -1225,28 +1214,6 @@ static ssize_t store_boostpulse_duration(
 
 define_one_global_rw(boostpulse_duration);
 
-static ssize_t show_io_is_busy(struct kobject *kobj,
-			struct attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", io_is_busy);
-}
-
-static ssize_t store_io_is_busy(struct kobject *kobj,
-			struct attribute *attr, const char *buf, size_t count)
-{
-	int ret;
-	unsigned long val;
-
-	ret = kstrtoul(buf, 0, &val);
-	if (ret < 0)
-		return ret;
-	io_is_busy = val;
-	return count;
-}
-
-static struct global_attr io_is_busy_attr = __ATTR(io_is_busy, 0644,
-		show_io_is_busy, store_io_is_busy);
-
 static ssize_t show_sync_freq(struct kobject *kobj,
 			struct attribute *attr, char *buf)
 {
@@ -1273,29 +1240,6 @@ static ssize_t store_sync_freq(struct kobject *kobj,
 
 static struct global_attr sync_freq_attr = __ATTR(sync_freq, 0644,
 		show_sync_freq, store_sync_freq);
-
-static ssize_t show_powersave_bias(struct kobject *kobj,
-				     struct attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", powersave_bias);
-}
-
-static ssize_t store_powersave_bias(struct kobject *kobj,
-			struct attribute *attr, const char *buf, size_t count)
-{
-	int ret;
-	unsigned long val;
-
-	ret = strict_strtoul(buf, 0, &val);
-	if (ret < 0)
-		return ret;
-	powersave_bias = val;
-	return count;
-}
-
-static struct global_attr powersave_bias_attr = __ATTR(powersave_bias, 0644,
-		show_powersave_bias, store_powersave_bias);
-
 
 static ssize_t show_up_threshold_any_cpu_load(struct kobject *kobj,
 			struct attribute *attr, char *buf)
@@ -1357,12 +1301,10 @@ static struct attribute *yankactive_attributes[] = {
 	&boost.attr,
 	&boostpulse.attr,
 	&boostpulse_duration.attr,
-	&io_is_busy_attr.attr,
 	&sampling_down_factor_attr.attr,
 	&sync_freq_attr.attr,
 	&up_threshold_any_cpu_load_attr.attr,
 	&up_threshold_any_cpu_freq_attr.attr,
-	&powersave_bias_attr.attr,
 	NULL,
 };
 
