@@ -34,7 +34,7 @@
  *
  * Assumes all word reads on our architecture are atomic.
  */
-#define atomic_read(v)		((v)->counter)
+#define atomic_read(v)		READ_ONCE((v)->counter)
 
 /**
  * atomic_xchg - atomic

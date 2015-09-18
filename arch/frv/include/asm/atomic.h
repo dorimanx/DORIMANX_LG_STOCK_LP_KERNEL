@@ -36,8 +36,8 @@
 #define smp_mb__after_atomic_inc()	barrier()
 
 #define ATOMIC_INIT(i)		{ (i) }
-#define atomic_read(v)		ACCESS_ONCE((v)->counter)
-#define atomic_set(v, i)	(((v)->counter) = (i))
+#define atomic_read(v)		READ_ONCE((v)->counter)
+#define atomic_set(v, i)	WRITE_ONCE(((v)->counter), (i))
 
 #ifndef CONFIG_FRV_OUTOFLINE_ATOMIC_OPS
 static inline int atomic_add_return(int i, atomic_t *v)

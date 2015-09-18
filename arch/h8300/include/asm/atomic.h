@@ -11,8 +11,13 @@
 
 #define ATOMIC_INIT(i)	{ (i) }
 
+<<<<<<< HEAD
 #define atomic_read(v)		(*(volatile int *)&(v)->counter)
 #define atomic_set(v, i)	(((v)->counter) = i)
+=======
+#define atomic_read(v)		READ_ONCE((v)->counter)
+#define atomic_set(v, i)	WRITE_ONCE(((v)->counter), (i))
+>>>>>>> 62e8a32... atomic, arch: Audit atomic_{read,set}()
 
 #include <linux/kernel.h>
 

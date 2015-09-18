@@ -34,7 +34,7 @@
  * Atomically reads the value of @v.  Note that the guaranteed
  * useful range of an atomic_t is only 24 bits.
  */
-#define atomic_read(v)	(ACCESS_ONCE((v)->counter))
+#define atomic_read(v)	READ_ONCE((v)->counter)
 
 /**
  * atomic_set - set atomic variable
@@ -44,7 +44,7 @@
  * Atomically sets the value of @v to @i.  Note that the guaranteed
  * useful range of an atomic_t is only 24 bits.
  */
-#define atomic_set(v, i) (((v)->counter) = (i))
+#define atomic_set(v, i) WRITE_ONCE(((v)->counter), (i))
 
 /**
  * atomic_add_return - add integer to atomic variable

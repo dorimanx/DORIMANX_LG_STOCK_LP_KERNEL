@@ -46,7 +46,7 @@
  *
  * Atomically reads the value of @v.
  */
-#define atomic_read(v)		ACCESS_ONCE((v)->counter)
+#define atomic_read(v)		READ_ONCE((v)->counter)
 
 /**
  * atomic_set - set atomic variable
@@ -55,7 +55,7 @@
  *
  * Atomically sets the value of @v to @i.
  */
-#define atomic_set(v,i)		((v)->counter = (i))
+#define atomic_set(v,i)		WRITE_ONCE((v)->counter, (i))
 
 /**
  * atomic_add - add integer to atomic variable

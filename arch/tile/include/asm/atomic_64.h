@@ -24,7 +24,7 @@
 
 /* First, the 32-bit atomic ops that are "real" on our 64-bit platform. */
 
-#define atomic_set(v, i) ((v)->counter = (i))
+#define atomic_set(v, i) WRITE_ONCE((v)->counter, (i))
 
 /*
  * The smp_mb() operations throughout are to support the fact that
@@ -81,8 +81,8 @@ static inline int __atomic_add_unless(atomic_t *v, int a, int u)
 
 #define ATOMIC64_INIT(i)	{ (i) }
 
-#define atomic64_read(v)		((v)->counter)
-#define atomic64_set(v, i) ((v)->counter = (i))
+#define atomic64_read(v)	READ_ONCE((v)->counter)
+#define atomic64_set(v, i)	WRITE_ONCE((v)->counter, (i))
 
 static inline long atomic64_cmpxchg(atomic64_t *v, long o, long n)
 {
