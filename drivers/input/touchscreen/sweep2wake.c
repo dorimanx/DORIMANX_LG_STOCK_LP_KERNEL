@@ -30,15 +30,10 @@
 #include <linux/workqueue.h>
 #include <linux/hrtimer.h>
 #include <linux/input.h>
-#ifdef CONFIG_POWERSUSPEND
-#include <linux/powersuspend.h>
-#else
-#ifndef CONFIG_HAS_EARLYSUSPEND
-#include <linux/lcd_notify.h>
-static struct notifier_block s2w_lcd_notif;
-#endif
-#endif
 
+#ifdef CONFIG_STATE_NOTIFIER
+#include <linux/state_notifier.h>
+#endif
 
 /* Version, author, desc, etc */
 #define DRIVER_AUTHOR "Dennis Rassmann <showp1984@gmail.com>"
@@ -84,7 +79,7 @@ static struct notifier_block s2w_lcd_notif;
 int s2w_switch = S2W_DEFAULT, s2w = S2W_DEFAULT;
 static int touch_x = 0, touch_y = 0;
 static bool touch_x_called = false, touch_y_called = false;
-static bool scr_suspended = false, exec_count = true;
+static bool exec_count = true;
 static bool scr_on_touch = false, barrier[2] = {false, false};
 static bool reverse_barrier[2] = {false, false};
 static struct input_dev * sweep2wake_pwrdev;
@@ -327,56 +322,6 @@ static struct input_handler s2w_input_handler = {
 	.id_table	= s2w_ids,
 };
 
-#ifdef CONFIG_POWERSUSPEND
-static void s2w_power_suspend(struct power_suspend *h) {
-	scr_suspended = true;
-}
-
-static void s2w_power_resume(struct power_suspend *h) {
-	scr_suspended = false;
-}
-
-static struct power_suspend s2w_power_suspend_handler = {
-	.suspend = s2w_power_suspend,
-	.resume = s2w_power_resume,
-};
-#else
-#ifndef CONFIG_HAS_EARLYSUSPEND
-static int lcd_notifier_callback(struct notifier_block *this,
-				unsigned long event, void *data)
-{
-	switch (event) {
-	case LCD_EVENT_ON_END:
-		scr_suspended = false;
-		break;
-	case LCD_EVENT_OFF_START:
-	case LCD_EVENT_ON_START:
-		break;
-	case LCD_EVENT_OFF_END:
-		scr_suspended = true;
-		break;
-	default:
-		break;
-	}
-
-	return NOTIFY_OK;
-}
-#else
-static void s2w_early_suspend(struct early_suspend *h) {
-	scr_suspended = true;
-}
-
-static void s2w_late_resume(struct early_suspend *h) {
-	scr_suspended = false;
-}
-
-static struct early_suspend s2w_early_suspend_handler = {
-	.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN,
-	.suspend = s2w_early_suspend,
-	.resume = s2w_late_resume,
-};
-#endif
-#endif
 /*
  * SYSFS stuff below here
  */
@@ -458,19 +403,6 @@ static int __init sweep2wake_init(void)
 	if (rc)
 		pr_err("%s: Failed to register s2w_input_handler\n", __func__);
 
-#ifdef CONFIG_POWERSUSPEND
-	register_power_suspend(&s2w_power_suspend_handler);
-#else
-#ifndef CONFIG_HAS_EARLYSUSPEND
-	s2w_lcd_notif.notifier_call = lcd_notifier_callback;
-	if (lcd_register_client(&s2w_lcd_notif) != 0) {
-		pr_err("%s: Failed to register lcd callback\n", __func__);
-	}
-#else
-	register_early_suspend(&s2w_early_suspend_handler);
-#endif
-#endif
-
 	sweep2sleep_kobj = kobject_create_and_add("sweep2sleep", NULL) ;
 	if (sweep2sleep_kobj == NULL) {
 		pr_warn("%s: sweep2sleep_kobj create_and_add failed\n",
@@ -500,13 +432,6 @@ static void __exit sweep2wake_exit(void)
 {
 	kobject_del(sweep2sleep_kobj);
 
-#ifdef CONFIG_POWERSUSPEND
-	unregister_power_suspend(&s2w_power_suspend_handler);
-#else
-#ifndef CONFIG_HAS_EARLYSUSPEND
-	lcd_unregister_client(&s2w_lcd_notif);
-#endif
-#endif
 	input_unregister_handler(&s2w_input_handler);
 	destroy_workqueue(s2w_input_wq);
 	input_unregister_device(sweep2wake_pwrdev);
