@@ -42,7 +42,6 @@
 #include <linux/mutex.h>
 #include <linux/delay.h>
 #include <linux/swap.h>
-#include <linux/powersuspend.h>
 #include <linux/fs.h>
 #include <linux/cpuset.h>
 #include <linux/vmpressure.h>
@@ -50,6 +49,11 @@
 #include <trace/events/memkill.h>
 #define CREATE_TRACE_POINTS
 #include <trace/events/almk.h>
+
+#ifdef CONFIG_STATE_NOTIFIER
+#include <linux/state_notifier.h>
+static struct notifier_block lmk_state_notif;
+#endif
 
 #ifdef CONFIG_HIGHMEM
 #define _ZONE ZONE_HIGHMEM
@@ -714,29 +718,42 @@ static struct shrinker lowmem_shrinker = {
 	.seeks = DEFAULT_SEEKS * 16
 };
 
-static void low_mem_power_suspend(struct power_suspend *handler)
+#ifdef CONFIG_STATE_NOTIFIER
+static void low_mem_power_suspend(void)
 {
-	if (lowmem_auto_oom) {
-		mutex_lock(&auto_oom_mutex);
-		memcpy(lowmem_minfree_screen_on, lowmem_minfree, sizeof(lowmem_minfree));
-		memcpy(lowmem_minfree, lowmem_minfree_screen_off, sizeof(lowmem_minfree_screen_off));
-		mutex_unlock(&auto_oom_mutex);
-	}
+	mutex_lock(&auto_oom_mutex);
+	memcpy(lowmem_minfree_screen_on, lowmem_minfree, sizeof(lowmem_minfree));
+	memcpy(lowmem_minfree, lowmem_minfree_screen_off, sizeof(lowmem_minfree_screen_off));
+	mutex_unlock(&auto_oom_mutex);
 }
 
-static void low_mem_late_resume(struct power_suspend *handler)
+static void low_mem_late_resume(void)
 {
-	if (lowmem_auto_oom) {
-		mutex_lock(&auto_oom_mutex);
-		memcpy(lowmem_minfree, lowmem_minfree_screen_on, sizeof(lowmem_minfree_screen_on));
-		mutex_unlock(&auto_oom_mutex);
-	}
+	mutex_lock(&auto_oom_mutex);
+	memcpy(lowmem_minfree, lowmem_minfree_screen_on, sizeof(lowmem_minfree_screen_on));
+	mutex_unlock(&auto_oom_mutex);
 }
 
-static struct power_suspend low_mem_suspend = {
-	.suspend = low_mem_power_suspend,
-	.resume = low_mem_late_resume,
-};
+static int state_notifier_callback(struct notifier_block *this,
+				unsigned long event, void *data)
+{
+	if (!lowmem_auto_oom)
+		return NOTIFY_OK;
+
+	switch (event) {
+		case STATE_NOTIFIER_ACTIVE:
+			low_mem_late_resume();
+			break;
+		case STATE_NOTIFIER_SUSPEND:
+			low_mem_power_suspend();
+			break;
+		default:
+			break;
+	}
+
+	return NOTIFY_OK;
+}
+#endif
 
 #ifdef CONFIG_ANDROID_BG_SCAN_MEM
 static int lmk_task_migration_notify(struct notifier_block *nb,
@@ -761,7 +778,13 @@ static int __init lowmem_init(void)
 {
 	register_shrinker(&lowmem_shrinker);
 	vmpressure_notifier_register(&lmk_vmpr_nb);
-	register_power_suspend(&low_mem_suspend);
+#ifdef CONFIG_STATE_NOTIFIER
+	lmk_state_notif.notifier_call = state_notifier_callback;
+	if (state_register_client(&lmk_state_notif))
+		pr_err("%s: Failed to register State notifier callback\n",
+			__func__);
+#endif
+
 #ifdef CONFIG_ANDROID_BG_SCAN_MEM
 	raw_notifier_chain_register(&bgtsk_migration_notifier_head,
 					&tsk_migration_nb);
@@ -772,6 +795,10 @@ static int __init lowmem_init(void)
 static void __exit lowmem_exit(void)
 {
 	unregister_shrinker(&lowmem_shrinker);
+#ifdef CONFIG_STATE_NOTIFIER
+	state_unregister_client(&lmk_state_notif);
+	lmk_state_notif.notifier_call = NULL;
+#endif
 #ifdef CONFIG_ANDROID_BG_SCAN_MEM
 	raw_notifier_chain_unregister(&bgtsk_migration_notifier_head,
 					&tsk_migration_nb);

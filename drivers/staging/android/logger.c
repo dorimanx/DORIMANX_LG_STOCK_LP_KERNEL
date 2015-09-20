@@ -29,8 +29,10 @@
 #include <linux/time.h>
 #include <linux/vmalloc.h>
 #include "logger.h"
-#include <linux/powersuspend.h>
-
+#ifdef CONFIG_STATE_NOTIFIER
+#include <linux/state_notifier.h>
+static struct notifier_block logger_state_notif;
+#endif
 #include <asm/ioctls.h>
 
 #ifndef CONFIG_LOGCAT_SIZE
@@ -474,21 +476,25 @@ static ssize_t do_write_log_from_user(struct logger_log *log,
 	return count;
 }
 
-static void log_early_suspend(struct power_suspend *handler)
+#ifdef CONFIG_STATE_NOTIFIER
+static int state_notifier_callback(struct notifier_block *this,
+				unsigned long event, void *data)
 {
-	if (log_mode == 1)
-		log_enabled = 0;
-}
+	switch (event) {
+		case STATE_NOTIFIER_ACTIVE:
+			log_enabled = 1;
+			break;
+		case STATE_NOTIFIER_SUSPEND:
+			if (log_mode == 1)
+				log_enabled = 0;
+			break;
+		default:
+			break;
+	}
 
-static void log_late_resume(struct power_suspend *handler)
-{
-	log_enabled = 1;
+	return NOTIFY_OK;
 }
-
-static struct power_suspend log_suspend = {
-	.suspend = log_early_suspend,
-	.resume = log_late_resume,
-};
+#endif
 
 /*
  * logger_aio_write - our write method, implementing support for write(),
@@ -844,7 +850,12 @@ static int __init logger_init(void)
 {
 	int ret;
 
-	register_power_suspend(&log_suspend);
+#ifdef CONFIG_STATE_NOTIFIER
+	logger_state_notif.notifier_call = state_notifier_callback;
+	if (state_register_client(&logger_state_notif))
+		pr_err("%s: Failed to register State notifier callback\n",
+			__func__);
+#endif
 
 	ret = create_log(LOGGER_LOG_MAIN, CONFIG_LOGCAT_SIZE*1024);
 	if (unlikely(ret))
@@ -869,6 +880,11 @@ out:
 static void __exit logger_exit(void)
 {
 	struct logger_log *current_log, *next_log;
+
+#ifdef CONFIG_STATE_NOTIFIER
+	state_unregister_client(&logger_state_notif);
+	logger_state_notif.notifier_call = NULL;
+#endif
 
 	list_for_each_entry_safe(current_log, next_log, &log_list, logs) {
 		/* we have to delete all the entry inside log_list */
