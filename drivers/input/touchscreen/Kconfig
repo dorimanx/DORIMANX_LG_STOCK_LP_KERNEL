@@ -1132,4 +1132,9 @@ config ALUCARD_TOUCHSCREEN_BOOST
 	help
 	  Alucard touchscreen boost.
 
+config STATE_NOTIFIER
+        bool "State Notifier"
+	depends on TOUCHSCREEN_SYNAPTICS_G2
+	default y
+
 endif
