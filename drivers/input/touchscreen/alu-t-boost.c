@@ -100,7 +100,7 @@ static void do_input_boost(struct work_struct *work)
 		}
 	}
 
-	mod_delayed_work_on(BOOT_CPU, touch_boost_wq,
+	queue_delayed_work_on(BOOT_CPU, touch_boost_wq,
 			&input_boost_rem,
 			msecs_to_jiffies(input_boost_ms));
 }
