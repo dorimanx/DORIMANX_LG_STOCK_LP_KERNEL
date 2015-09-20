@@ -1202,7 +1202,7 @@ static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 
 	switch (event) {
 	case CPUFREQ_GOV_START:
-		if (!cpu_online(cpu))
+		if ((!cpu_online(cpu)) || (!policy))
 			return -EINVAL;
 
 		mutex_lock(&gov_lock);
@@ -1286,7 +1286,7 @@ static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 
 	case CPUFREQ_GOV_LIMITS:
 		/* If device is being removed, skip set limits */
-		if (!policy->cur)
+		if (!policy)
 			break;
 		__cpufreq_driver_target(policy,
 				policy->cur, CPUFREQ_RELATION_L);
