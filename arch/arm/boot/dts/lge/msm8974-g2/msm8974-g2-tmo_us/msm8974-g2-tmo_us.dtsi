@@ -85,6 +85,7 @@
 		qcom,bus-width = <8>;
 		qcom,msm-bus,active-only = <0>;
 		qcom,nonremovable;
+		qcom,wakeup-on-idle;
 
 		status = "ok";
 	};
