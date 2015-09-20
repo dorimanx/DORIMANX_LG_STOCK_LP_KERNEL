@@ -24,6 +24,9 @@
 static unsigned int debug = 1;
 module_param_named(debug_mask, debug, uint, 0644);
 
+bool state_suspended;
+module_param_named(state_suspended, state_suspended, bool, 0644);
+
 #define dprintk(msg...)		\
 do {				\
 	if (debug)		\
@@ -79,12 +82,14 @@ static void _suspend_work(struct work_struct *work)
 {
 	state_notifier_call_chain(STATE_NOTIFIER_SUSPEND, NULL);
 	state_suspended = true;
+	dprintk("[STATE NOTIFIER] suspend completed.\n");
 }
 
 static void _resume_work(struct work_struct *work)
 {
 	state_notifier_call_chain(STATE_NOTIFIER_ACTIVE, NULL);
 	state_suspended = false;
+	dprintk("[STATE NOTIFIER] resume completed.\n");
 }
 
 void state_suspend(void)
@@ -95,7 +100,6 @@ void state_suspend(void)
 	INIT_DELAYED_WORK(&suspend_work, _suspend_work);
 	queue_delayed_work_on(0, susp_wq, &suspend_work, 
 		msecs_to_jiffies(suspend_defer_time * 1000));
-	dprintk("[STATE NOTIFIER] suspend completed.\n");
 }
 
 void state_resume(void)
@@ -103,10 +107,8 @@ void state_resume(void)
 	flush_workqueue(susp_wq);
 	cancel_delayed_work_sync(&suspend_work);
 
-	if (state_suspended) {
+	if (state_suspended)
 		queue_work_on(0, susp_wq, &resume_work);
-		dprintk("[STATE NOTIFIER] resume completed.\n");
-	}
 }
 
 static int fb_notifier_callback(struct notifier_block *self,
