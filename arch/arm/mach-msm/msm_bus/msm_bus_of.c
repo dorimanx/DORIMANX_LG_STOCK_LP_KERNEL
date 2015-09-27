@@ -48,7 +48,6 @@ static struct msm_bus_scale_pdata *get_pdata(struct platform_device *pdev,
 	struct msm_bus_scale_pdata *pdata = NULL;
 	struct msm_bus_paths *usecase = NULL;
 	int i = 0, j, ret, num_usecases = 0, num_paths, len;
-	unsigned int active_only;
 	const uint32_t *vec_arr = NULL;
 	bool mem_err = false;
 
@@ -81,14 +80,12 @@ static struct msm_bus_scale_pdata *get_pdata(struct platform_device *pdev,
 
 	pdata->num_usecases = num_usecases;
 
-	ret = of_property_read_u32(of_node, "qcom,msm-bus,active-only",
-			&active_only);
-	if (ret) {
+	if (of_property_read_bool(of_node, "qcom,msm-bus,active-only"))
+		pdata->active_only = 1;
+	else {
 		pr_debug("active_only flag absent.\n");
 		pr_debug("Using dual context by default\n");
 	}
-
-	pdata->active_only = active_only;
 
 	usecase = devm_kzalloc(&pdev->dev, (sizeof(struct msm_bus_paths) *
 		pdata->num_usecases), GFP_KERNEL);
