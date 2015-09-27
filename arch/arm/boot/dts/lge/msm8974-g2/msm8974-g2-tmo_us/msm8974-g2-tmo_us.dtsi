@@ -83,7 +83,7 @@
 
 	/*	qcom,sup-voltages = <2950 2950>; */ /* This is not needed for SDHC driver */
 		qcom,bus-width = <8>;
-		qcom,msm-bus,active-only = <1>;
+		qcom,msm-bus,active-only = <0>;
 		qcom,nonremovable;
 		qcom,wakeup-on-idle;
 
@@ -139,7 +139,7 @@
 
 		qcom,msm-bus,name = "sdcc2";
 		qcom,msm-bus,num-cases = <8>;
-		qcom,msm-bus,active-only = <1>;
+		qcom,msm-bus,active-only = <0>;
 		qcom,msm-bus,num-paths = <1>;
 		qcom,msm-bus,vectors-KBps = <81 512 0 0>, /* No vote */
 				<81 512 1600 3200>,    /* 400 KB/s*/
@@ -196,7 +196,7 @@
 
 		qcom,msm-bus,name = "sdcc2";
 		qcom,msm-bus,num-cases = <8>;
-		qcom,msm-bus,active-only = <1>;
+		qcom,msm-bus,active-only = <0>;
 		qcom,msm-bus,num-paths = <1>;
 		qcom,msm-bus,vectors-KBps = <81 512 0 0>, /* No vote */
 				<81 512 1600 3200>,    /* 400 KB/s*/
@@ -253,7 +253,7 @@
 
 		qcom,msm-bus,name = "sdcc2";
 		qcom,msm-bus,num-cases = <8>;
-		qcom,msm-bus,active-only = <1>;
+		qcom,msm-bus,active-only = <0>;
 		qcom,msm-bus,num-paths = <1>;
 		qcom,msm-bus,vectors-KBps = <81 512 0 0>, /* No vote */
 				<81 512 1600 3200>,    /* 400 KB/s*/
