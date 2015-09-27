@@ -430,7 +430,7 @@
                 qca,wifi-vddpa-supply = <&pm8941_l19>;
                 qca,wifi-vddio-supply = <&pm8941_l10>;
                 qcom,msm-bus,num-cases = <5>;
-                qcom,msm-bus,active-only = <0>;
+                qcom,msm-bus,active-only = <1>;
                 qcom,msm-bus,num-paths = <1>;
                 qcom,msm-bus,vectors-KBps =
                         <85 512 0 0>,

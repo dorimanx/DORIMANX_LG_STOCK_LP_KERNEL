@@ -102,7 +102,7 @@
 
 		qcom,msm-bus,name = "sdcc2";
 		qcom,msm-bus,num-cases = <8>;
-		qcom,msm-bus,active-only = <0>;
+		qcom,msm-bus,active-only = <1>;
 		qcom,msm-bus,num-paths = <1>;
 		qcom,msm-bus,vectors-KBps = <81 512 0 0>, /* No vote */
 				<81 512 1600 3200>,    /* 400 KB/s*/
@@ -159,7 +159,7 @@
 
 		qcom,msm-bus,name = "sdcc2";
 		qcom,msm-bus,num-cases = <8>;
-		qcom,msm-bus,active-only = <0>;
+		qcom,msm-bus,active-only = <1>;
 		qcom,msm-bus,num-paths = <1>;
 		qcom,msm-bus,vectors-KBps = <81 512 0 0>, /* No vote */
 				<81 512 1600 3200>,    /* 400 KB/s*/
@@ -228,7 +228,7 @@
 	qcom,pad-drv-on = <0x4 0x4 0x4>; /* 10mA, 10mA, 10mA */
 	qcom,pad-drv-off = <0x0 0x0 0x0>; /* 2mA, 2mA, 2mA */
 
-	qcom,msm-bus,active-only = <0>;
+	qcom,msm-bus,active-only = <1>;
 	qcom,nonremovable;
 	status = "ok";
 };
