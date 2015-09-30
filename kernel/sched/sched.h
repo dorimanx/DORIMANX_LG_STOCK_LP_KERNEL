@@ -320,6 +320,24 @@ struct cfs_bandwidth { };
 
 #endif	/* CONFIG_CGROUP_SCHED */
 
+#ifdef CONFIG_SCHED_HMP
+
+struct sched_cluster {
+	struct list_head list;
+	struct cpumask cpus;
+	int id;
+	int max_power_cost;
+};
+
+extern unsigned long all_cluster_ids[];
+
+static inline int cluster_first_cpu(struct sched_cluster *cluster)
+{
+	return cpumask_first(&cluster->cpus);
+}
+
+#endif
+
 /* CFS-related fields in a runqueue */
 struct cfs_rq {
 	struct load_weight load;
@@ -619,6 +637,8 @@ struct rq {
 #endif
 
 #ifdef CONFIG_SCHED_HMP
+	struct sched_cluster *cluster;
+
 	/*
 	 * max_freq = user or thermal defined maximum
 	 * max_possible_freq = maximum supported by hardware
@@ -1046,6 +1066,7 @@ extern void post_big_small_task_count_change(const struct cpumask *cpus);
 extern void inc_nr_big_small_task(struct rq *rq, struct task_struct *p);
 extern void dec_nr_big_small_task(struct rq *rq, struct task_struct *p);
 extern void set_hmp_defaults(void);
+extern unsigned int power_cost(u64 task_load, int cpu);
 extern unsigned int power_cost_at_freq(int cpu, unsigned int freq);
 extern void reset_all_window_stats(u64 window_start, unsigned int window_size);
 extern void boost_kick(int cpu);
@@ -1069,6 +1090,11 @@ static inline void dec_nr_big_small_task(struct rq *rq, struct task_struct *p)
 }
 
 static inline void clear_reserved(int cpu) { }
+
+static inline unsigned int power_cost(u64 task_load, int cpu)
+{
+	return SCHED_POWER_SCALE;
+}
 
 #define power_cost_at_freq(...) 0
 
