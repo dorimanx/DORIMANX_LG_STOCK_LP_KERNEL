@@ -44,6 +44,8 @@ extern unsigned int sysctl_sched_freq_account_wait_time;
 extern unsigned int sysctl_sched_migration_fixup;
 extern unsigned int sysctl_sched_heavy_task_pct;
 extern unsigned int sysctl_sched_enable_power_aware;
+extern unsigned int sysctl_sched_enable_colocation;
+extern unsigned int sysctl_sched_enable_thread_grouping;
 extern unsigned int sysctl_sched_min_runtime;
 
 #ifdef CONFIG_SCHED_DEBUG
@@ -70,6 +72,9 @@ extern unsigned int sysctl_sched_small_task_pct;
 extern unsigned int sysctl_sched_upmigrate_pct;
 extern unsigned int sysctl_sched_downmigrate_pct;
 extern int sysctl_sched_upmigrate_min_nice;
+extern unsigned int sysctl_sched_grp_upmigrate_pct;
+extern unsigned int sysctl_sched_grp_downmigrate_pct;
+extern unsigned int sysctl_sched_grp_task_active_windows;
 extern unsigned int sysctl_sched_powerband_limit_pct;
 extern unsigned int sysctl_sched_boost;
 extern unsigned int sysctl_power_aware_timer_migration;
