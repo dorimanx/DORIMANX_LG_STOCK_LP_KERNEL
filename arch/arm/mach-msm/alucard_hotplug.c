@@ -46,6 +46,7 @@ static DEFINE_PER_CPU(struct hotplug_cpuinfo, od_hotplug_cpuinfo);
 
 static struct notifier_block notif;
 static struct delayed_work alucard_hotplug_work;
+static struct workqueue_struct *alucard_hp_wq;
 
 static struct hotplug_tuners {
 	unsigned int hotplug_sampling_rate;
@@ -228,7 +229,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 		delay -= jiffies % delay;
 	}
 
-	queue_delayed_work_on(BOOT_CPU, system_wq,
+	queue_delayed_work_on(BOOT_CPU, alucard_hp_wq,
 				&alucard_hotplug_work,
 				delay);
 }
@@ -278,7 +279,7 @@ static int alucard_hotplug_callback(struct notifier_block *nb,
 			unsigned long action, void *data)
 {
 	unsigned int cpu = (unsigned long)data;
-	struct hotplug_cpuinfo *pcpu_info;
+	struct hotplug_cpuinfo *pcpu_info = NULL;
 
 	switch (action) {
 	case CPU_ONLINE:
@@ -286,14 +287,10 @@ static int alucard_hotplug_callback(struct notifier_block *nb,
 		pcpu_info->prev_cpu_idle = get_cpu_idle_time(cpu,
 				&pcpu_info->prev_cpu_wall,
 				0);
-		break;
-	case CPU_STARTING:
-		pcpu_info = &per_cpu(od_hotplug_cpuinfo, cpu);
 		pcpu_info->cur_up_rate = 1;
-		break;
-	case CPU_DYING:
-		pcpu_info = &per_cpu(od_hotplug_cpuinfo, cpu);
 		pcpu_info->cur_down_rate = 1;
+		break;
+	default:
 		break;
 	}
 
@@ -333,7 +330,7 @@ static void hotplug_start(void)
 	}
 
 	INIT_DEFERRABLE_WORK(&alucard_hotplug_work, hotplug_work_fn);
-	queue_delayed_work_on(BOOT_CPU, system_wq,
+	queue_delayed_work_on(BOOT_CPU, alucard_hp_wq,
 				&alucard_hotplug_work,
 				delay);
 
@@ -724,6 +721,12 @@ static int __init alucard_hotplug_init(void)
 	if (ret) {
 		printk(KERN_ERR "failed at(%d)\n", __LINE__);
 		return ret;
+	}
+
+	alucard_hp_wq = alloc_workqueue("alu_hp_wq", WQ_HIGHPRI, 0);
+	if (!alucard_hp_wq) {
+		printk(KERN_ERR "Failed to create alu_hp_wq workqueue\n");
+		return -EFAULT;
 	}
 
 	/* INITIALIZE PCPU VARS */
