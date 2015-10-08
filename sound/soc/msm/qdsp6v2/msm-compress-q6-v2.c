@@ -1065,6 +1065,8 @@ static int msm_compr_free(struct snd_compr_stream *cstream)
 		pr_err("%s prtd is null\n", __func__);
 		return 0;
 	}
+	prtd->cmd_interrupt = 1;
+	wake_up(&prtd->drain_wait);
 	pdata = snd_soc_platform_get_drvdata(soc_prtd->platform);
 	ac = prtd->audio_client;
 	if (!pdata || !ac) {
@@ -1792,16 +1794,18 @@ static int msm_compr_trigger(struct snd_compr_stream *cstream, int cmd)
 				 __func__);
 			break;
 		}
+
+		spin_lock_irqsave(&prtd->lock, flags);
+		prtd->gapless_state.stream_opened[stream_index] = 1;
+		prtd->gapless_state.set_next_stream_id = true;
+		spin_unlock_irqrestore(&prtd->lock, flags);
+
 		rc = msm_compr_send_media_format_block(cstream, stream_id);
 		if (rc < 0) {
 			 pr_err("%s, failed to send media format block\n",
 				__func__);
 			break;
 		}
-		spin_lock_irqsave(&prtd->lock, flags);
-		prtd->gapless_state.stream_opened[stream_index] = 1;
-		prtd->gapless_state.set_next_stream_id = true;
-		spin_unlock_irqrestore(&prtd->lock, flags);
 		break;
 	}
 
