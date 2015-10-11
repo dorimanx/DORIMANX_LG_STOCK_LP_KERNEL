@@ -298,9 +298,9 @@
  * /dev/random.  Should be enough to do a significant reseed.
  */
 #ifdef CONFIG_CRYPTO_FIPS
-static int random_read_wakeup_bits = 1024;
+static int random_read_wakeup_bits = 768;
 #else
-static int random_read_wakeup_bits = 1024;
+static int random_read_wakeup_bits = 512;
 #endif
 
 /*
