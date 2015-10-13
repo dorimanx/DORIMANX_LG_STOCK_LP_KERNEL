@@ -327,7 +327,6 @@ void getnstimeofday(struct timespec *ts)
 {
 	WARN_ON(__getnstimeofday(ts));
 }
-
 EXPORT_SYMBOL(getnstimeofday);
 
 /**
@@ -457,8 +456,8 @@ void do_gettimeofday(struct timeval *tv)
 	tv->tv_sec = now.tv_sec;
 	tv->tv_usec = now.tv_nsec/1000;
 }
-
 EXPORT_SYMBOL(do_gettimeofday);
+
 /**
  * do_settimeofday - Sets the time of day
  * @tv:		pointer to the timespec variable containing the new time
@@ -497,7 +496,6 @@ int do_settimeofday(const struct timespec *tv)
 
 	return 0;
 }
-
 EXPORT_SYMBOL(do_settimeofday);
 
 /**
@@ -521,7 +519,8 @@ int timekeeping_inject_offset(struct timespec *ts)
 
 	timekeeping_forward_now(tk);
 
-	tmp = timespec_add(tk->xtime,  *ts);
+	/* Make sure the proposed value is valid */
+	tmp = timespec_add(tk_xtime(tk),  *ts);
 	if (!timespec_valid_strict(&tmp)) {
 		ret = -EINVAL;
 		goto error;
@@ -703,6 +702,7 @@ u64 timekeeping_max_deferment(void)
 	struct timekeeper *tk = &timekeeper;
 	unsigned long seq;
 	u64 ret;
+
 	do {
 		seq = read_seqcount_begin(&timekeeper_seq);
 
@@ -1025,9 +1025,7 @@ ktime_t ktime_get(void)
 	do {
 		seq = read_seqcount_begin(&timekeeper_seq);
 		secs = tk->xtime_sec + tk->wall_to_monotonic.tv_sec;
-		nsecs = tk->xtime.tv_nsec +
-				tk->wall_to_monotonic.tv_nsec;
-		nsecs += timekeeping_get_ns(tk);
+		nsecs = timekeeping_get_ns(tk) + tk->wall_to_monotonic.tv_nsec;
 
 	} while (read_seqcount_retry(&timekeeper_seq, seq));
 
@@ -1038,7 +1036,6 @@ ktime_t ktime_get(void)
 	 * Use ktime_set/ktime_add_ns to create a proper ktime on
 	 * 32-bit architectures without CONFIG_KTIME_SCALAR.
 	 */
-
 	return ktime_add_ns(ktime_set(secs, 0), nsecs);
 }
 EXPORT_SYMBOL_GPL(ktime_get);
@@ -1386,9 +1383,6 @@ static void update_wall_time(void)
 #else
 	offset = (clock->read(clock) - clock->cycle_last) & clock->mask;
 #endif
-	/* Check if there's really nothing to do */
-	if (offset < tk->cycle_interval)
-		goto out;
 
 	/* Check if there's really nothing to do */
 	if (offset < real_tk->cycle_interval)
