@@ -455,8 +455,6 @@ int second_overflow(unsigned long secs)
 							 << NTP_SCALE_SHIFT;
 	time_adjust = 0;
 
-
-
 out:
 	return leap;
 }
@@ -551,8 +549,8 @@ static inline void process_adj_status(struct timex *txc, struct timespec *ts)
 	/* only set allowed bits */
 	time_status &= STA_RONLY;
 	time_status |= txc->status & ~STA_RONLY;
-
 }
+
 
 static inline void process_adjtimex_modes(struct timex *txc,
 						struct timespec *ts,
