@@ -339,7 +339,6 @@ core_initcall(init_tick_nohz_full);
 #define have_nohz_full_mask (0)
 #endif
 
-
 /*
  * NOHZ - aka dynamic tick functionality
  */
@@ -1090,7 +1089,7 @@ static void wakeup_user(void)
 }
 /*
  * We rearm the timer until we get disabled by the idle code.
- * Called with interrupts disabled and timer->base->cpu_base->lock held.
+ * Called with interrupts disabled.
  */
 static enum hrtimer_restart tick_sched_timer(struct hrtimer *timer)
 {
@@ -1105,11 +1104,11 @@ static enum hrtimer_restart tick_sched_timer(struct hrtimer *timer)
 	 * Do not call, when we are not in irq context and have
 	 * no valid regs pointer
 	 */
-	if (regs)
+	if (regs) {
 		tick_sched_handle(ts, regs);
 
-		if ((rq_info.init == 1) && (tick_do_timer_cpu == cpu)) {
-
+		if (rq_info.init == 1 &&
+				tick_do_timer_cpu == smp_processor_id()) {
 			/*
 			 * update run queue statistics
 			 */
@@ -1158,7 +1157,7 @@ void tick_setup_sched_timer(void)
 	/* Get the next period (per cpu) */
 	hrtimer_set_expires(&ts->sched_timer, tick_init_jiffy_update());
 
-	/* Offset the tick to avert xtime_lock contention. */
+	/* Offset the tick to avert jiffies_lock contention. */
 	if (sched_skew_tick) {
 		u64 offset = ktime_to_ns(tick_period) >> 1;
 		do_div(offset, num_possible_cpus());
