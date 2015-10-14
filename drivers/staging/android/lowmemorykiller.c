@@ -503,7 +503,7 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 	if (mutex_lock_interruptible(&scan_mutex) < 0)
 		return 0;
 
-	other_free = global_page_state(NR_FREE_PAGES) - totalreserve_pages;
+	other_free = global_page_state(NR_FREE_PAGES);
 
 	if (global_page_state(NR_SHMEM) + total_swapcache_pages() <
 		global_page_state(NR_FILE_PAGES))
