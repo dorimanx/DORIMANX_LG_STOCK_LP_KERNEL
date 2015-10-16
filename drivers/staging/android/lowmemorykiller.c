@@ -121,12 +121,12 @@ module_param_named(enable_adaptive_lmk, enable_adaptive_lmk, int,
 
 /*
  * This parameter controls the behaviour of LMK when vmpressure is in
- * the range of 90-94. Adaptive lmk triggers based on number of file
+ * the range of 88-94. Adaptive lmk triggers based on number of file
  * pages wrt vmpressure_file_min, when vmpressure is in the range of
- * 90-94. Usually this is a pseudo minfree value, higher than the
+ * 85-94. Usually this is a pseudo minfree value, higher than the
  * highest configured value in minfree array.
  */
-static int vmpressure_file_min = 52224; /* 51 * 1024 pages */
+static int vmpressure_file_min = 66560; /* (65 * 1024) * 4 = 266 MB */
 module_param_named(vmpressure_file_min, vmpressure_file_min, int,
 	S_IRUGO | S_IWUSR);
 
@@ -174,7 +174,7 @@ static int lmk_vmpressure_notifier(struct notifier_block *nb,
 
 		atomic_set(&shift_adj, 1);
 		trace_almk_vmpressure(pressure, other_free, other_file);
-	} else if (pressure >= 90) {
+	} else if (pressure >= 85) {
 		if (lowmem_adj_size < array_size)
 			array_size = lowmem_adj_size;
 		if (lowmem_minfree_size < array_size)
@@ -224,8 +224,8 @@ static bool avoid_to_kill(uid_t uid)
 	 * uid == 1027 > nfc
 	 */
 	if (uid == 1001 || uid == 1002 || uid == 1010
-			|| uid == 1013 || uid == 1014
-			|| uid == 1021 || uid == 1027)
+			|| uid == 1014 || uid == 1021 ||
+			uid == 1027)
 		return 1;
 	return 0;
 }
