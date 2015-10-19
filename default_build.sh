@@ -56,7 +56,6 @@ CLEANUP()
 	BUILD_800=0
 	BUILD_801=0
 	BUILD_802=0
-	BUILD_805=0
 	BUILD_LS_980=0
 	BUILD_VS_980=0
 }
@@ -90,8 +89,6 @@ BUILD_NOW()
 			cp arch/arm/configs/dorimanx_d801_defconfig .config
 		elif [ "$BUILD_802" -eq "1" ]; then
 			cp arch/arm/configs/dorimanx_d802_defconfig .config
-		elif [ "$BUILD_805" -eq "1" ]; then
-			cp arch/arm/configs/dorimanx_d805_defconfig .config
 		elif [ "$BUILD_LS_980" -eq "1" ]; then
 			cp arch/arm/configs/dorimanx_ls980_defconfig .config
 		elif [ "$BUILD_VS_980" -eq "1" ]; then
@@ -103,7 +100,6 @@ BUILD_NOW()
 		BRANCH_800=$(grep -R "CONFIG_MACH_MSM8974_G2_ATT=y" .config | wc -l)
 		BRANCH_801=$(grep -R "CONFIG_MACH_MSM8974_G2_TMO_US=y" .config | wc -l)
 		BRANCH_802=$(grep -R "D802" .config | wc -l)
-		BRANCH_805=$(grep -R "D805" .config | wc -l)
 		BRANCH_LS_980=$(grep -R "CONFIG_MACH_MSM8974_G2_SPR=y" .config | wc -l)
 		BRANCH_VS_980=$(grep -R "CONFIG_MACH_MSM8974_G2_VZW=y" .config | wc -l)
 		if [ "$BRANCH_800" -eq "0" ] && [ "$BUILD_800" -eq "1" ]; then
@@ -114,9 +110,6 @@ BUILD_NOW()
 		fi;
 		if [ "$BRANCH_802" -eq "0" ] && [ "$BUILD_802" -eq "1" ]; then
 			cp arch/arm/configs/dorimanx_d802_defconfig ./.config
-		fi;
-		if [ "$BRANCH_805" -eq "0" ] && [ "$BUILD_805" -eq "1" ]; then
-			cp arch/arm/configs/dorimanx_d805_defconfig ./.config
 		fi;
 		if [ "$BRANCH_LS_980" -eq "0" ] && [ "$BUILD_LS_980" -eq "1" ]; then
 			cp arch/arm/configs/dorimanx_ls980_defconfig ./.config
@@ -178,8 +171,6 @@ BUILD_NOW()
 		cp -a ../lp_ramdisk_dorimanx/D801-RAMDISK/* ../ramdisk-lp-tmp/
 	elif [ "$BUILD_802" == "1" ]; then
 		cp -a ../lp_ramdisk_dorimanx/D802-RAMDISK/* ../ramdisk-lp-tmp/
-	elif [ "$BUILD_805" == "1" ]; then
-		cp -a ../lp_ramdisk_dorimanx/D805-RAMDISK/* ../ramdisk-lp-tmp/
 	elif [ "$BUILD_LS_980" == "1" ]; then
 		cp -a ../lp_ramdisk_dorimanx/LS980-RAMDISK/* ../ramdisk-lp-tmp/
 	elif [ "$BUILD_VS_980" == "1" ]; then
@@ -304,7 +295,7 @@ CLEAN_KERNEL()
 }
 
 echo "What to cook for you?!";
-select CHOICE in D800 D801 D802 D805 LS980 VS980 ALL; do
+select CHOICE in D800 D801 D802 LS980 VS980 ALL; do
 	case "$CHOICE" in
 		"D800")
 			export KERNEL_CONFIG=dorimanx_d800_defconfig
@@ -322,12 +313,6 @@ select CHOICE in D800 D801 D802 D805 LS980 VS980 ALL; do
 			export KERNEL_CONFIG=dorimanx_d802_defconfig
 			KERNEL_CONFIG_FILE=dorimanx_d802_defconfig
 			BUILD_802=1;
-			BUILD_NOW;
-			break;;
-		"D805")
-			export KERNEL_CONFIG=dorimanx_d805_defconfig
-			KERNEL_CONFIG_FILE=dorimanx_d805_defconfig
-			BUILD_805=1;
 			BUILD_NOW;
 			break;;
 		"LS980")
@@ -384,19 +369,6 @@ select CHOICE in D800 D801 D802 D805 LS980 VS980 ALL; do
 			BUILD_802=1;
 			BUILD_NOW;
 			echo "D802 is ready!"
-			cp READY-KERNEL/*.zip READY-RELEASES/;
-			echo "starting build of D805 in 3"
-			sleep 1;
-			echo "starting build of D805 in 2"
-			sleep 1;
-			echo "starting build of D805 in 1"
-			sleep 1;
-			CLEANUP;
-			export KERNEL_CONFIG=dorimanx_d805_defconfig
-			KERNEL_CONFIG_FILE=dorimanx_d805_defconfig
-			BUILD_805=1;
-			BUILD_NOW;
-			echo "D805 is ready!"
 			cp READY-KERNEL/*.zip READY-RELEASES/;
 			echo "starting build of LS980 in 3"
 			sleep 1;
