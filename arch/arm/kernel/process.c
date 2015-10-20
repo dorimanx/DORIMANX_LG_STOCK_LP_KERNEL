@@ -180,10 +180,12 @@ void (*arm_pm_idle)(void) = arch_idle;
 
 void arch_cpu_idle(void)
 {
-	if (arm_pm_idle)
-		arm_pm_idle();
-	else
-		cpu_do_idle();
+	if (!need_resched()) {
+		if (arm_pm_idle)
+			arm_pm_idle();
+		else
+			cpu_do_idle();
+	}
 	local_irq_enable();
 }
 
