@@ -114,6 +114,9 @@ static unsigned long lowmem_deathpending_timeout;
 static atomic_t shift_adj = ATOMIC_INIT(0);
 static short adj_max_shift = 353;
 
+#define VM_PRESSURE_ADAPTIVE_START	90
+#define VM_PRESSURE_ADAPTIVE_STOP	95
+
 /* User knob to enable/disable adaptive lmk feature */
 static int enable_adaptive_lmk = 1;
 module_param_named(enable_adaptive_lmk, enable_adaptive_lmk, int,
@@ -121,9 +124,9 @@ module_param_named(enable_adaptive_lmk, enable_adaptive_lmk, int,
 
 /*
  * This parameter controls the behaviour of LMK when vmpressure is in
- * the range of 85-94. Adaptive lmk triggers based on number of file
+ * the range of 90-94. Adaptive lmk triggers based on number of file
  * pages wrt vmpressure_file_min, when vmpressure is in the range of
- * 85-94. Usually this is a pseudo minfree value, higher than the
+ * 90-94. Usually this is a pseudo minfree value, higher than the
  * highest configured value in minfree array.
  */
 static int vmpressure_file_min = 66560; /* (65 * 1024) * 4 = 266 MB */
@@ -156,6 +159,8 @@ int adjust_minadj(short *min_score_adj)
 	return ret;
 }
 
+static unsigned long vm_pressure = 0;
+
 static int lmk_vmpressure_notifier(struct notifier_block *nb,
 			unsigned long action, void *data)
 {
@@ -166,7 +171,10 @@ static int lmk_vmpressure_notifier(struct notifier_block *nb,
 	if (!enable_adaptive_lmk)
 		return 0;
 
-	if (pressure >= 95) {
+	/* update vm_pressure state */
+	vm_pressure = pressure;
+
+	if (pressure >= VM_PRESSURE_ADAPTIVE_STOP) {
 		other_file = global_page_state(NR_FILE_PAGES) -
 			global_page_state(NR_SHMEM) -
 			total_swapcache_pages();
@@ -174,7 +182,7 @@ static int lmk_vmpressure_notifier(struct notifier_block *nb,
 
 		atomic_set(&shift_adj, 1);
 		trace_almk_vmpressure(pressure, other_free, other_file);
-	} else if (pressure >= 85) {
+	} else if (pressure >= VM_PRESSURE_ADAPTIVE_START) {
 		if (lowmem_adj_size < array_size)
 			array_size = lowmem_adj_size;
 		if (lowmem_minfree_size < array_size)
@@ -627,10 +635,10 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 				selected = p;
 				selected_tasksize = tasksize;
 				selected_oom_score_adj = oom_score_adj;
-				lowmem_print(2, "select '%s' (%d), adj %hd, size %ldkB, to kill\n",
+				lowmem_print(1, "selected protected application '%s' (%d), adj %hd, size %ldkB, to kill\n",
 					p->comm, p->pid, oom_score_adj, tasksize * (long)(PAGE_SIZE / 1024));
 			} else
-				lowmem_print(2, "selected skipped %s' (%d), adj %hd, size %ldkB, not kill\n",
+				lowmem_print(2, "selected protected application skipped %s' (%d), adj %hd, size %ldkB, not kill\n",
 					p->comm, p->pid, oom_score_adj, tasksize * (long)(PAGE_SIZE / 1024));
 		} else
 #endif
@@ -685,6 +693,10 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 			     global_page_state(NR_SLAB_UNRECLAIMABLE) *
 				(long)(PAGE_SIZE / 1024),
 			     sc->gfp_mask);
+		if (vm_pressure >= VM_PRESSURE_ADAPTIVE_START)
+			lowmem_print(1, "VM Pressure is %lu\n", vm_pressure);
+		else
+			lowmem_print(2, "VM Pressure is %lu\n", vm_pressure);
 
 		if (lowmem_debug_level >= 2 && selected_oom_score_adj == 0) {
 			show_mem(SHOW_MEM_FILTER_NODES);
