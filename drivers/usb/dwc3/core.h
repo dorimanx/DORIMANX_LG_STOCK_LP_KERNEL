@@ -545,6 +545,7 @@ enum dwc3_device_state {
 	DWC3_DEFAULT_STATE,
 	DWC3_ADDRESS_STATE,
 	DWC3_CONFIGURED_STATE,
+	DWC3_REQ_SET_INTERFACE,
 };
 
 /* TRB Length, PCM and Status */
