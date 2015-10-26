@@ -63,11 +63,16 @@ module_param(min_input_interval, uint, 0644);
 
 static struct min_cpu_limit {
 	uint32_t user_min_freq_lock[4];
+	uint32_t user_boost_freq_lock[4];
 } limit = {
 	.user_min_freq_lock[0] = 0,
 	.user_min_freq_lock[1] = 0,
 	.user_min_freq_lock[2] = 0,
 	.user_min_freq_lock[3] = 0,
+	.user_boost_freq_lock[0] = 0,
+	.user_boost_freq_lock[1] = 0,
+	.user_boost_freq_lock[2] = 0,
+	.user_boost_freq_lock[3] = 0,
 };
 
 static void do_input_boost_rem(struct work_struct *work)
@@ -75,14 +80,17 @@ static void do_input_boost_rem(struct work_struct *work)
 	unsigned int cpu;
 
 	for_each_possible_cpu(cpu) {
-		dprintk("Removing input boost for CPU%u\n", cpu);
-		set_cpu_min_lock(cpu, limit.user_min_freq_lock[cpu]);
+		if (limit.user_boost_freq_lock[cpu] > 0) {
+			dprintk("Removing input boost for CPU%u\n", cpu);
+			set_cpu_min_lock(cpu, limit.user_min_freq_lock[cpu]);
+			limit.user_boost_freq_lock[cpu] = 0;
+		}
 	}
 }
 
 static void do_input_boost(struct work_struct *work)
 {
-	unsigned int i, cpu;
+	unsigned int cpu;
 	unsigned nr_cpus = nr_boost_cpus;
 
 	cancel_delayed_work_sync(&input_boost_rem);
@@ -92,23 +100,23 @@ static void do_input_boost(struct work_struct *work)
 	else if (nr_cpus > NR_CPUS)
 		nr_cpus = NR_CPUS;
 
-	/* Save user current min lock */
-	for_each_possible_cpu(cpu)
-		limit.user_min_freq_lock[cpu] = get_cpu_min_lock(cpu);
-
-	for (i = 0; i < nr_cpus; i++) {
+	for (cpu = 0; cpu < nr_cpus; cpu++) {
 		struct cpufreq_policy policy;
 		unsigned int cur = 0;
 
-		dprintk("Input boost for CPU%u\n", i);
-		set_cpu_min_lock(i, input_boost_freq);
+		/* Save user current min & boost lock */
+		limit.user_min_freq_lock[cpu] = get_cpu_min_lock(cpu);
+		limit.user_boost_freq_lock[cpu] = input_boost_freq;
 
-		if (cpu_online(i)) {
-			cur = cpufreq_quick_get(i);
-			if (cur < input_boost_freq && cur > 0) {
-				policy.cpu = i;
+		dprintk("Input boost for CPU%u\n", cpu);
+		set_cpu_min_lock(cpu, limit.user_boost_freq_lock[cpu]);
+
+		if (cpu_online(cpu)) {
+			cur = cpufreq_quick_get(cpu);
+			if (cur < limit.user_boost_freq_lock[cpu] && cur > 0) {
+				policy.cpu = cpu;
 				cpufreq_driver_target(&policy,
-					input_boost_freq, CPUFREQ_RELATION_L);
+					limit.user_boost_freq_lock[cpu], CPUFREQ_RELATION_L);
 			}
 		}
 	}
