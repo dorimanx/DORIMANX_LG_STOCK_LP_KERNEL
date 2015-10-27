@@ -720,6 +720,7 @@ EXPORT_SYMBOL(submit_bio_wait);
  *
  * @bio will then represent the remaining, uncompleted portion of the io.
  */
+#if 0 /* Dorimanx note not used for now, and need more updates to /block/ */
 void bio_advance(struct bio *bio, unsigned bytes)
 {
 	if (bio_integrity(bio))
@@ -749,6 +750,7 @@ void bio_advance(struct bio *bio, unsigned bytes)
 	}
 }
 EXPORT_SYMBOL(bio_advance);
+#endif
 
 struct bio_map_data {
 	struct bio_vec *iovecs;
