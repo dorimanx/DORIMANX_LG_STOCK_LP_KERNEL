@@ -80,15 +80,23 @@ static void msm_limit_suspend(void)
 	}
 
 	mutex_lock(&limit.msm_limiter_mutex);
+
 	limit.suspended = 1;
-	mutex_unlock(&limit.msm_limiter_mutex);
 
 	for_each_possible_cpu(cpu) {
-		set_cpu_min_lock(cpu, limit.suspend_min_freq);
-		set_max_lock(cpu, limit.suspend_max_freq);
+		if (limit.suspend_min_freq)
+			set_cpu_min_lock(cpu, limit.suspend_min_freq);
+		if (limit.suspend_max_freq)
+			set_max_lock(cpu, limit.suspend_max_freq);
 	}
-	dprintk("Limit all cores max freq to %d\n and min freq to %d\n",
-		limit.suspend_max_freq, limit.suspend_min_freq);
+	if (limit.suspend_min_freq)
+		dprintk("Limit all cores min freq to %d\n",
+			limit.suspend_min_freq);
+	if (limit.suspend_max_freq)
+		dprintk("Limit all cores max freq to %d\n",
+			limit.suspend_max_freq);
+
+	mutex_unlock(&limit.msm_limiter_mutex);
 }
 
 static void msm_limit_resume(void)
@@ -100,16 +108,22 @@ static void msm_limit_resume(void)
 		return;
 
 	mutex_lock(&limit.msm_limiter_mutex);
+
 	limit.suspended = 0;
-	mutex_unlock(&limit.msm_limiter_mutex);
 
 	for_each_possible_cpu(cpu) {
-		set_cpu_min_lock(cpu, limit.resume_min_freq[cpu]);
-		set_max_lock(cpu, limit.resume_max_freq[cpu]);
-		dprintk("Restore cpu%d max freq to %d\n and min freq to %d\n",
-					cpu, limit.resume_max_freq[cpu],
-					limit.resume_min_freq[cpu]);
+		if (limit.resume_min_freq[cpu]) {
+			set_cpu_min_lock(cpu, limit.resume_min_freq[cpu]);
+			dprintk("Restore cpu%d min freq to %d\n",
+					cpu, limit.resume_min_freq[cpu]);
+		}
+		if (limit.resume_max_freq[cpu]) {
+			set_max_lock(cpu, limit.resume_max_freq[cpu]);
+			dprintk("Restore cpu%d max freq to %d\n",
+					cpu, limit.resume_max_freq[cpu]);
+		}
 	}
+	mutex_unlock(&limit.msm_limiter_mutex);
 }
 
 static int state_notifier_callback(struct notifier_block *this,
