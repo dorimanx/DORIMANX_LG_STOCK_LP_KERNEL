@@ -10,8 +10,6 @@ struct state_event {
 	void *data;
 };
 
-extern bool state_suspended;
-extern bool use_fb_notifier;
 extern bool scr_suspended;
 extern void state_suspend(void);
 extern void state_resume(void);
