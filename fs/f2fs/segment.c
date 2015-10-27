@@ -88,6 +88,21 @@ struct llist_node *llist_reverse_order(struct llist_node *head)
 #define list_last_entry(ptr, type, member) \
 	list_entry((ptr)->prev, type, member)
 
+static unsigned long __reverse_ulong(unsigned char *str)
+{
+	unsigned long tmp = 0;
+	int shift = 24, idx = 0;
+
+#if BITS_PER_LONG == 64
+	shift = 56;
+#endif
+	while (shift >= 0) {
+		tmp |= (unsigned long)str[idx++] << shift;
+		shift -= BITS_PER_BYTE;
+	}
+	return tmp;
+}
+
 /*
  * __reverse_ffs is copied from include/asm-generic/bitops/__ffs.h since
  * MSB and LSB are reversed in a byte by f2fs_set_bit.
@@ -97,27 +112,31 @@ static inline unsigned long __reverse_ffs(unsigned long word)
 	int num = 0;
 
 #if BITS_PER_LONG == 64
-	if ((word & 0xffffffff) == 0) {
+	if ((word & 0xffffffff00000000UL) == 0)
 		num += 32;
+	else
 		word >>= 32;
-	}
 #endif
-	if ((word & 0xffff) == 0) {
+	if ((word & 0xffff0000) == 0)
 		num += 16;
+	else
 		word >>= 16;
-	}
-	if ((word & 0xff) == 0) {
+
+	if ((word & 0xff00) == 0)
 		num += 8;
+	else
 		word >>= 8;
-	}
+
 	if ((word & 0xf0) == 0)
 		num += 4;
 	else
 		word >>= 4;
+
 	if ((word & 0xc) == 0)
 		num += 2;
 	else
 		word >>= 2;
+
 	if ((word & 0x2) == 0)
 		num += 1;
 	return num;
@@ -127,26 +146,16 @@ static inline unsigned long __reverse_ffs(unsigned long word)
  * __find_rev_next(_zero)_bit is copied from lib/find_next_bit.c because
  * f2fs_set_bit makes MSB and LSB reversed in a byte.
  * Example:
- *                             LSB <--> MSB
- *   f2fs_set_bit(0, bitmap) => 0000 0001
- *   f2fs_set_bit(7, bitmap) => 1000 0000
+ *                             MSB <--> LSB
+ *   f2fs_set_bit(0, bitmap) => 1000 0000
+ *   f2fs_set_bit(7, bitmap) => 0000 0001
  */
 static unsigned long __find_rev_next_bit(const unsigned long *addr,
 			unsigned long size, unsigned long offset)
 {
-	while (!f2fs_test_bit(offset, (unsigned char *)addr))
-		offset++;
-
-	if (offset > size)
-		offset = size;
-
-	return offset;
-#if 0
 	const unsigned long *p = addr + BIT_WORD(offset);
 	unsigned long result = offset & ~(BITS_PER_LONG - 1);
 	unsigned long tmp;
-	unsigned long mask, submask;
-	unsigned long quot, rest;
 
 	if (offset >= size)
 		return size;
@@ -156,14 +165,9 @@ static unsigned long __find_rev_next_bit(const unsigned long *addr,
 	if (!offset)
 		goto aligned;
 
-	tmp = *(p++);
-	quot = (offset >> 3) << 3;
-	rest = offset & 0x7;
-	mask = ~0UL << quot;
-	submask = (unsigned char)(0xff << rest) >> rest;
-	submask <<= quot;
-	mask &= submask;
-	tmp &= mask;
+	tmp = __reverse_ulong((unsigned char *)p);
+	tmp &= ~0UL >> offset;
+
 	if (size < BITS_PER_LONG)
 		goto found_first;
 	if (tmp)
@@ -171,42 +175,34 @@ static unsigned long __find_rev_next_bit(const unsigned long *addr,
 
 	size -= BITS_PER_LONG;
 	result += BITS_PER_LONG;
+	p++;
 aligned:
 	while (size & ~(BITS_PER_LONG-1)) {
-		tmp = *(p++);
+		tmp = __reverse_ulong((unsigned char *)p);
 		if (tmp)
 			goto found_middle;
 		result += BITS_PER_LONG;
 		size -= BITS_PER_LONG;
+		p++;
 	}
 	if (!size)
 		return result;
-	tmp = *p;
+
+	tmp = __reverse_ulong((unsigned char *)p);
 found_first:
-	tmp &= (~0UL >> (BITS_PER_LONG - size));
-	if (tmp == 0UL)		/* Are any bits set? */
+	tmp &= (~0UL << (BITS_PER_LONG - size));
+	if (!tmp)		/* Are any bits set? */
 		return result + size;   /* Nope. */
 found_middle:
 	return result + __reverse_ffs(tmp);
-#endif
 }
 
 static unsigned long __find_rev_next_zero_bit(const unsigned long *addr,
 			unsigned long size, unsigned long offset)
 {
-	while (f2fs_test_bit(offset, (unsigned char *)addr))
-		offset++;
-
-	if (offset > size)
-		offset = size;
-
-	return offset;
-#if 0
 	const unsigned long *p = addr + BIT_WORD(offset);
 	unsigned long result = offset & ~(BITS_PER_LONG - 1);
 	unsigned long tmp;
-	unsigned long mask, submask;
-	unsigned long quot, rest;
 
 	if (offset >= size)
 		return size;
@@ -216,40 +212,36 @@ static unsigned long __find_rev_next_zero_bit(const unsigned long *addr,
 	if (!offset)
 		goto aligned;
 
-	tmp = *(p++);
-	quot = (offset >> 3) << 3;
-	rest = offset & 0x7;
-	mask = ~(~0UL << quot);
-	submask = (unsigned char)~((unsigned char)(0xff << rest) >> rest);
-	submask <<= quot;
-	mask += submask;
-	tmp |= mask;
+	tmp = __reverse_ulong((unsigned char *)p);
+	tmp |= ~((~0UL << offset) >> offset);
+
 	if (size < BITS_PER_LONG)
 		goto found_first;
-	if (~tmp)
+	if (tmp != ~0UL)
 		goto found_middle;
 
 	size -= BITS_PER_LONG;
 	result += BITS_PER_LONG;
+	p++;
 aligned:
 	while (size & ~(BITS_PER_LONG - 1)) {
-		tmp = *(p++);
-		if (~tmp)
+		tmp = __reverse_ulong((unsigned char *)p);
+		if (tmp != ~0UL)
 			goto found_middle;
 		result += BITS_PER_LONG;
 		size -= BITS_PER_LONG;
+		p++;
 	}
 	if (!size)
 		return result;
-	tmp = *p;
 
+	tmp = __reverse_ulong((unsigned char *)p);
 found_first:
-	tmp |= ~0UL << size;
-	if (tmp == ~0UL)        /* Are any bits zero? */
+	tmp |= ~(~0UL << (BITS_PER_LONG - size));
+	if (tmp == ~0UL)	/* Are any bits zero? */
 		return result + size;   /* Nope. */
 found_middle:
 	return result + __reverse_ffz(tmp);
-#endif
 }
 
 void register_inmem_page(struct inode *inode, struct page *page)
@@ -380,33 +372,6 @@ void f2fs_balance_fs_bg(struct f2fs_sb_info *sbi)
 		f2fs_sync_fs(sbi->sb, true);
 }
 
-struct __submit_bio_ret {
-	struct completion event;
-	int error;
-};
-
-static void __submit_bio_wait_endio(struct bio *bio, int error)
-{
-	struct __submit_bio_ret *ret = bio->bi_private;
-
-	ret->error = error;
-	complete(&ret->event);
-}
-
-static int __submit_bio_wait(int rw, struct bio *bio)
-{
-	struct __submit_bio_ret ret;
-
-	rw |= REQ_SYNC;
-	init_completion(&ret.event);
-	bio->bi_private = &ret;
-	bio->bi_end_io = __submit_bio_wait_endio;
-	submit_bio(rw, bio);
-	wait_for_completion(&ret.event);
-
-	return ret.error;
-}
-
 static int issue_flush_thread(void *data)
 {
 	struct f2fs_sb_info *sbi = data;
@@ -427,7 +392,7 @@ repeat:
 		fcc->dispatch_list = llist_reverse_order(fcc->dispatch_list);
 
 		bio->bi_bdev = sbi->sb->s_bdev;
-		ret = __submit_bio_wait(WRITE_FLUSH, bio);
+		ret = submit_bio_wait(WRITE_FLUSH, bio);
 
 		llist_for_each_entry_safe(cmd, next,
 					  fcc->dispatch_list, llnode) {
@@ -459,7 +424,7 @@ int f2fs_issue_flush(struct f2fs_sb_info *sbi)
 		int ret;
 
 		bio->bi_bdev = sbi->sb->s_bdev;
-		ret = __submit_bio_wait(WRITE_FLUSH, bio);
+		ret = submit_bio_wait(WRITE_FLUSH, bio);
 		bio_put(bio);
 		return ret;
 	}
@@ -1403,6 +1368,9 @@ void write_meta_page(struct f2fs_sb_info *sbi, struct page *page)
 		.encrypted_page = NULL,
 	};
 
+	if (unlikely(page->index >= MAIN_BLKADDR(sbi)))
+		fio.rw &= ~REQ_META;
+
 	set_page_writeback(page);
 	f2fs_submit_page_mbio(&fio);
 }
@@ -1532,7 +1500,7 @@ static inline bool is_merged_page(struct f2fs_sb_info *sbi,
 		return false;
 	}
 
-	__bio_for_each_segment(bvec, io->bio, i, 0) {
+	bio_for_each_segment_all(bvec, io->bio, i) {
 
 		if (bvec->bv_page->mapping) {
 			target = bvec->bv_page;
@@ -1564,6 +1532,23 @@ void f2fs_wait_on_page_writeback(struct page *page,
 		if (is_merged_page(sbi, page, type))
 			f2fs_submit_merged_bio(sbi, type, WRITE);
 		wait_on_page_writeback(page);
+	}
+}
+
+void f2fs_wait_on_encrypted_page_writeback(struct f2fs_sb_info *sbi,
+							block_t blkaddr)
+{
+	struct page *cpage;
+
+	if (blkaddr == NEW_ADDR)
+		return;
+
+	f2fs_bug_on(sbi, blkaddr == NULL_ADDR);
+
+	cpage = find_lock_page(META_MAPPING(sbi), blkaddr);
+	if (cpage) {
+		f2fs_wait_on_page_writeback(cpage, DATA);
+		f2fs_put_page(cpage, 1);
 	}
 }
 
@@ -1704,7 +1689,7 @@ static int restore_curseg_summaries(struct f2fs_sb_info *sbi)
 
 		if (npages >= 2)
 			ra_meta_pages(sbi, start_sum_block(sbi), npages,
-								META_CP);
+							META_CP, true);
 
 		/* restore for compacted data summary */
 		if (read_compacted_summaries(sbi))
@@ -1714,7 +1699,7 @@ static int restore_curseg_summaries(struct f2fs_sb_info *sbi)
 
 	if (__exist_node_summaries(sbi))
 		ra_meta_pages(sbi, sum_blk_addr(sbi, NR_CURSEG_TYPE, type),
-					NR_CURSEG_TYPE - type, META_CP);
+					NR_CURSEG_TYPE - type, META_CP, true);
 
 	for (; type <= CURSEG_COLD_NODE; type++) {
 		err = read_normal_summaries(sbi, type);
@@ -2201,7 +2186,7 @@ static void build_sit_entries(struct f2fs_sb_info *sbi)
 	int nrpages = MAX_BIO_BLOCKS(sbi);
 
 	do {
-		readed = ra_meta_pages(sbi, start_blk, nrpages, META_SIT);
+		readed = ra_meta_pages(sbi, start_blk, nrpages, META_SIT, true);
 
 		start = start_blk * sit_i->sents_per_block;
 		end = (start_blk + readed) * sit_i->sents_per_block;
