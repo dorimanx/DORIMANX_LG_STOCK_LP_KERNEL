@@ -68,6 +68,13 @@ static inline int cpufreq_unregister_notifier(struct notifier_block *nb,
 static inline void disable_cpufreq(void) { }
 #endif		/* CONFIG_CPU_FREQ */
 
+#ifdef CONFIG_MSM_CPUFREQ_LIMITER
+int cpufreq_set_freq(unsigned int max_freq, unsigned int min_freq,
+			unsigned int cpu);
+int cpufreq_get_max(unsigned int cpu);
+int cpufreq_get_min(unsigned int cpu);
+#endif
+
 /* if (cpufreq_driver->target) exists, the ->governor decides what frequency
  * within the limits is used. If (cpufreq_driver->setpolicy> exists, these
  * two generic policies are available:

@@ -30,10 +30,10 @@
 
 #define MSM_LIMIT			"msm_cpufreq_limit"
 
-#define DEFAULT_SUSPEND_FREQUENCY		0
+#define DEFAULT_MAX_SUSPEND_FREQUENCY	0
+#define DEFAULT_MIN_SUSPEND_FREQUENCY	0
 #define DEFAULT_MAX_RESUME_FREQUENCY	2265600
-#define DEFAULT_MIN_FREQUENCY		300000
-#define DEFAULT_MIN_RESUME_FREQUENCY	300000
+#define DEFAULT_MIN_RESUME_FREQUENCY	0
 
 static unsigned int debug = 1;
 module_param_named(debug_mask, debug, uint, 0644);
@@ -53,8 +53,8 @@ static struct cpu_limit {
 	struct mutex msm_limiter_mutex;
 	struct notifier_block notif;
 } limit = {
-	.suspend_max_freq = DEFAULT_SUSPEND_FREQUENCY,
-	.suspend_min_freq = DEFAULT_MIN_FREQUENCY,
+	.suspend_max_freq = DEFAULT_MAX_SUSPEND_FREQUENCY,
+	.suspend_min_freq = DEFAULT_MIN_SUSPEND_FREQUENCY,
 	.resume_max_freq[0] = DEFAULT_MAX_RESUME_FREQUENCY,
 	.resume_max_freq[1] = DEFAULT_MAX_RESUME_FREQUENCY,
 	.resume_max_freq[2] = DEFAULT_MAX_RESUME_FREQUENCY,
@@ -80,7 +80,6 @@ static void msm_limit_suspend(void)
 	}
 
 	mutex_lock(&limit.msm_limiter_mutex);
-
 	limit.suspended = 1;
 
 	for_each_possible_cpu(cpu) {
@@ -89,14 +88,14 @@ static void msm_limit_suspend(void)
 		if (limit.suspend_max_freq)
 			set_max_lock(cpu, limit.suspend_max_freq);
 	}
+	mutex_unlock(&limit.msm_limiter_mutex);
+
 	if (limit.suspend_min_freq)
 		dprintk("Limit all cores min freq to %d\n",
 			limit.suspend_min_freq);
 	if (limit.suspend_max_freq)
 		dprintk("Limit all cores max freq to %d\n",
 			limit.suspend_max_freq);
-
-	mutex_unlock(&limit.msm_limiter_mutex);
 }
 
 static void msm_limit_resume(void)
@@ -108,20 +107,21 @@ static void msm_limit_resume(void)
 		return;
 
 	mutex_lock(&limit.msm_limiter_mutex);
-
 	limit.suspended = 0;
 
 	for_each_possible_cpu(cpu) {
-		if (limit.resume_min_freq[cpu]) {
+		if (get_cpu_min_lock(cpu)) {
 			set_cpu_min_lock(cpu, limit.resume_min_freq[cpu]);
 			dprintk("Restore cpu%d min freq to %d\n",
 					cpu, limit.resume_min_freq[cpu]);
 		}
-		if (limit.resume_max_freq[cpu]) {
+		if (get_max_lock(cpu)) {
 			set_max_lock(cpu, limit.resume_max_freq[cpu]);
 			dprintk("Restore cpu%d max freq to %d\n",
 					cpu, limit.resume_max_freq[cpu]);
 		}
+		cpufreq_set_freq(get_max_lock(cpu),
+				get_cpu_min_lock(cpu), cpu);
 	}
 	mutex_unlock(&limit.msm_limiter_mutex);
 }
@@ -148,6 +148,7 @@ static int state_notifier_callback(struct notifier_block *this,
 
 static int msm_cpufreq_limit_start(void)
 {
+	unsigned int cpu = 0;
 	int ret = 0;
 
 	limit.notif.notifier_call = state_notifier_callback;
@@ -158,6 +159,12 @@ static int msm_cpufreq_limit_start(void)
 	}
 
 	mutex_init(&limit.msm_limiter_mutex);
+
+	/* Save current instance */
+	for_each_possible_cpu(cpu) {
+		limit.resume_max_freq[cpu] = get_max_lock(cpu);
+		limit.resume_min_freq[cpu] = get_cpu_min_lock(cpu);
+	}
 
 err_dev:
 	return ret;
@@ -252,10 +259,15 @@ static ssize_t store_msm_cpufreq_max_limit_cpu##cpu	\
 	ret = sscanf(buf, "%u\n", &val);		\
 	if (ret != 1)					\
 		return -EINVAL;				\
+	if (val == 0)					\
+		goto out;				\
 	if (val < 300000 || val > 2803200)		\
-		val = 0;				\
+		val = 2265600;				\
+out:							\
+	mutex_lock(&limit.msm_limiter_mutex);		\
 	set_max_lock(cpu, val);				\
-		return count;				\
+	mutex_unlock(&limit.msm_limiter_mutex);		\
+	return count;					\
 }							\
 static ssize_t show_msm_cpufreq_max_limit_cpu##cpu	\
 (struct kobject *kobj,					\
@@ -276,8 +288,9 @@ static ssize_t store_msm_cpufreq_min_limit_cpu##cpu	\
 		return -EINVAL;				\
 	if (val < 300000 || val > 2803200)		\
 		val = 0;				\
+	mutex_lock(&limit.msm_limiter_mutex);		\
 	set_cpu_min_lock(cpu, val);			\
-		return count;				\
+	mutex_unlock(&limit.msm_limiter_mutex);		\
 	return count;					\
 }							\
 static ssize_t show_msm_cpufreq_min_limit_cpu##cpu	\
