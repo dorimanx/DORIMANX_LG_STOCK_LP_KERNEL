@@ -83,10 +83,14 @@ static void msm_limit_suspend(void)
 	limit.suspended = 1;
 
 	for_each_possible_cpu(cpu) {
-		if (limit.suspend_min_freq)
+		if (limit.suspend_min_freq) {
+			cpufreq_set_freq(0, limit.suspend_min_freq, cpu);
 			set_cpu_min_lock(cpu, limit.suspend_min_freq);
-		if (limit.suspend_max_freq)
+		}
+		if (limit.suspend_max_freq) {
+			cpufreq_set_freq(limit.suspend_max_freq, 0, cpu);
 			set_max_lock(cpu, limit.suspend_max_freq);
+		}
 	}
 	mutex_unlock(&limit.msm_limiter_mutex);
 
