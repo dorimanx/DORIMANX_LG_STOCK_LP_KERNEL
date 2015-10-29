@@ -78,7 +78,6 @@ EXPORT_SYMBOL_GPL(state_notifier_call_chain);
 static void _suspend_work(struct work_struct *work)
 {
 	state_notifier_call_chain(STATE_NOTIFIER_SUSPEND, NULL);
-	msleep_interruptible(50);
 	state_suspended = true;
 	suspend_in_progress = false;
 	dprintk("%s: suspend completed.\n", STATE_NOTIFIER);
@@ -116,10 +115,12 @@ void state_resume(void)
 
 static int __init state_notifier_init(void)
 {
-	susp_wq =
-	    alloc_workqueue("state_susp_wq", WQ_HIGHPRI, 0);
-	if (!susp_wq)
+	susp_wq = alloc_workqueue("state_susp_wq", WQ_HIGHPRI | WQ_UNBOUND |
+					WQ_FREEZABLE | WQ_MEM_RECLAIM, 0);
+	if (!susp_wq) {
 		pr_err("State Notifier failed to allocate suspend workqueue\n");
+		return 0;
+	}
 
 	INIT_DELAYED_WORK(&suspend_work, _suspend_work);
 	INIT_WORK(&resume_work, _resume_work);
