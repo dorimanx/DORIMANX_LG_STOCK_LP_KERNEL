@@ -565,6 +565,13 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 
 		if (max_load_other_cpu < j_dbs_info->max_load)
 			max_load_other_cpu = j_dbs_info->max_load;
+
+/*
+ * This stock change brake the hotplug min core set.
+ * if set to 2 cores min, freq stuck on max for online cores.
+ * added this warning to know why it's OFF, Dorimanx
+ */
+#if 0
 		/*
 		 * The other cpu could be running at higher frequency
 		 * but may not have completed it's sampling_down_factor.
@@ -580,6 +587,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 				max_load_other_cpu =
 				dbs_tuners_ins.micro_freq_up_threshold;
 		}
+#endif
 	}
 
 	/* calculate the scaled load across CPU */
