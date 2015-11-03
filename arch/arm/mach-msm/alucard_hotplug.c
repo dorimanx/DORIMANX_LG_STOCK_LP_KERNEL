@@ -237,8 +237,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 #ifdef CONFIG_STATE_NOTIFIER
 static void alucard_hotplug_suspend(void)
 {
-	if (hotplug_tuners_ins.hotplug_enable > 0
-				&& hotplug_tuners_ins.hotplug_suspend == 1 &&
+	if (hotplug_tuners_ins.hotplug_suspend == 1 &&
 				hotplug_tuners_ins.suspended == false) {
 			hotplug_tuners_ins.suspended = true;
 			pr_info("Alucard HotPlug suspended.\n");
@@ -247,8 +246,7 @@ static void alucard_hotplug_suspend(void)
 
 static void alucard_hotplug_resume(void)
 {
-	if (hotplug_tuners_ins.hotplug_enable > 0
-		&& hotplug_tuners_ins.suspended == true) {
+	if (hotplug_tuners_ins.suspended == true) {
 			hotplug_tuners_ins.suspended = false;
 			/* wake up everyone */
 			if (hotplug_tuners_ins.hotplug_suspend == 1)
@@ -260,6 +258,9 @@ static void alucard_hotplug_resume(void)
 static int state_notifier_callback(struct notifier_block *this,
 				unsigned long event, void *data)
 {
+	if (hotplug_tuners_ins.hotplug_enable == 0)
+		return NOTIFY_OK;
+
 	switch (event) {
 		case STATE_NOTIFIER_ACTIVE:
 			alucard_hotplug_resume();

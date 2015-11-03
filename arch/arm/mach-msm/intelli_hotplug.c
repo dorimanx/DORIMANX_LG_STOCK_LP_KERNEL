@@ -361,8 +361,7 @@ static void __ref intelli_plug_resume(void)
 static int state_notifier_callback(struct notifier_block *this,
 				unsigned long event, void *data)
 {
-	if ((atomic_read(&intelli_plug_active) == 0) ||
-			hotplug_suspended)
+	if (atomic_read(&intelli_plug_active) == 0)
 		return NOTIFY_OK;
 
 	switch (event) {
