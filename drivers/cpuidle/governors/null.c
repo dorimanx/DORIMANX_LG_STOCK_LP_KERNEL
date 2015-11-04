@@ -40,11 +40,4 @@ static int __init init_null(void)
 	return cpuidle_register_governor(&null_governor);
 }
 
-static void __exit exit_null(void)
-{
-	cpuidle_unregister_governor(&null_governor);
-}
-
-MODULE_LICENSE("GPL");
-module_init(init_null);
-module_exit(exit_null);
+postcore_initcall(init_null);
