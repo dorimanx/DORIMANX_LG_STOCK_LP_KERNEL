@@ -536,6 +536,7 @@ code:
 	x = *q;
 
 This will not have the desired effect because there is no actual data
+<<<<<<< HEAD
 dependency, but rather a control dependency that the CPU may short-circuit by
 attempting to predict the outcome in advance.  In such a case what's actually
 required is:
@@ -545,6 +546,225 @@ required is:
 		q = &b;
 	<read barrier>
 	x = *q;
+=======
+dependency, but rather a control dependency that the CPU may short-circuit
+by attempting to predict the outcome in advance, so that other CPUs see
+the load from b as having happened before the load from a.  In such a
+case what's actually required is:
+
+	q = READ_ONCE(a);
+	if (q) {
+		<read barrier>
+		p = READ_ONCE(b);
+	}
+
+However, stores are not speculated.  This means that ordering -is- provided
+for load-store control dependencies, as in the following example:
+
+	q = READ_ONCE(a);
+	if (q) {
+		WRITE_ONCE(b, p);
+	}
+
+Control dependencies pair normally with other types of barriers.  That
+said, please note that READ_ONCE() is not optional! Without the
+READ_ONCE(), the compiler might combine the load from 'a' with other
+loads from 'a', and the store to 'b' with other stores to 'b', with
+possible highly counterintuitive effects on ordering.
+
+Worse yet, if the compiler is able to prove (say) that the value of
+variable 'a' is always non-zero, it would be well within its rights
+to optimize the original example by eliminating the "if" statement
+as follows:
+
+	q = a;
+	b = p;  /* BUG: Compiler and CPU can both reorder!!! */
+
+So don't leave out the READ_ONCE().
+
+It is tempting to try to enforce ordering on identical stores on both
+branches of the "if" statement as follows:
+
+	q = READ_ONCE(a);
+	if (q) {
+		barrier();
+		WRITE_ONCE(b, p);
+		do_something();
+	} else {
+		barrier();
+		WRITE_ONCE(b, p);
+		do_something_else();
+	}
+
+Unfortunately, current compilers will transform this as follows at high
+optimization levels:
+
+	q = READ_ONCE(a);
+	barrier();
+	WRITE_ONCE(b, p);  /* BUG: No ordering vs. load from a!!! */
+	if (q) {
+		/* WRITE_ONCE(b, p); -- moved up, BUG!!! */
+		do_something();
+	} else {
+		/* WRITE_ONCE(b, p); -- moved up, BUG!!! */
+		do_something_else();
+	}
+
+Now there is no conditional between the load from 'a' and the store to
+'b', which means that the CPU is within its rights to reorder them:
+The conditional is absolutely required, and must be present in the
+assembly code even after all compiler optimizations have been applied.
+Therefore, if you need ordering in this example, you need explicit
+memory barriers, for example, smp_store_release():
+
+	q = READ_ONCE(a);
+	if (q) {
+		smp_store_release(&b, p);
+		do_something();
+	} else {
+		smp_store_release(&b, p);
+		do_something_else();
+	}
+
+In contrast, without explicit memory barriers, two-legged-if control
+ordering is guaranteed only when the stores differ, for example:
+
+	q = READ_ONCE(a);
+	if (q) {
+		WRITE_ONCE(b, p);
+		do_something();
+	} else {
+		WRITE_ONCE(b, r);
+		do_something_else();
+	}
+
+The initial READ_ONCE() is still required to prevent the compiler from
+proving the value of 'a'.
+
+In addition, you need to be careful what you do with the local variable 'q',
+otherwise the compiler might be able to guess the value and again remove
+the needed conditional.  For example:
+
+	q = READ_ONCE(a);
+	if (q % MAX) {
+		WRITE_ONCE(b, p);
+		do_something();
+	} else {
+		WRITE_ONCE(b, r);
+		do_something_else();
+	}
+
+If MAX is defined to be 1, then the compiler knows that (q % MAX) is
+equal to zero, in which case the compiler is within its rights to
+transform the above code into the following:
+
+	q = READ_ONCE(a);
+	WRITE_ONCE(b, p);
+	do_something_else();
+
+Given this transformation, the CPU is not required to respect the ordering
+between the load from variable 'a' and the store to variable 'b'.  It is
+tempting to add a barrier(), but this does not help.  The conditional
+is gone, and the barrier won't bring it back.  Therefore, if you are
+relying on this ordering, you should make sure that MAX is greater than
+one, perhaps as follows:
+
+	q = READ_ONCE(a);
+	BUILD_BUG_ON(MAX <= 1); /* Order load from a with store to b. */
+	if (q % MAX) {
+		WRITE_ONCE(b, p);
+		do_something();
+	} else {
+		WRITE_ONCE(b, r);
+		do_something_else();
+	}
+
+Please note once again that the stores to 'b' differ.  If they were
+identical, as noted earlier, the compiler could pull this store outside
+of the 'if' statement.
+
+You must also be careful not to rely too much on boolean short-circuit
+evaluation.  Consider this example:
+
+	q = READ_ONCE(a);
+	if (q || 1 > 0)
+		WRITE_ONCE(b, 1);
+
+Because the first condition cannot fault and the second condition is
+always true, the compiler can transform this example as following,
+defeating control dependency:
+
+	q = READ_ONCE(a);
+	WRITE_ONCE(b, 1);
+
+This example underscores the need to ensure that the compiler cannot
+out-guess your code.  More generally, although READ_ONCE() does force
+the compiler to actually emit code for a given load, it does not force
+the compiler to use the results.
+
+Finally, control dependencies do -not- provide transitivity.  This is
+demonstrated by two related examples, with the initial values of
+x and y both being zero:
+
+	CPU 0                     CPU 1
+	=======================   =======================
+	r1 = READ_ONCE(x);        r2 = READ_ONCE(y);
+	if (r1 > 0)               if (r2 > 0)
+	  WRITE_ONCE(y, 1);         WRITE_ONCE(x, 1);
+
+	assert(!(r1 == 1 && r2 == 1));
+
+The above two-CPU example will never trigger the assert().  However,
+if control dependencies guaranteed transitivity (which they do not),
+then adding the following CPU would guarantee a related assertion:
+
+	CPU 2
+	=====================
+	WRITE_ONCE(x, 2);
+
+	assert(!(r1 == 2 && r2 == 1 && x == 2)); /* FAILS!!! */
+
+But because control dependencies do -not- provide transitivity, the above
+assertion can fail after the combined three-CPU example completes.  If you
+need the three-CPU example to provide ordering, you will need smp_mb()
+between the loads and stores in the CPU 0 and CPU 1 code fragments,
+that is, just before or just after the "if" statements.  Furthermore,
+the original two-CPU example is very fragile and should be avoided.
+
+These two examples are the LB and WWC litmus tests from this paper:
+http://www.cl.cam.ac.uk/users/pes20/ppc-supplemental/test6.pdf and this
+site: https://www.cl.cam.ac.uk/~pes20/ppcmem/index.html.
+
+In summary:
+
+  (*) Control dependencies can order prior loads against later stores.
+      However, they do -not- guarantee any other sort of ordering:
+      Not prior loads against later loads, nor prior stores against
+      later anything.  If you need these other forms of ordering,
+      use smp_rmb(), smp_wmb(), or, in the case of prior stores and
+      later loads, smp_mb().
+
+  (*) If both legs of the "if" statement begin with identical stores
+      to the same variable, a barrier() statement is required at the
+      beginning of each leg of the "if" statement.
+
+  (*) Control dependencies require at least one run-time conditional
+      between the prior load and the subsequent store, and this
+      conditional must involve the prior load.  If the compiler is able
+      to optimize the conditional away, it will have also optimized
+      away the ordering.  Careful use of READ_ONCE() and WRITE_ONCE()
+      can help to preserve the needed conditional.
+
+  (*) Control dependencies require that the compiler avoid reordering the
+      dependency into nonexistence.  Careful use of READ_ONCE() or
+      atomic{,64}_read() can help to preserve your control dependency.
+      Please see the Compiler Barrier section for more information.
+
+  (*) Control dependencies pair normally with other types of barriers.
+
+  (*) Control dependencies do -not- provide transitivity.  If you
+      need transitivity, use smp_mb().
+>>>>>>> 105ff3c... atomic: remove all traces of READ_ONCE_CTRL() and atomic*_read_ctrl()
 
 
 SMP BARRIER PAIRING

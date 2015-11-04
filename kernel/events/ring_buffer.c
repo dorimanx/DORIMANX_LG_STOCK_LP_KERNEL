@@ -159,6 +159,15 @@ int perf_output_begin(struct perf_output_handle *handle,
 	perf_output_get_handle(handle);
 
 	do {
+<<<<<<< HEAD
+=======
+		tail = READ_ONCE(rb->user_page->data_tail);
+		offset = head = local_read(&rb->head);
+		if (!rb->overwrite &&
+		    unlikely(CIRC_SPACE(head, tail, perf_data_size(rb)) < size))
+			goto fail;
+
+>>>>>>> 105ff3c... atomic: remove all traces of READ_ONCE_CTRL() and atomic*_read_ctrl()
 		/*
 		 * Userspace could choose to issue a mb() before updating the
 		 * tail pointer. So that all reads will be completed before the
