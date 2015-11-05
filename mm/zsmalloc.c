@@ -1847,20 +1847,14 @@ static void zs_unregister_shrinker(struct zs_pool *pool)
 	}
 }
 
-static void zs_register_shrinker(struct zs_pool *pool)
+static int zs_register_shrinker(struct zs_pool *pool)
 {
 	pool->shrinker.scan_objects = zs_shrinker_scan;
 	pool->shrinker.count_objects = zs_shrinker_count;
 	pool->shrinker.batch = 0;
 	pool->shrinker.seeks = DEFAULT_SEEKS;
 
-	register_shrinker(&pool->shrinker);
-}
-
-static int zs_register_shrinker_int(struct zs_pool *pool)
-{
-	zs_register_shrinker(pool);
-	return 0;
+	return register_shrinker(&pool->shrinker);
 }
 
 /**
@@ -1952,7 +1946,7 @@ struct zs_pool *zs_create_pool(char *name, gfp_t flags)
 	 * Not critical, we still can use the pool
 	 * and user can trigger compaction manually.
 	 */
-	if (zs_register_shrinker_int(pool) == 0)
+	if (zs_register_shrinker(pool) == 0)
 		pool->shrinker_enabled = true;
 	return pool;
 
