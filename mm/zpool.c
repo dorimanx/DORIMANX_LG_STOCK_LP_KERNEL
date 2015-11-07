@@ -73,7 +73,8 @@ int zpool_unregister_driver(struct zpool_driver *driver)
 }
 EXPORT_SYMBOL(zpool_unregister_driver);
 
-static struct zpool_driver *zpool_get_driver(char *type)
+/* this assumes @type is null-terminated. */
+static struct zpool_driver *zpool_get_driver(const char *type)
 {
 	struct zpool_driver *driver;
 
@@ -147,7 +148,7 @@ EXPORT_SYMBOL(zpool_has_pool);
  *
  * Returns: New zpool on success, NULL on failure.
  */
-struct zpool *zpool_create_pool(char *type, char *name, gfp_t gfp,
+struct zpool *zpool_create_pool(const char *type, const char *name, gfp_t gfp,
 		const struct zpool_ops *ops)
 {
 	struct zpool_driver *driver;
