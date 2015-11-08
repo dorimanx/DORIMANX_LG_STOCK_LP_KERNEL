@@ -84,10 +84,12 @@ static struct notifier_block dcache_state_notif;
  *     dentry2->d_lock
  */
 
-#define DEFAULT_VFS_CACHE_PRESSURE 60
-#define DEFAULT_VFS_SUSPEND_CACHE_PRESSURE 20
-int sysctl_vfs_cache_pressure __read_mostly, resume_cache_pressure;
-int sysctl_vfs_suspend_cache_pressure __read_mostly, suspend_cache_pressure;
+int sysctl_vfs_cache_pressure __read_mostly = 100;
+
+#ifdef CONFIG_STATE_NOTIFIER
+static int suspend_cache_pressure = 60;
+static int resume_cache_pressure = 100;
+#endif
 
 EXPORT_SYMBOL_GPL(sysctl_vfs_cache_pressure);
 
@@ -3138,6 +3140,7 @@ static int state_notifier_callback(struct notifier_block *this,
 			sysctl_vfs_cache_pressure = resume_cache_pressure;
 			break;
 		case STATE_NOTIFIER_SUSPEND:
+			resume_cache_pressure = sysctl_vfs_cache_pressure;
 			sysctl_vfs_cache_pressure = suspend_cache_pressure;
 			break;
 		default:
@@ -3222,11 +3225,6 @@ EXPORT_SYMBOL(d_genocide);
 
 void __init vfs_caches_init_early(void)
 {
-	sysctl_vfs_cache_pressure = resume_cache_pressure =
-		DEFAULT_VFS_CACHE_PRESSURE;
-	sysctl_vfs_suspend_cache_pressure = suspend_cache_pressure =
-		DEFAULT_VFS_SUSPEND_CACHE_PRESSURE;
-
 	dcache_init_early();
 	inode_init_early();
 }
