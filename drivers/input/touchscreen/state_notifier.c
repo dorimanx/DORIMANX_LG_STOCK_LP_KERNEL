@@ -115,8 +115,8 @@ void state_resume(void)
 
 static int __init state_notifier_init(void)
 {
-	susp_wq = alloc_workqueue("state_susp_wq", WQ_HIGHPRI | WQ_UNBOUND |
-					WQ_FREEZABLE | WQ_MEM_RECLAIM, 0);
+	susp_wq = create_singlethread_workqueue("state_susp_wq");
+
 	if (!susp_wq) {
 		pr_err("State Notifier failed to allocate suspend workqueue\n");
 		return 0;
