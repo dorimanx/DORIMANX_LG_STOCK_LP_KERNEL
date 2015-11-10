@@ -196,8 +196,7 @@ static void handle_zero_page(struct bio_vec *bvec)
 static int zram_compact(struct zram *zram)
 {
 	struct zram_meta *meta;
-	u64 val;
-	u64 data_size;
+	u64 new_size, data_size;
 
 	down_read(&zram->init_lock);
 	if (!init_done(zram)) {
@@ -208,24 +207,16 @@ static int zram_compact(struct zram *zram)
 
 	meta = zram->meta;
 
-	val = zs_get_total_pages(meta->mem_pool);
 	data_size = atomic64_read(&zram->stats.compr_data_size);
-	pr_info("%s mem_used_total = %llu\n", zram->disk->disk_name, val);
-	pr_info("%s compr_data_size = %llu\n", zram->disk->disk_name,
-		(unsigned long long)data_size);
-	pr_info("%s orig_data_size = %llu\n", zram->disk->disk_name,
-		(u64)atomic64_read(&zram->stats.pages_stored));
 
 	pr_info("*** zram state notifier: starting compaction ***\n");
 	zs_compact(meta->mem_pool);
 
-	val = zs_get_total_pages(meta->mem_pool);
-	data_size = atomic64_read(&zram->stats.compr_data_size);
-	pr_info("%s mem_used_total = %llu\n", zram->disk->disk_name, val);
-	pr_info("%s compr_data_size = %llu\n", zram->disk->disk_name,
-		(unsigned long long)data_size);
-	pr_info("%s orig_data_size = %llu\n", zram->disk->disk_name,
-		(u64)atomic64_read(&zram->stats.pages_stored));
+	new_size = atomic64_read(&zram->stats.compr_data_size);
+	if (new_size < data_size)
+		pr_info("%s compacted. Saved %llu kb.\n",
+			zram->disk->disk_name,
+			(unsigned long long)(data_size - new_size));
 	pr_info("*** zram state notifier: finished compaction ***\n");
 
 	up_read(&zram->init_lock);
