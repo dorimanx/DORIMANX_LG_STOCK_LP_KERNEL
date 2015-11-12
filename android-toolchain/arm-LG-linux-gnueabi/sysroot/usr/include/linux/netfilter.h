@@ -4,6 +4,8 @@
 #include <linux/types.h>
 
 #include <linux/sysctl.h>
+#include <linux/in.h>
+#include <linux/in6.h>
 
 /* Responses from hook functions. */
 #define NF_DROP 0
@@ -48,10 +50,17 @@ enum nf_inet_hooks {
 	NF_INET_NUMHOOKS
 };
 
+enum nf_dev_hooks {
+	NF_NETDEV_INGRESS,
+	NF_NETDEV_NUMHOOKS
+};
+
 enum {
 	NFPROTO_UNSPEC =  0,
+	NFPROTO_INET   =  1,
 	NFPROTO_IPV4   =  2,
 	NFPROTO_ARP    =  3,
+	NFPROTO_NETDEV =  5,
 	NFPROTO_BRIDGE =  7,
 	NFPROTO_IPV6   = 10,
 	NFPROTO_DECNET = 12,
@@ -66,4 +75,4 @@ union nf_inet_addr {
 	struct in6_addr	in6;
 };
 
-#endif /*__LINUX_NETFILTER_H*/
+#endif /* __LINUX_NETFILTER_H */

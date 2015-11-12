@@ -15,6 +15,7 @@
 #define __ISDN_H__
 
 #include <linux/ioctl.h>
+#include <linux/tty.h>
 
 #define ISDN_MAX_DRIVERS    32
 #define ISDN_MAX_CHANNELS   64

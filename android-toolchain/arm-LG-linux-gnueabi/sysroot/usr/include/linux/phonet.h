@@ -182,4 +182,4 @@ static __inline__ __u8 pn_sockaddr_get_resource(const struct sockaddr_pn *spn)
 
 /* Phonet device ioctl requests */
 
-#endif
+#endif /* LINUX_PHONET_H */

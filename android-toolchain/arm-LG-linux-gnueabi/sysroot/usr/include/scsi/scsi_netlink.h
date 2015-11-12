@@ -119,7 +119,5 @@ struct scsi_nl_host_vendor_msg {
 	(hdr)->msglen = mlen;					\
 	}
 
-
-
 #endif /* SCSI_NETLINK_H */
 

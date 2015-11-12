@@ -34,6 +34,7 @@
 #define RTF_PREF(pref)	((pref) << 27)
 #define RTF_PREF_MASK	0x18000000
 
+#define RTF_PCPU	0x40000000
 #define RTF_LOCAL	0x80000000
 
 
@@ -55,4 +56,7 @@ struct in6_rtmsg {
 #define RTMSG_NEWROUTE		0x21
 #define RTMSG_DELROUTE		0x22
 
-#endif
+#define IP6_RT_PRIO_USER	1024
+#define IP6_RT_PRIO_ADDRCONF	256
+
+#endif /* _LINUX_IPV6_ROUTE_H */

@@ -51,4 +51,4 @@ typedef struct slaving_request {
 } slaving_request_t;
 
 
-#endif /* _LINUX_EQL_H */
+#endif /* _LINUX_IF_EQL_H */

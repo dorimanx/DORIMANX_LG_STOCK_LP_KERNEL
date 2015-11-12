@@ -217,4 +217,4 @@ struct fsl_hv_ioctl_prop {
 	_IOWR(FSL_HV_IOCTL_TYPE, 8, struct fsl_hv_ioctl_prop)
 
 
-#endif
+#endif /* FSL_HYPERVISOR_H */

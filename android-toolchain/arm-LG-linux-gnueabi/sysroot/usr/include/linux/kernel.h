@@ -10,4 +10,4 @@
 #define __ALIGN_KERNEL_MASK(x, mask)	(((x) + (mask)) & ~(mask))
 
 
-#endif
+#endif /* _LINUX_KERNEL_H */
