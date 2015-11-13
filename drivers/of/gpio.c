@@ -78,6 +78,7 @@ err0:
 }
 EXPORT_SYMBOL(of_get_named_gpio_flags);
 
+#if 0 /* Moved to include/linux/of_gpio.h */
 /**
  * of_gpio_named_count - Count GPIOs for a device
  * @np:		device node to count GPIOs for
@@ -112,6 +113,7 @@ unsigned int of_gpio_named_count(struct device_node *np, const char* propname)
 	return cnt;
 }
 EXPORT_SYMBOL(of_gpio_named_count);
+#endif
 
 /**
  * of_gpio_simple_xlate - translate gpio_spec to the GPIO number and flags
