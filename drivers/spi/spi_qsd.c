@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 /* Copyright (c) 2008-2015, The Linux Foundation. All rights reserved.
-=======
-/* Copyright (c) 2008-2014, The Linux Foundation. All rights reserved.
->>>>>>> e8b08ec... spi_qsd: Fix SPI L2 Crash
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -43,7 +39,7 @@
 #include <linux/mutex.h>
 #include <linux/atomic.h>
 #include <linux/pm_runtime.h>
-#include <mach/sps.h>
+#include <linux/msm-sps.h>
 #include <mach/dma.h>
 #include <mach/msm_bus.h>
 #include <mach/msm_bus_board.h>
@@ -598,7 +594,7 @@ static inline bool msm_spi_is_valid_state(struct msm_spi *dd)
 	return spi_op & SPI_OP_STATE_VALID;
 }
 
-static inline void msm_spi_udelay(unsigned long delay_usecs)
+static inline void msm_spi_udelay(unsigned int delay_usecs)
 {
 	/*
 	 * For smaller values of delay, context switch time
@@ -612,7 +608,7 @@ static inline void msm_spi_udelay(unsigned long delay_usecs)
 
 static inline int msm_spi_wait_valid(struct msm_spi *dd)
 {
-	unsigned long delay = 0;
+	unsigned int delay = 0;
 	unsigned long timeout = 0;
 
 	if (dd->clock_speed == 0)
@@ -2284,7 +2280,7 @@ static void msm_spi_bam_teardown(struct msm_spi *dd)
 static int msm_spi_bam_init(struct msm_spi *dd)
 {
 	struct sps_bam_props bam_props = {0};
-	u32 bam_handle;
+	uintptr_t bam_handle;
 	int rc = 0;
 
 	rc = sps_phy2h(dd->bam.phys_addr, &bam_handle);
@@ -2357,7 +2353,7 @@ static int msm_spi_dt_to_pdata_populate(struct platform_device *pdev,
 	int  ret, err = 0;
 	struct device_node *node = pdev->dev.of_node;
 
-	for (; itr->dt_name ; ++itr) {
+	for (; itr->dt_name; ++itr) {
 		switch (itr->type) {
 		case DT_GPIO:
 			ret = of_get_named_gpio(node, itr->dt_name, 0);
@@ -2806,7 +2802,6 @@ err_probe_exit:
 	return rc;
 }
 
-#ifdef CONFIG_PM
 static int msm_spi_pm_suspend_runtime(struct device *device)
 {
 	struct platform_device *pdev = to_platform_device(device);
@@ -2891,6 +2886,7 @@ resume_exit:
 	return 0;
 }
 
+#ifdef CONFIG_PM_SLEEP
 static int msm_spi_suspend(struct device *device)
 {
 	if (!pm_runtime_enabled(device) || !pm_runtime_suspended(device)) {
@@ -2930,7 +2926,8 @@ static int msm_spi_resume(struct device *device)
 #else
 #define msm_spi_suspend NULL
 #define msm_spi_resume NULL
-#endif /* CONFIG_PM */
+#endif
+
 
 static int __devexit msm_spi_remove(struct platform_device *pdev)
 {
@@ -2974,7 +2971,7 @@ static struct platform_driver msm_spi_driver = {
 		.pm		= &msm_spi_dev_pm_ops,
 		.of_match_table = msm_spi_dt_match,
 	},
-	.remove		= = __exit_p(msm_spi_remove),
+	.remove		= __exit_p(msm_spi_remove),
 	.probe		= msm_spi_probe,
 };
 
