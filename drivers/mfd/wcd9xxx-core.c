@@ -798,7 +798,7 @@ static int wcd9xxx_device_init(struct wcd9xxx *wcd9xxx)
 		goto err;
 
 	ret = mfd_add_devices(wcd9xxx->dev, -1, found->dev, found->size,
-			      NULL, 0);
+			      NULL, 0, NULL);
 	if (ret != 0) {
 		dev_err(wcd9xxx->dev, "Failed to add children: %d\n", ret);
 		goto err_irq;

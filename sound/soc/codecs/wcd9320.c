@@ -471,9 +471,7 @@ struct taiko_priv {
 	 * end of impedance measurement
 	 */
 	struct list_head reg_save_restore;
-
 	struct pm_qos_request pm_qos_req;
-
 	/* cal info for codec */
 	struct fw_info *fw_data;
 };
@@ -2527,7 +2525,6 @@ static int slim_rx_mux_put(struct snd_kcontrol *kcontrol,
 		goto err;
 	}
 rtn:
-
 	mutex_unlock(&codec->mutex);
 	snd_soc_dapm_mux_update_power(widget, kcontrol, 1, widget->value, e);
 
@@ -7790,8 +7787,8 @@ static int taiko_codec_probe(struct snd_soc_codec *codec)
 #endif
 
 #ifdef CONFIG_SOUND_CONTROL_HAX_3_GPL
-        pr_info("taiko codec probe...\n");
-        fauxsound_codec_ptr = codec;
+	pr_info("taiko codec probe...\n");
+	fauxsound_codec_ptr = codec;
 #endif
 
 	codec->control_data = dev_get_drvdata(codec->dev->parent);
@@ -7803,6 +7800,7 @@ static int taiko_codec_probe(struct snd_soc_codec *codec)
 	else
 		wcd9xxx_hw_revision = 2;
 #endif
+
 	wcd9xxx_ssr_register(control, taiko_device_down,
 			     taiko_post_reset_cb, (void *)codec);
 
@@ -8021,8 +8019,7 @@ static int taiko_codec_remove(struct snd_soc_codec *codec)
 #ifdef CONFIG_ENABLE_MBHC
 	/* cleanup MBHC */
 	wcd9xxx_mbhc_deinit(&taiko->mbhc);
-#endif // CONFIG_ENABLE_MBHC
-
+#endif /* CONFIG_ENABLE_MBHC */
 	/* cleanup resmgr */
 	wcd9xxx_resmgr_deinit(&taiko->resmgr);
 
