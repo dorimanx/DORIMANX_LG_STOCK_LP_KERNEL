@@ -3268,8 +3268,8 @@ static void wcd9xxx_correct_swch_plug(struct work_struct *work)
 					wcd9xxx_report_plug(mbhc, 1,
 							    SND_JACK_LINEOUT);
 			} else if (mbhc->current_plug == PLUG_TYPE_NONE) {
-				wcd9xxx_report_plug(mbhc, 1,
-						    SND_JACK_HEADPHONE);
+					wcd9xxx_report_plug(mbhc, 1,
+							    SND_JACK_HEADPHONE);
 			}
 			WCD9XXX_BCL_UNLOCK(mbhc->resmgr);
 		} else {
@@ -4832,7 +4832,7 @@ static int wcd9xxx_event_notify(struct notifier_block *self, unsigned long val,
 		}
 		if (mbhc->micbias_enable && mbhc->polling_active &&
 		    !(snd_soc_read(mbhc->codec, mbhc->mbhc_bias_regs.ctl_reg)
-		      & 0x80)) {
+		    & 0x80)) {
 			pr_debug("%s:Micbias turned off by recording, set up again",
 				 __func__);
 			snd_soc_update_bits(codec, mbhc->mbhc_bias_regs.ctl_reg,
