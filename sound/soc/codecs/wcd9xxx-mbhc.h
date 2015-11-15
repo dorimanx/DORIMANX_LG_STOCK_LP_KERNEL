@@ -167,12 +167,6 @@ enum mbhc_hph_type {
 	MBHC_HPH_STEREO,
 };
 
-enum mbhc_hph_type {
-	MBHC_HPH_NONE = 0,
-	MBHC_HPH_MONO,
-	MBHC_HPH_STEREO,
-};
-
 struct wcd9xxx_mbhc_general_cfg {
 	u8 t_ldoh;
 	u8 t_bg_fast_settle;
