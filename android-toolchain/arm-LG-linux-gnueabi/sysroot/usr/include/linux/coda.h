@@ -733,4 +733,5 @@ struct coda_mount_data {
 	int		fd;       /* Opened device */
 };
 
-#endif /* _CODA_HEADER_ */
+#endif 
+

@@ -139,4 +139,4 @@ struct blk_user_trace_setup {
 	__u32 pid;
 };
 
-#endif /* BLKTRACE_H */
+#endif

@@ -11,17 +11,6 @@
 
 #include <linux/types.h>	/* __u8 etc */
 
-/* This is arbitrary.
- * From USB 2.0 spec Table 11-13, offset 7, a hub can
- * have up to 255 ports. The most yet reported is 10.
- *
- * Current Wireless USB host hardware (Intel i1480 for example) allows
- * up to 22 devices to connect. Upcoming hardware might raise that
- * limit. Because the arrays need to add a bit for hub status data, we
- * use 31, so plus one evens out to four bytes.
- */
-#define USB_MAXCHILDREN		31
-
 /*
  * Hub request types
  */
@@ -86,8 +75,6 @@
 #define USB_PORT_FEAT_BH_PORT_RESET		28
 #define USB_PORT_FEAT_C_BH_PORT_RESET		29
 #define USB_PORT_FEAT_FORCE_LINKPM_ACCEPT	30
-
-#define USB_PORT_LPM_TIMEOUT(p)			(((p) & 0xff) << 8)
 
 /* USB 3.0 hub remote wake mask bits, see table 10-14 */
 #define USB_PORT_FEAT_REMOTE_WAKE_CONNECT	(1 << 8)
@@ -247,8 +234,8 @@ struct usb_hub_descriptor {
 
 		struct {
 			__u8 bHubHdrDecLat;
-			__le16 wHubDelay;
-			__le16 DeviceRemovable;
+			__u16 wHubDelay;
+			__u16 DeviceRemovable;
 		}  __attribute__ ((packed)) ss;
 	} u;
 } __attribute__ ((packed));

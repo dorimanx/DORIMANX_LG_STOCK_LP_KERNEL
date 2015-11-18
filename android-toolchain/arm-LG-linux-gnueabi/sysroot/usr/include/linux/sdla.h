@@ -113,4 +113,4 @@ struct sdla_dlci_conf {
 };
 
 
-#endif /* SDLA_H */
+#endif

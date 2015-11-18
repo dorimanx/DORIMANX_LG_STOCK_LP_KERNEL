@@ -219,4 +219,4 @@ struct omapfb_display_info {
 };
 
 
-#endif /* __LINUX_OMAPFB_H__ */
+#endif /* __OMAPFB_H */

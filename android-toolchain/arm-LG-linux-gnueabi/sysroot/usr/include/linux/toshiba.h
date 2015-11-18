@@ -34,4 +34,4 @@ typedef struct {
 } SMMRegisters;
 
 
-#endif /* _LINUX_TOSHIBA_H */
+#endif

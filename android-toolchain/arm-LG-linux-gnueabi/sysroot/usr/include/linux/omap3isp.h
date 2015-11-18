@@ -28,7 +28,6 @@
 #define OMAP3_ISP_USER_H
 
 #include <linux/types.h>
-#include <linux/videodev2.h>
 
 /*
  * Private IOCTLs
@@ -428,7 +427,7 @@ struct omap3isp_ccdc_update_config {
 #define OMAP3ISP_PREV_COLOR_CONV	(1 << 8)
 #define OMAP3ISP_PREV_YC_LIMIT		(1 << 9)
 #define OMAP3ISP_PREV_DEFECT_COR	(1 << 10)
-/* Bit 11 was OMAP3ISP_PREV_GAMMABYPASS, now merged with OMAP3ISP_PREV_GAMMA */
+#define OMAP3ISP_PREV_GAMMABYPASS	(1 << 11)
 #define OMAP3ISP_PREV_DRK_FRM_CAPTURE	(1 << 12)
 #define OMAP3ISP_PREV_DRK_FRM_SUBTRACT	(1 << 13)
 #define OMAP3ISP_PREV_LENS_SHADING	(1 << 14)
@@ -437,7 +436,6 @@ struct omap3isp_ccdc_update_config {
 
 #define OMAP3ISP_PREV_NF_TBL_SIZE	64
 #define OMAP3ISP_PREV_CFA_TBL_SIZE	576
-#define OMAP3ISP_PREV_CFA_BLK_SIZE	(OMAP3ISP_PREV_CFA_TBL_SIZE / 4)
 #define OMAP3ISP_PREV_GAMMA_TBL_SIZE	1024
 #define OMAP3ISP_PREV_YENH_TBL_SIZE	128
 
@@ -479,7 +477,7 @@ struct omap3isp_prev_cfa {
 	enum omap3isp_cfa_fmt format;
 	__u8 gradthrs_vert;
 	__u8 gradthrs_horz;
-	__u32 table[4][OMAP3ISP_PREV_CFA_BLK_SIZE];
+	__u32 table[OMAP3ISP_PREV_CFA_TBL_SIZE];
 };
 
 /**

@@ -13,4 +13,4 @@
 #define PHONET_DEV_MTU		PHONET_MAX_MTU
 
 
-#endif /* LINUX_IF_PHONET_H */
+#endif

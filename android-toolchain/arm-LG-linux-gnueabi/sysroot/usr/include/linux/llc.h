@@ -1,3 +1,5 @@
+#ifndef __LINUX_LLC_H
+#define __LINUX_LLC_H
 /*
  * IEEE 802.2 User Interface SAPs for Linux, data structures and indicators.
  *
@@ -10,8 +12,6 @@
  *
  * See the GNU General Public License for more details.
  */
-#ifndef __LINUX_LLC_H
-#define __LINUX_LLC_H
 
 #include <linux/socket.h>
 

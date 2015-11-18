@@ -18,4 +18,4 @@
 #define P_PGID		2
 
 
-#endif /* _LINUX_WAIT_H */
+#endif

@@ -42,4 +42,5 @@ struct dlm_plock_info {
 };
 
 
-#endif /* __DLM_PLOCK_DOT_H__ */
+#endif
+

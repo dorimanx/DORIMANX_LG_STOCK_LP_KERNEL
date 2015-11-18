@@ -185,8 +185,7 @@ enum {
 				 * to clear media change status */
 	FD_UNUSED_BIT,
 	FD_DISK_CHANGED_BIT,	/* disk has been changed since last i/o */
-	FD_DISK_WRITABLE_BIT,	/* disk is writable */
-	FD_OPEN_SHOULD_FAIL_BIT
+	FD_DISK_WRITABLE_BIT	/* disk is writable */
 };
 
 #define FDSETDRVPRM _IOW(2, 0x90, struct floppy_drive_params)
@@ -380,4 +379,4 @@ struct floppy_raw_cmd {
 
 
 
-#endif /* _LINUX_FD_H */
+#endif

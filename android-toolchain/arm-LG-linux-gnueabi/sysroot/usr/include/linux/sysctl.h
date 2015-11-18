@@ -153,7 +153,6 @@ enum
 	KERN_MAX_LOCK_DEPTH=74, /* int: rtmutex's maximum lock depth */
 	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
 	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
-	KERN_PANIC_ON_WARN=77, /* int: call panic() in WARN() functions */
 };
 
 
@@ -569,7 +568,6 @@ enum {
 	NET_IPV6_ACCEPT_RA_RT_INFO_MAX_PLEN=22,
 	NET_IPV6_PROXY_NDP=23,
 	NET_IPV6_ACCEPT_SOURCE_ROUTE=25,
-	NET_IPV6_ACCEPT_RA_FROM_LOCAL=26,
 	__NET_IPV6_MAX
 };
 

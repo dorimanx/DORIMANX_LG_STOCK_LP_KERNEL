@@ -1,3 +1,6 @@
+#ifndef _LINUX_LOOP_H
+#define _LINUX_LOOP_H
+
 /*
  * include/linux/loop.h
  *
@@ -6,9 +9,6 @@
  * Copyright 1993 by Theodore Ts'o.  Redistribution of this file is
  * permitted under the GNU General Public License.
  */
-#ifndef _LINUX_LOOP_H
-#define _LINUX_LOOP_H
-
 
 #define LO_NAME_SIZE	64
 #define LO_KEY_SIZE	32
@@ -91,4 +91,4 @@ struct loop_info64 {
 #define LOOP_CTL_ADD		0x4C80
 #define LOOP_CTL_REMOVE		0x4C81
 #define LOOP_CTL_GET_FREE	0x4C82
-#endif /* _LINUX_LOOP_H */
+#endif

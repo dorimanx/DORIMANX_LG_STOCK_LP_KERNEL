@@ -69,10 +69,6 @@
 #define NFS4_CDFC4_FORE_OR_BOTH 0x3
 #define NFS4_CDFC4_BACK_OR_BOTH 0x7
 
-#define NFS4_CDFS4_FORE 0x1
-#define NFS4_CDFS4_BACK 0x2
-#define NFS4_CDFS4_BOTH 0x3
-
 #define NFS4_SET_TO_SERVER_TIME	0
 #define NFS4_SET_TO_CLIENT_TIME	1
 
@@ -86,10 +82,6 @@
 #define ACL4_SUPPORT_AUDIT_ACL 0x04
 #define ACL4_SUPPORT_ALARM_ACL 0x08
 
-#define NFS4_ACL_AUTO_INHERIT 0x00000001
-#define NFS4_ACL_PROTECTED    0x00000002
-#define NFS4_ACL_DEFAULTED    0x00000004
-
 #define NFS4_ACE_FILE_INHERIT_ACE             0x00000001
 #define NFS4_ACE_DIRECTORY_INHERIT_ACE        0x00000002
 #define NFS4_ACE_NO_PROPAGATE_INHERIT_ACE     0x00000004
@@ -97,7 +89,6 @@
 #define NFS4_ACE_SUCCESSFUL_ACCESS_ACE_FLAG   0x00000010
 #define NFS4_ACE_FAILED_ACCESS_ACE_FLAG       0x00000020
 #define NFS4_ACE_IDENTIFIER_GROUP             0x00000040
-#define NFS4_ACE_INHERITED_ACE                0x00000080
 
 #define NFS4_ACE_READ_DATA                    0x00000001
 #define NFS4_ACE_LIST_DIRECTORY               0x00000001
@@ -111,8 +102,6 @@
 #define NFS4_ACE_DELETE_CHILD                 0x00000040
 #define NFS4_ACE_READ_ATTRIBUTES              0x00000080
 #define NFS4_ACE_WRITE_ATTRIBUTES             0x00000100
-#define NFS4_ACE_WRITE_RETENTION              0x00000200
-#define NFS4_ACE_WRITE_RETENTION_HOLD         0x00000400
 #define NFS4_ACE_DELETE                       0x00010000
 #define NFS4_ACE_READ_ACL                     0x00020000
 #define NFS4_ACE_WRITE_ACL                    0x00040000
@@ -157,7 +146,7 @@
 #define NFS4_SECINFO_STYLE4_CURRENT_FH	0
 #define NFS4_SECINFO_STYLE4_PARENT	1
 
-#define NFS4_MAX_UINT64	(~(__u64)0)
+#define NFS4_MAX_UINT64	(~(u64)0)
 
 /* An NFS4 sessions server must support at least NFS4_MAX_OPS operations.
  * If a compound requires more operations, adjust NFS4_MAX_OPS accordingly.
@@ -169,7 +158,14 @@
  */
 #define NFS4_MAX_BACK_CHANNEL_OPS 2
 
-#endif /* _LINUX_NFS4_H */
+enum nfs4_acl_whotype {
+	NFS4_ACL_WHO_NAMED = 0,
+	NFS4_ACL_WHO_OWNER,
+	NFS4_ACL_WHO_GROUP,
+	NFS4_ACL_WHO_EVERYONE,
+};
+
+#endif
 
 /*
  * Local variables:

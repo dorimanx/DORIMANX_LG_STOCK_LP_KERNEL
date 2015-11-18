@@ -20,8 +20,13 @@ struct xt_connlimit_info {
 		};
 	};
 	unsigned int limit;
-	/* revision 1 */
-	__u32 flags;
+	union {
+		/* revision 0 */
+		unsigned int inverse;
+
+		/* revision 1 */
+		__u32 flags;
+	};
 
 	/* Used internally by the kernel */
 	struct xt_connlimit_data *data __attribute__((aligned(8)));

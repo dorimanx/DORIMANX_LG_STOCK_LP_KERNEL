@@ -95,4 +95,4 @@ struct r3964_client_message {
 
 
 
-#endif /* __LINUX_N_R3964_H__ */
+#endif

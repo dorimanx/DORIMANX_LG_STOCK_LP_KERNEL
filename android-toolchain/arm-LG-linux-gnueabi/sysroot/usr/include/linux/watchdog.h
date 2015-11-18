@@ -45,8 +45,6 @@ struct watchdog_info {
 #define	WDIOF_SETTIMEOUT	0x0080  /* Set timeout (in seconds) */
 #define	WDIOF_MAGICCLOSE	0x0100	/* Supports magic close char */
 #define	WDIOF_PRETIMEOUT	0x0200  /* Pretimeout (in seconds), get/set */
-#define	WDIOF_ALARMONLY		0x0400	/* Watchdog triggers a management or
-					   other external alarm not a reboot */
 #define	WDIOF_KEEPALIVEPING	0x8000	/* Keep alive ping reply */
 
 #define	WDIOS_DISABLECARD	0x0001	/* Turn off the watchdog timer */
@@ -54,4 +52,4 @@ struct watchdog_info {
 #define	WDIOS_TEMPPANIC		0x0004	/* Kernel panic on temperature trip */
 
 
-#endif /* _LINUX_WATCHDOG_H */
+#endif  /* ifndef _LINUX_WATCHDOG_H */

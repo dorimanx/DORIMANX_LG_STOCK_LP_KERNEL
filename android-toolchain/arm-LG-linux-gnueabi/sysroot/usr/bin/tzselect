@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PKGVERSION="(crosstool-NG crosstool-ng-1.21.0-218-g2655034 - PWR-CORE) "
+PKGVERSION="(crosstool-NG crosstool-ng-1.21.0-286-g6ac8e31 - PWR-CORE) "
 TZVERSION="2.22"
 REPORT_BUGS_TO="<http://www.gnu.org/software/libc/bugs.html>"
 

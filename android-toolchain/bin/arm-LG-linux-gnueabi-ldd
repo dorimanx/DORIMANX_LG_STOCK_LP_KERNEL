@@ -2,7 +2,7 @@
 
 # NON-CONFIGURABLE STUFF!
 export LC_ALL=C
-version="crosstool-ng-1.21.0-218-g2655034"
+version="crosstool-ng-1.21.0-286-g6ac8e31"
 bits="32"
 sed="${SED:-/usr/bin/sed}"
 grep="${GREP:-/usr/bin/grep}"
@@ -158,8 +158,8 @@ fi
 
 sysroot="$( "${gcc}" -print-sysroot 2>/dev/null )"
 if [ -z "${sysroot}" ]; then
-    sysroot="$( "${gcc}" -print-file-name=libc.so 2>/dev/null   \
-                |sed -r -e 's:/usr/lib/libc.so$::;'             \
+    sysroot="$( "${gcc}" -print-file-name=libc.so 2>/dev/null \
+                |${sed} -r -e 's:/usr/lib/libc.so$::;'        \
               )"
 fi
 if [ -z "${sysroot}" ]; then

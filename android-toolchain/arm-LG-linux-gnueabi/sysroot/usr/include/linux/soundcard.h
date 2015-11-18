@@ -1,3 +1,5 @@
+#ifndef SOUNDCARD_H
+#define SOUNDCARD_H
 /*
  * Copyright by Hannu Savolainen 1993-1997
  *
@@ -21,8 +23,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef SOUNDCARD_H
-#define SOUNDCARD_H
 
 
 /*
@@ -1273,4 +1273,4 @@ void seqbuf_dump(void);	/* This function must be provided by programs */
 #define SEQ_WRPATCH2(patchx, len) \
 		(SEQ_DUMPBUF(), write(seqfd, (char*)(patchx), len))
 
-#endif /* SOUNDCARD_H */
+#endif

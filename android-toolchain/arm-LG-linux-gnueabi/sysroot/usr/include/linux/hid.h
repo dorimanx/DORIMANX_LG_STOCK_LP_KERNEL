@@ -1,8 +1,12 @@
+#ifndef __HID_H
+#define __HID_H
+
 /*
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2001 Vojtech Pavlik
  *  Copyright (c) 2006-2007 Jiri Kosina
  */
+
 /*
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +26,6 @@
  * e-mail - mail your message to <vojtech@ucw.cz>, or by paper mail:
  * Vojtech Pavlik, Simunkova 1594, Prague 8, 182 00 Czech Republic
  */
-#ifndef __HID_H
-#define __HID_H
-
-
 
 /*
  * USB HID (Human Interface Device) interface class code
@@ -63,4 +63,5 @@
 #define HID_MAX_DESCRIPTOR_SIZE		4096
 
 
-#endif /* __HID_H */
+#endif
+
