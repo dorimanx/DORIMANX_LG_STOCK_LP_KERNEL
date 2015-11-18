@@ -173,5 +173,4 @@ void apr_set_subsys_state(void);
 const char *apr_get_lpass_subsys_name(void);
 bool apr_register_voice_svc(void);
 uint16_t apr_get_reset_domain(uint16_t proc);
-extern int is_modem_up;
 #endif
