@@ -1165,7 +1165,7 @@ static struct subsys_soc_restart_order *ssr_parse_restart_orders(struct
 	struct device_node *ssr_node;
 	uint32_t len;
 
-	if (!of_get_property(dev->of_node, "qti,restart-group", &len))
+	if (!of_get_property(dev->of_node, "qcom,restart-group", &len))
 		return NULL;
 
 	count = len/sizeof(uint32_t);
@@ -1188,7 +1188,7 @@ static struct subsys_soc_restart_order *ssr_parse_restart_orders(struct
 
 	for (i = 0; i < count; i++) {
 		ssr_node = of_parse_phandle(dev->of_node,
-						"qti,restart-group", i);
+						"qcom,restart-group", i);
 		if (!ssr_node)
 			return ERR_PTR(-ENXIO);
 		of_node_put(ssr_node);
