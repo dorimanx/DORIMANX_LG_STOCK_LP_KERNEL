@@ -770,7 +770,7 @@ int wcd9xxx_slim_ch_master_status(struct wcd9xxx *wcd9xxx, void *handle,
 	sb_comp = &tx_master->slim_s.sb_comp;
 	rc = wait_for_completion_timeout(sb_comp, (2 * (HZ/10)));
 	rc = slim_port_get_xfer_status(wcd9xxx->slim, slim_cfg->ph1,
-				       (phys_addr_t *)&phys, len);
+				       (u8 **)&phys, len);
 	if (rc || *len == 0) {
 		pr_err("%s: Get Xfer status rc %x, len %x\n",
 		       __func__, rc, *(len));
@@ -862,7 +862,7 @@ int wcd9xxx_slim_ch_master_read(struct wcd9xxx *wcd9xxx, void *handle,
 	slim_cfg = tx_master->slim_cfg;
 	sb_comp = &tx_master->slim_s.sb_comp;
 	rc = slim_port_xfer(wcd9xxx->slim, slim_cfg->ph1,
-			    (phys_addr_t)phys, read_len, sb_comp);
+			    (u8 *)phys, read_len, sb_comp);
 	if (rc) {
 		pr_err("%s:Slimbus master read failure rc %d\n",
 		       __func__, rc);
