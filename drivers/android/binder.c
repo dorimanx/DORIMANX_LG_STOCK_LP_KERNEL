@@ -440,6 +440,13 @@ static void __set_user_nice_no_resched(long nice)
 	sched_preempt_enable_no_resched();
 }
 
+static void kfree_no_resched(const void *objp)
+{
+	preempt_disable();
+	kfree(objp);
+	preempt_enable_no_resched();
+}
+
 static void binder_set_nice(long nice)
 {
 	long min_nice;
@@ -997,7 +1004,7 @@ static int binder_dec_node(struct binder_node *node, int strong, int internal)
 					     "dead node %d deleted\n",
 					     node->debug_id);
 			}
-			kfree(node);
+			kfree_no_resched(node);
 			binder_stats_deleted(BINDER_STAT_NODE);
 		}
 	}
@@ -1109,10 +1116,10 @@ static void binder_delete_ref(struct binder_ref *ref)
 			     "%d delete ref %d desc %d has death notification\n",
 			      ref->proc->pid, ref->debug_id, ref->desc);
 		list_del(&ref->death->work.entry);
-		kfree(ref->death);
+		kfree_no_resched(ref->death);
 		binder_stats_deleted(BINDER_STAT_DEATH);
 	}
-	kfree(ref);
+	kfree_no_resched(ref);
 	binder_stats_deleted(BINDER_STAT_REF);
 }
 
@@ -1187,7 +1194,7 @@ static void binder_pop_transaction(struct binder_thread *target_thread,
 	t->need_reply = 0;
 	if (t->buffer)
 		t->buffer->transaction = NULL;
-	kfree(t);
+	kfree_no_resched(t);
 	binder_stats_deleted(BINDER_STAT_TRANSACTION);
 }
 
@@ -1738,10 +1745,10 @@ err_copy_data_failed:
 	t->buffer->transaction = NULL;
 	binder_free_buf(target_proc, t->buffer);
 err_binder_alloc_buf_failed:
-	kfree(tcomplete);
+	kfree_no_resched(tcomplete);
 	binder_stats_deleted(BINDER_STAT_TRANSACTION_COMPLETE);
 err_alloc_tcomplete_failed:
-	kfree(t);
+	kfree_no_resched(t);
 	binder_stats_deleted(BINDER_STAT_TRANSACTION);
 err_alloc_t_failed:
 err_bad_call_stack:
@@ -2282,7 +2289,7 @@ retry:
 				     proc->pid, thread->pid);
 
 			list_del(&w->entry);
-			kfree(w);
+			kfree_no_resched(w);
 			binder_stats_deleted(BINDER_STAT_TRANSACTION_COMPLETE);
 		} break;
 		case BINDER_WORK_NODE: {
@@ -2342,7 +2349,7 @@ retry:
 						     (u64)node->ptr,
 						     (u64)node->cookie);
 					rb_erase(&node->rb_node, &proc->nodes);
-					kfree(node);
+					kfree_no_resched(node);
 					binder_stats_deleted(BINDER_STAT_NODE);
 				} else {
 					binder_debug(BINDER_DEBUG_INTERNAL_REFS,
@@ -2383,7 +2390,7 @@ retry:
 
 			if (w->type == BINDER_WORK_CLEAR_DEATH_NOTIFICATION) {
 				list_del(&w->entry);
-				kfree(death);
+				kfree_no_resched(death);
 				binder_stats_deleted(BINDER_STAT_DEATH);
 			} else
 				list_move(&w->entry, &proc->delivered_death);
@@ -2465,7 +2472,7 @@ retry:
 			thread->transaction_stack = t;
 		} else {
 			t->buffer->transaction = NULL;
-			kfree(t);
+			kfree_no_resched(t);
 			binder_stats_deleted(BINDER_STAT_TRANSACTION);
 		}
 		break;
@@ -2517,7 +2524,7 @@ static void binder_release_work(struct list_head *list)
 		case BINDER_WORK_TRANSACTION_COMPLETE: {
 			binder_debug(BINDER_DEBUG_DEAD_TRANSACTION,
 				"undelivered TRANSACTION_COMPLETE\n");
-			kfree(w);
+			kfree_no_resched(w);
 			binder_stats_deleted(BINDER_STAT_TRANSACTION_COMPLETE);
 		} break;
 		case BINDER_WORK_DEAD_BINDER_AND_CLEAR:
@@ -2528,7 +2535,7 @@ static void binder_release_work(struct list_head *list)
 			binder_debug(BINDER_DEBUG_DEAD_TRANSACTION,
 				"undelivered death notification, %016llx\n",
 				(u64)death->cookie);
-			kfree(death);
+			kfree_no_resched(death);
 			binder_stats_deleted(BINDER_STAT_DEATH);
 		} break;
 		default:
@@ -2611,7 +2618,7 @@ static int binder_free_thread(struct binder_proc *proc,
 	if (send_reply)
 		binder_send_failed_reply(send_reply, BR_DEAD_REPLY);
 	binder_release_work(&thread->todo);
-	kfree(thread);
+	kfree_no_resched(thread);
 	binder_stats_deleted(BINDER_STAT_THREAD);
 	return active_transactions;
 }
@@ -2948,7 +2955,7 @@ static int binder_mmap(struct file *filp, struct vm_area_struct *vma)
 	return 0;
 
 err_alloc_small_buf_failed:
-	kfree(proc->pages);
+	kfree_no_resched(proc->pages);
 	proc->pages = NULL;
 err_alloc_pages_failed:
 	mutex_lock(&binder_mmap_lock);
@@ -3050,7 +3057,7 @@ static int binder_node_release(struct binder_node *node, int refs)
 	binder_release_work(&node->async_todo);
 
 	if (hlist_empty(&node->refs)) {
-		kfree(node);
+		kfree_no_resched(node);
 		binder_stats_deleted(BINDER_STAT_NODE);
 
 		return refs;
@@ -3176,7 +3183,7 @@ static void binder_deferred_release(struct binder_proc *proc)
 			__free_page(proc->pages[i]);
 			page_count++;
 		}
-		kfree(proc->pages);
+		kfree_no_resched(proc->pages);
 		vfree(proc->buffer);
 	}
 
@@ -3187,7 +3194,7 @@ static void binder_deferred_release(struct binder_proc *proc)
 		     __func__, proc->pid, threads, nodes, incoming_refs,
 		     outgoing_refs, active_transactions, buffers, page_count);
 
-	kfree(proc);
+	kfree_no_resched(proc);
 }
 
 static void binder_deferred_func(struct work_struct *work)
