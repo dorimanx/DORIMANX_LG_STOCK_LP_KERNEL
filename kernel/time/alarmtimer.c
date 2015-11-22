@@ -100,7 +100,7 @@ void power_on_alarm_init(void)
  * Get the soonest power off alarm timer and set the alarm value into rtc
  * register.
  */
-void set_power_on_alarm(long secs, bool enable)
+void set_power_on_alarm(void)
 {
 	int rc;
 	struct timespec wall_time, alarm_ts;

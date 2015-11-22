@@ -113,8 +113,10 @@ static void alarm_clear(enum android_alarm_type alarm_type, struct timespec *ts)
 	alarm_enabled &= ~alarm_type_mask;
 	spin_unlock_irqrestore(&alarm_slock, flags);
 
+#if 0
 	if (alarm_type == ANDROID_ALARM_RTC_POWEROFF_WAKEUP)
 		set_power_on_alarm(ts->tv_sec, 0);
+#endif
 	mutex_unlock(&alarm_mutex);
 }
 
@@ -132,8 +134,10 @@ static void alarm_set(enum android_alarm_type alarm_type,
 	devalarm_start(&alarms[alarm_type], timespec_to_ktime(*ts));
 	spin_unlock_irqrestore(&alarm_slock, flags);
 
+#if 0
 	if (alarm_type == ANDROID_ALARM_RTC_POWEROFF_WAKEUP)
 		set_power_on_alarm(ts->tv_sec, 1);
+#endif
 	mutex_unlock(&alarm_mutex);
 }
 
