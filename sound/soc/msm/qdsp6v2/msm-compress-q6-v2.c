@@ -3316,7 +3316,6 @@ static int msm_compr_dec_params_put(struct snd_kcontrol *kcontrol,
 	switch (prtd->codec) {
 	case FORMAT_MP3:
 	case FORMAT_MPEG4_AAC:
-	case FORMAT_FLAC:
 		pr_debug("%s: no runtime parameters for codec: %d\n", __func__,
 			 prtd->codec);
 		break;
