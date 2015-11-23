@@ -92,7 +92,7 @@ static int msm8974_auxpcm_rate = 8000;
 
 static void *adsp_state_notifier;
 
-#define ADSP_STATE_READY_TIMEOUT_MS 50
+#define ADSP_STATE_READY_TIMEOUT_MS 3000
 
 #ifdef CONFIG_SND_SOC_CS35L32
 #define GPIO_QUAT_MI2S_MCLK   57
