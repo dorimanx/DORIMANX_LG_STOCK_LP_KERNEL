@@ -211,12 +211,12 @@ DECLARE_PER_CPU(unsigned long, process_counts);
 extern int nr_processes(void);
 extern unsigned long nr_running(void);
 extern unsigned long nr_iowait(void);
+extern unsigned long nr_iowait_cpu(int cpu);
+extern unsigned long this_cpu_load(void);
 #if defined(CONFIG_INTELLI_HOTPLUG) || defined(CONFIG_MSM_RUN_QUEUE_STATS_BE_CONSERVATIVE)
 extern unsigned long avg_nr_running(void);
 extern unsigned long avg_cpu_nr_running(unsigned int cpu);
 #endif
-extern unsigned long nr_iowait_cpu(int cpu);
-extern unsigned long this_cpu_load(void);
 
 extern void sched_update_nr_prod(int cpu, unsigned long nr, bool inc);
 extern void sched_get_nr_running_avg(int *avg, int *iowait_avg);
@@ -968,6 +968,7 @@ extern void wake_up_q(struct wake_q_head *head);
 #define SD_BALANCE_FORK		0x0008	/* Balance on fork, clone */
 #define SD_BALANCE_WAKE		0x0010  /* Balance on wakeup */
 #define SD_WAKE_AFFINE		0x0020	/* Wake task to waking CPU */
+#define SD_PREFER_LOCAL		0x0040  /* Prefer to keep tasks local to this domain */
 #define SD_SHARE_CPUPOWER	0x0080	/* Domain members share cpu power */
 #define SD_SHARE_PKG_RESOURCES	0x0200	/* Domain members share cpu pkg resources */
 #define SD_SERIALIZE		0x0400	/* Only a single load balancing instance */
@@ -976,76 +977,6 @@ extern void wake_up_q(struct wake_q_head *head);
 #define SD_OVERLAP		0x2000	/* sched_domains of this level overlap */
 
 extern int __weak arch_sd_sibiling_asym_packing(void);
-
-/*
- * Optimise SD flags for power savings:
- * SD_BALANCE_NEWIDLE helps aggressive task consolidation and power savings.
- * Keep default SD flags if sched_{smt,mc}_power_saving=0
- */
-
-static inline int sd_power_saving_flags(void)
-{
-	if (sched_mc_power_savings | sched_smt_power_savings)
-		return SD_BALANCE_NEWIDLE;
-
-	return 0;
-}
-
-struct sched_group_power {
-	atomic_t ref;
-	/*
-	 * CPU power of this group, SCHED_LOAD_SCALE being max power for a
-	 * single CPU.
-	 */
-	unsigned int power, power_orig;
-	unsigned long next_update;
-	/*
-	 * Number of busy cpus in this group.
-	 */
-	atomic_t nr_busy_cpus;
-
-	unsigned long cpumask[0]; /* iteration mask */
-};
-
-struct sched_group {
-	struct sched_group *next;	/* Must be a circular list */
-	atomic_t ref;
-
-	unsigned int group_weight;
-	struct sched_group_power *sgp;
-
-	/*
-	 * The CPUs this group covers.
-	 *
-	 * NOTE: this field is variable length. (Allocated dynamically
-	 * by attaching extra space to the end of the structure,
-	 * depending on how many CPUs the kernel has booted up with)
-	 */
-	unsigned long cpumask[0];
-};
-
-static inline struct cpumask *sched_group_cpus(struct sched_group *sg)
-{
-	return to_cpumask(sg->cpumask);
-}
-
-/*
- * cpumask masking which cpus in the group are allowed to iterate up the domain
- * tree.
- */
-static inline struct cpumask *sched_group_mask(struct sched_group *sg)
-{
-	return to_cpumask(sg->sgp->cpumask);
-}
-
-/**
- * group_first_cpu - Returns the first cpu in the cpumask of a sched_group.
- * @group: The group whose first cpu is to be returned.
- */
-static inline unsigned int group_first_cpu(struct sched_group *group)
-{
-	return cpumask_first(sched_group_cpus(group));
-}
 
 struct sched_domain_attr {
 	int relax_domain_level;
@@ -1310,6 +1241,7 @@ struct sched_entity {
 	/* rq "owned" by this entity/group: */
 	struct cfs_rq		*my_q;
 #endif
+
 /*
  * Load-tracking only depends on SMP, FAIR_GROUP_SCHED dependency below may be
  * removed when useful for applications beyond shares distribution (e.g.
@@ -1482,8 +1414,10 @@ struct task_struct {
 	int exit_code, exit_signal;
 	int pdeath_signal;  /*  The signal sent when the parent dies  */
 	unsigned int jobctl;	/* JOBCTL_*, siglock protected */
-	/* ??? */
+
+	/* Used for emulating ABI behavior of previous Linux versions */
 	unsigned int personality;
+
 	unsigned did_exec:1;
 	unsigned in_execve:1;	/* Tell the LSMs that the process is doing an
 				 * execve */
@@ -1723,6 +1657,9 @@ struct task_struct {
 	 * cache last used pipe for splice
 	 */
 	struct pipe_inode_info *splice_pipe;
+
+	struct page_frag task_frag;
+
 #ifdef	CONFIG_TASK_DELAY_ACCT
 	struct task_delay_info *delays;
 #endif
@@ -1958,11 +1895,6 @@ static inline void put_task_struct(struct task_struct *t)
 		__put_task_struct(t);
 }
 
-static inline cputime_t task_gtime(struct task_struct *t)
-{
-	return t->gtime;
-}
-
 static inline void task_cputime(struct task_struct *t,
 				cputime_t *utime, cputime_t *stime)
 {
@@ -1980,6 +1912,11 @@ static inline void task_cputime_scaled(struct task_struct *t,
 		*utimescaled = t->utimescaled;
 	if (stimescaled)
 		*stimescaled = t->stimescaled;
+}
+
+static inline cputime_t task_gtime(struct task_struct *t)
+{
+	return t->gtime;
 }
 extern void task_cputime_adjusted(struct task_struct *p, cputime_t *ut, cputime_t *st);
 extern void thread_group_cputime_adjusted(struct task_struct *p, cputime_t *ut, cputime_t *st);
@@ -2061,18 +1998,6 @@ extern void sched_set_io_is_busy(int val);
 	static inline void task_clear_##func(struct task_struct *p)	\
 	{ clear_bit(PFA_##name, &p->atomic_flags); }
 
-#define PFA_NO_NEW_PRIVS 0x00000001	/* May not gain new privileges. */
-
-static inline bool task_no_new_privs(struct task_struct *p)
-{
-	return test_bit(PFA_NO_NEW_PRIVS, &p->atomic_flags);
-}
-
-static inline void task_set_no_new_privs(struct task_struct *p)
-{
-	set_bit(PFA_NO_NEW_PRIVS, &p->atomic_flags);
-}
-
 /* __GFP_IO isn't allowed if PF_MEMALLOC_NOIO is set in current->flags */
 static inline gfp_t memalloc_noio_flags(gfp_t flags)
 {
@@ -2091,6 +2016,19 @@ static inline unsigned int memalloc_noio_save(void)
 static inline void memalloc_noio_restore(unsigned int flags)
 {
 	current->flags = (current->flags & ~PF_MEMALLOC_NOIO) | flags;
+}
+
+/* Per-process atomic flags. */
+#define PFA_NO_NEW_PRIVS 0x00000001	/* May not gain new privileges. */
+
+static inline bool task_no_new_privs(struct task_struct *p)
+{
+	return test_bit(PFA_NO_NEW_PRIVS, &p->atomic_flags);
+}
+
+static inline void task_set_no_new_privs(struct task_struct *p)
+{
+	set_bit(PFA_NO_NEW_PRIVS, &p->atomic_flags);
 }
 
 /*
@@ -2182,13 +2120,20 @@ sched_set_cpu_cstate(int cpu, int cstate, int wakeup_energy, int wakeup_latency)
 }
 #endif
 
-static inline void set_wake_up_idle(bool enabled)
+#ifdef CONFIG_SCHED_HMP
+
+extern int sched_set_boost(int enable);
+extern int sched_set_cpu_mostly_idle_load(int cpu, int mostly_idle_pct);
+extern int sched_get_cpu_mostly_idle_load(int cpu);
+extern int sched_set_cpu_mostly_idle_nr_run(int cpu, int nr_run);
+extern int sched_get_cpu_mostly_idle_nr_run(int cpu);
+
+#else
+static inline int sched_set_boost(int enable)
 {
-	if (enabled)
-		current->flags |= PF_WAKE_UP_IDLE;
-	else
-		current->flags &= ~PF_WAKE_UP_IDLE;
+	return -EINVAL;
 }
+#endif
 
 #ifdef CONFIG_NO_HZ_COMMON
 void calc_load_enter_idle(void);
@@ -2198,18 +2143,13 @@ static inline void calc_load_enter_idle(void) { }
 static inline void calc_load_exit_idle(void) { }
 #endif /* CONFIG_NO_HZ_COMMON */
 
-#ifdef CONFIG_SCHED_HMP
-extern int sched_set_boost(int enable);
-extern int sched_set_cpu_mostly_idle_load(int cpu, int mostly_idle_pct);
-extern int sched_get_cpu_mostly_idle_load(int cpu);
-extern int sched_set_cpu_mostly_idle_nr_run(int cpu, int nr_run);
-extern int sched_get_cpu_mostly_idle_nr_run(int cpu);
-#else
-static inline int sched_set_boost(int enable)
+static inline void set_wake_up_idle(bool enabled)
 {
-	return -EINVAL;
+	if (enabled)
+		current->flags |= PF_WAKE_UP_IDLE;
+	else
+		current->flags &= ~PF_WAKE_UP_IDLE;
 }
-#endif
 
 #ifndef CONFIG_CPUMASK_OFFSTACK
 static inline int set_cpus_allowed(struct task_struct *p, cpumask_t new_mask)
@@ -2311,13 +2251,6 @@ static inline void wake_up_nohz_cpu(int cpu) { }
 #endif
 
 extern unsigned int sysctl_sched_wakeup_load_threshold;
-
-extern unsigned int sysctl_numa_balancing_scan_delay;
-extern unsigned int sysctl_numa_balancing_scan_period_min;
-extern unsigned int sysctl_numa_balancing_scan_period_max;
-extern unsigned int sysctl_numa_balancing_scan_period_reset;
-extern unsigned int sysctl_numa_balancing_scan_size;
-extern unsigned int sysctl_numa_balancing_settle_count;
 
 #ifdef CONFIG_NO_HZ_FULL
 extern bool sched_can_stop_tick(void);
@@ -3082,10 +3015,6 @@ extern long sched_getaffinity(pid_t pid, struct cpumask *mask);
 #ifdef CONFIG_CGROUP_SCHED
 extern struct task_group root_task_group;
 #endif /* CONFIG_CGROUP_SCHED */
-
-extern void sched_online_group(struct task_group *tg,
-			       struct task_group *parent);
-extern void sched_offline_group(struct task_group *tg);
 
 extern int task_can_switch_user(struct user_struct *up,
 					struct task_struct *tsk);

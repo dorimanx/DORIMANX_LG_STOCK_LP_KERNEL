@@ -2285,10 +2285,8 @@ int sched_hmp_proc_update_handler(struct ctl_table *table, int write,
 		update_min_nice = 1;
 	} else {
 		/* all tunables other than min_nice are in percentage */
-		if ((sysctl_sched_downmigrate_pct >
-		    sysctl_sched_upmigrate_pct) ||
-		    (sysctl_sched_mostly_idle_load_pct >
-		    sysctl_sched_spill_load_pct) || *data > 100) {
+		if (sysctl_sched_downmigrate_pct >
+		    sysctl_sched_upmigrate_pct || *data > 100) {
 			*data = old_val;
 			ret = -EINVAL;
 			goto done;
