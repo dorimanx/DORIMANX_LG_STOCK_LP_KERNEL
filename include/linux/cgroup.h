@@ -28,6 +28,7 @@ struct cgroup_subsys;
 struct inode;
 struct cgroup;
 struct css_id;
+struct eventfd_ctx;
 
 extern int cgroup_init_early(void);
 extern int cgroup_init(void);
@@ -99,6 +100,12 @@ enum {
 	CSS_ONLINE	= (1 << 1), /* between ->css_online() and ->css_offline() */
 };
 
+/* Caller must verify that the css is not for root cgroup */
+static inline void __css_get(struct cgroup_subsys_state *css, int count)
+{
+	atomic_add(count, &css->refcnt);
+}
+
 /*
  * Call css_get() to hold a reference on the css; it can be used
  * for a reference obtained via:
@@ -106,7 +113,6 @@ enum {
  * - task->cgroups for a locked task
  */
 
-extern void __css_get(struct cgroup_subsys_state *css, int count);
 static inline void css_get(struct cgroup_subsys_state *css)
 {
 	/* We don't need to reference count the root state */
@@ -144,7 +150,10 @@ static inline void css_put(struct cgroup_subsys_state *css)
 enum {
 	/* Control Group is dead */
 	CGRP_REMOVED,
-	/* Control Group has ever had a child cgroup or a task */
+	/*
+	 * Control Group has previously had a child cgroup or a task,
+	 * but no longer (only if CGRP_NOTIFY_ON_RELEASE is set)
+	 */
 	CGRP_RELEASABLE,
 	/* Control Group requires release notifications to userspace */
 	CGRP_NOTIFY_ON_RELEASE,
@@ -265,6 +274,11 @@ enum {
 	 *   match.
 	 *
 	 * - Remount is disallowed.
+	 *
+	 * - memcg: use_hierarchy is on by default and the cgroup file for
+	 *   the flag is not created.
+	 *
+	 * - blkcg: blk-throttle becomes properly hierarchical.
 	 *
 	 * The followings are planned changes.
 	 *
@@ -572,6 +586,7 @@ struct cgroup_subsys {
 	int (*css_online)(struct cgroup *cgrp);
 	void (*css_offline)(struct cgroup *cgrp);
 	void (*css_free)(struct cgroup *cgrp);
+
 	int (*allow_attach)(struct cgroup *cgrp, struct cgroup_taskset *tset);
 	int (*can_attach)(struct cgroup *cgrp, struct cgroup_taskset *tset);
 	void (*cancel_attach)(struct cgroup *cgrp, struct cgroup_taskset *tset);
@@ -654,10 +669,16 @@ static inline struct cgroup_subsys_state *cgroup_subsys_state(
  * The caller can also specify additional allowed conditions via @__c, such
  * as locks used during the cgroup_subsys::attach() methods.
  */
+#ifdef CONFIG_PROVE_RCU
+extern struct mutex cgroup_mutex;
 #define task_css_set_check(task, __c)					\
 	rcu_dereference_check((task)->cgroups,				\
 		lockdep_is_held(&(task)->alloc_lock) ||			\
 		lockdep_is_held(&cgroup_mutex) || (__c))
+#else
+#define task_css_set_check(task, __c)					\
+	rcu_dereference((task)->cgroups)
+#endif
 
 /**
  * task_subsys_state_check - obtain css for (task, subsys) w/ extra access conds
@@ -668,14 +689,8 @@ static inline struct cgroup_subsys_state *cgroup_subsys_state(
  * Return the cgroup_subsys_state for the (@task, @subsys_id) pair.  The
  * synchronization rules are the same as task_css_set_check().
  */
-#ifdef CONFIG_PROVE_RCU
-extern struct mutex cgroup_mutex;
 #define task_subsys_state_check(task, subsys_id, __c)			\
 	task_css_set_check((task), (__c))->subsys[(subsys_id)]
-#else
-#define task_subsys_state_check(task, subsys_id, __c)			\
-	rcu_dereference((task)->cgroups->subsys[(subsys_id)])
-#endif
 
 /**
  * task_css_set - obtain a task's css_set

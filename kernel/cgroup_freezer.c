@@ -136,6 +136,8 @@ static int freezer_css_online(struct cgroup *cgroup)
 	spin_unlock(&freezer->lock);
 	if (parent)
 		spin_unlock_irq(&parent->lock);
+
+	return 0;
 }
 
 /**

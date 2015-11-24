@@ -2205,9 +2205,6 @@ int get_signal_to_deliver(siginfo_t *info, struct k_sigaction *return_ka,
 	if (unlikely(current->task_works))
 		task_work_run();
 
-	if (unlikely(uprobe_deny_signal()))
-		return 0;
-
 	/*
 	 * Do this once, we can't return to user-mode if freezing() == T.
 	 * do_signal_stop() and ptrace_stop() do freezable_schedule() and
