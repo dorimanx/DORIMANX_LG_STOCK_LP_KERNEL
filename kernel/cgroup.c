@@ -5113,7 +5113,7 @@ static void check_for_release(struct cgroup *cgrp)
 {
 	/* All of these checks rely on RCU to keep the cgroup
 	 * structure alive */
-	if (cgroup_is_releasable(cgrp) && !atomic_read(&cgrp->count)
+	if (cgroup_is_releasable(cgrp) && !cgroup_css_sets_empty(cgrp)
 	    && list_empty(&cgrp->children) && !cgroup_has_css_refs(cgrp)) {
 		/* Control Group is currently removeable. If it's not
 		 * already queued for a userspace notification, queue
