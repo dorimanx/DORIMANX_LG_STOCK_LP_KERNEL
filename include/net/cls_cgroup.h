@@ -17,17 +17,17 @@
 #include <linux/hardirq.h>
 #include <linux/rcupdate.h>
 
-#ifdef CONFIG_CGROUPS
+#if IS_ENABLED(CONFIG_NET_CLS_CGROUP)
 struct cgroup_cls_state
 {
 	struct cgroup_subsys_state css;
 	u32 classid;
 };
 
-#ifdef CONFIG_NET_CLS_CGROUP
+#if IS_BUILTIN(CONFIG_NET_CLS_CGROUP)
 static inline u32 task_cls_classid(struct task_struct *p)
 {
-	int classid;
+	u32 classid;
 
 	if (in_interrupt())
 		return 0;
@@ -39,7 +39,7 @@ static inline u32 task_cls_classid(struct task_struct *p)
 
 	return classid;
 }
-#else
+#elif IS_MODULE(CONFIG_NET_CLS_CGROUP)
 static inline u32 task_cls_classid(struct task_struct *p)
 {
 	struct cgroup_subsys_state *css;
@@ -58,10 +58,10 @@ static inline u32 task_cls_classid(struct task_struct *p)
 	return classid;
 }
 #endif
-#else
+#else /* !CGROUP_NET_CLS_CGROUP */
 static inline u32 task_cls_classid(struct task_struct *p)
 {
 	return 0;
 }
-#endif
+#endif /* CGROUP_NET_CLS_CGROUP */
 #endif  /* _NET_CLS_CGROUP_H */
