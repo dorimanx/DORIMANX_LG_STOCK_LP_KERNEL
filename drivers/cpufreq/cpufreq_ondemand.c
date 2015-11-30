@@ -40,8 +40,8 @@
 
 #define DEF_MIDDLE_GRID_STEP			(14)
 #define DEF_HIGH_GRID_STEP			(20)
-#define DEF_MIDDLE_GRID_LOAD			(65)
-#define DEF_HIGH_GRID_LOAD			(89)
+#define DEF_MIDDLE_GRID_LOAD			(55)
+#define DEF_HIGH_GRID_LOAD			(79)
 
 #define DEF_SAMPLING_DOWN_FACTOR		(1)
 #define DEF_SAMPLING_RATE			(50000)
