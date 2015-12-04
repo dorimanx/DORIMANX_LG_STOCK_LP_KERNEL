@@ -49,10 +49,6 @@
 #define MAX_SSR_REASON_LEN	81U
 #define STOP_ACK_TIMEOUT_MS	1000
 
-/* START : subsys_modem_restart : testmode */
-bool ignore_errors_by_subsys_modem_restart = false;
-/* END : subsys_modem_restart : testmode */
-
 struct modem_data {
 	struct mba_data *mba;
 	struct q6v5_data *q6;
@@ -317,11 +313,6 @@ static int modem_powerup(const struct subsys_desc *subsys)
 	struct modem_data *drv = subsys_to_drv(subsys);
 	int ret;
 
-#ifdef CONFIG_MACH_LGE
-	pr_info("%s : modem is powering up\n", __func__);
-	dump_stack();
-#endif
-
 	if (subsys->is_not_loadable)
 		return 0;
 	/*
@@ -331,11 +322,6 @@ static int modem_powerup(const struct subsys_desc *subsys)
 	 */
 	INIT_COMPLETION(drv->stop_ack);
 	drv->ignore_errors = false;
-
-	/* START : subsys_modem_restart : testmode */
-	ignore_errors_by_subsys_modem_restart = false;
-	/* END : subsys_modem_restart : testmode */
-
 	ret = pil_boot(&drv->q6->desc);
 	if (ret)
 		return ret;
@@ -405,13 +391,6 @@ static irqreturn_t modem_wdog_bite_intr_handler(int irq, void *dev_id)
 
 	if (drv->ignore_errors)
 		return IRQ_HANDLED;
-
-	/* START : subsys_modem_restart : testmode */
-	if (ignore_errors_by_subsys_modem_restart) {
-		pr_err("IGNORE watchdog bite received from modem software!\n");
-		return IRQ_HANDLED;
-	}
-	/* END : subsys_modem_restart : testmode */
 
 	pr_err("Watchdog bite received from modem software!\n");
 	subsys_set_crash_status(drv->subsys, true);
