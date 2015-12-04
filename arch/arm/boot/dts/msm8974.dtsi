@@ -2345,7 +2345,9 @@
 		interrupts = <0 29 1>;
 		qcom,rx-ring-size = <64>;
 		qcom,max-rx-mtu = <4096>;
+/* Disable dmux fast shutdown. possible bug with calls hang kernel.
 		qcom,fast-shutdown;
+*/
 	};
 
         memory_hole: qcom,msm-mem-hole {
