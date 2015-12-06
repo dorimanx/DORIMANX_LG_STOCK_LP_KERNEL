@@ -675,7 +675,6 @@ TRACE_EVENT(rcu_barrier,
 	do { } while (0)
 #define trace_rcu_torture_read(rcutorturename, rhp, secs, c_old, c) \
 	do { } while (0)
-#define trace_rcu_torture_read(rcutorturename, rhp) do { } while (0)
 #define trace_rcu_barrier(name, s, cpu, cnt, done) do { } while (0)
 
 #endif /* #else #ifdef CONFIG_RCU_TRACE */
