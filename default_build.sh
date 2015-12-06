@@ -344,6 +344,9 @@ select CHOICE in D800 D801 D802 LS980 VS980 ALL; do
 			BUILD_NOW;
 			echo "D800 is ready!"
 			cp READY-KERNEL/*.zip READY-RELEASES/;
+			if [ -e /root/ftp_login_mirror1.cfg ] && [ -e /root/ftp_login_mirror2.cfg ]; then
+				sh upload_release.sh d800
+			fi;
 			echo "starting build of D801 in 3"
 			sleep 1;
 			echo "starting build of D801 in 2"
@@ -357,6 +360,9 @@ select CHOICE in D800 D801 D802 LS980 VS980 ALL; do
 			BUILD_NOW;
 			echo "D801 is ready!"
 			cp READY-KERNEL/*.zip READY-RELEASES/;
+			if [ -e /root/ftp_login_mirror1.cfg ] && [ -e /root/ftp_login_mirror2.cfg ]; then
+				sh upload_release.sh d801
+			fi;
 			echo "starting build of D802 in 3"
 			sleep 1;
 			echo "starting build of D802 in 2"
@@ -370,6 +376,9 @@ select CHOICE in D800 D801 D802 LS980 VS980 ALL; do
 			BUILD_NOW;
 			echo "D802 is ready!"
 			cp READY-KERNEL/*.zip READY-RELEASES/;
+			if [ -e /root/ftp_login_mirror1.cfg ] && [ -e /root/ftp_login_mirror2.cfg ]; then
+				sh upload_release.sh d802
+			fi;
 			echo "starting build of LS980 in 3"
 			sleep 1;
 			echo "starting build of LS980 in 2"
@@ -383,6 +392,9 @@ select CHOICE in D800 D801 D802 LS980 VS980 ALL; do
 			BUILD_NOW;
 			echo "LS980 is ready!"
 			cp READY-KERNEL/*.zip READY-RELEASES/;
+			if [ -e /root/ftp_login_mirror1.cfg ] && [ -e /root/ftp_login_mirror2.cfg ]; then
+				sh upload_release.sh ls980
+			fi;
 			echo "starting build of VS980 in 3"
 			sleep 1;
 			echo "starting build of VS980 in 2"
@@ -397,7 +409,7 @@ select CHOICE in D800 D801 D802 LS980 VS980 ALL; do
 			echo "VS980 is ready!"
 			cp READY-KERNEL/*.zip READY-RELEASES/;
 			if [ -e /root/ftp_login_mirror1.cfg ] && [ -e /root/ftp_login_mirror2.cfg ]; then
-				sh upload_release.sh
+				sh upload_release.sh vs980
 			fi;
 			break;;
 	esac;
