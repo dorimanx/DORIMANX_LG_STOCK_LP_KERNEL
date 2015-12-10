@@ -412,11 +412,7 @@ static int exfat_readdir(struct file *filp, struct dir_context *ctx)
 static int exfat_readdir(struct file *filp, void *dirent, filldir_t filldir)
 #endif
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,9,0)
 	struct inode *inode = file_inode(filp);
-#else
-	struct inode *inode = filp->f_path.dentry->d_inode;
-#endif
 	struct super_block *sb = inode->i_sb;
 	struct exfat_sb_info *sbi = EXFAT_SB(sb);
 	FS_INFO_T *p_fs = &(sbi->fs_info);
@@ -548,13 +544,7 @@ static long exfat_generic_ioctl(struct file *filp,
 								unsigned int cmd, unsigned long arg)
 #endif
 {
-#if !(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36))
-#if !(LINUX_VERSION_CODE < KERNEL_VERSION(3,18,3))
-	struct inode *inode = filp->f_path.dentry->d_inode;
-#else
-	struct inode *inode = filp->f_dentry->d_inode;
-#endif
-#endif
+	struct inode *inode = file_inode(filp);
 #ifdef CONFIG_EXFAT_KERNEL_DEBUG
 	unsigned int flags;
 #endif /* CONFIG_EXFAT_KERNEL_DEBUG */

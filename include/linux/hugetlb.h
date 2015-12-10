@@ -290,7 +290,7 @@ static inline struct hstate *hstate_inode(struct inode *i)
 
 static inline struct hstate *hstate_file(struct file *f)
 {
-	return hstate_inode(f->f_dentry->d_inode);
+	return hstate_inode(file_inode(f));
 }
 
 static inline struct hstate *hstate_sizelog(int page_size_log)

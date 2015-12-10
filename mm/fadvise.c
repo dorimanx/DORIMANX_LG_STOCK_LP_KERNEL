@@ -40,7 +40,7 @@ SYSCALL_DEFINE(fadvise64_64)(int fd, loff_t offset, loff_t len, int advice)
 	if (!file)
 		return -EBADF;
 
-	if (S_ISFIFO(file->f_path.dentry->d_inode->i_mode)) {
+	if (S_ISFIFO(file_inode(file)->i_mode)) {
 		ret = -ESPIPE;
 		goto out;
 	}

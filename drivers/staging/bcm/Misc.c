@@ -192,7 +192,7 @@ static int BcmFileDownload(PMINI_ADAPTER Adapter, const char *path, unsigned int
 		BCM_DEBUG_PRINT(Adapter, DBG_TYPE_INITEXIT, MP_INIT, DBG_LVL_ALL, "Unable to Open %s\n", path);
 		goto exit_download;
 	}
-	BCM_DEBUG_PRINT(Adapter, DBG_TYPE_INITEXIT, MP_INIT, DBG_LVL_ALL, "Opened file is = %s and length =0x%lx to be downloaded at =0x%x", path, (unsigned long)flp->f_dentry->d_inode->i_size, loc);
+	BCM_DEBUG_PRINT(Adapter, DBG_TYPE_INITEXIT, MP_INIT, DBG_LVL_ALL, "Opened file is = %s and length =0x%lx to be downloaded at =0x%x", path, (unsigned long)file_inode(flp)->i_size, loc);
 	do_gettimeofday(&tv);
 
 	BCM_DEBUG_PRINT(Adapter, DBG_TYPE_INITEXIT, MP_INIT, DBG_LVL_ALL, "download start %lx", ((tv.tv_sec * 1000) + (tv.tv_usec / 1000)));

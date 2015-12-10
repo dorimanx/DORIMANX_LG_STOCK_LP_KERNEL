@@ -348,7 +348,7 @@ static struct page *read_page(struct file *file, unsigned long index,
 			      unsigned long count)
 {
 	struct page *page = NULL;
-	struct inode *inode = file->f_path.dentry->d_inode;
+	struct inode *inode = file_inode(file);
 	struct buffer_head *bh;
 	sector_t block;
 
@@ -758,7 +758,7 @@ static void bitmap_file_put(struct bitmap *bitmap)
 	bitmap_file_unmap(bitmap);
 
 	if (file) {
-		struct inode *inode = file->f_path.dentry->d_inode;
+		struct inode *inode = file_inode(file);
 		invalidate_mapping_pages(inode->i_mapping, 0, -1);
 		fput(file);
 	}

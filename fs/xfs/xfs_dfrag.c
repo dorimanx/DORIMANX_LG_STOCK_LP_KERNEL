@@ -80,14 +80,14 @@ xfs_swapext(
 		goto out_put_tmp_file;
 	}
 
-	if (IS_SWAPFILE(file->f_path.dentry->d_inode) ||
-	    IS_SWAPFILE(tmp_file->f_path.dentry->d_inode)) {
+	if (IS_SWAPFILE(file_inode(f_file)) ||
+	    IS_SWAPFILE(file_inode(tmp_file))) {
 		error = XFS_ERROR(EINVAL);
 		goto out_put_tmp_file;
 	}
 
-	ip = XFS_I(file->f_path.dentry->d_inode);
-	tip = XFS_I(tmp_file->f_path.dentry->d_inode);
+	ip = XFS_I(file_inode(f_file));
+	tip = XFS_I(file_inode(tmp_file));
 
 	if (ip->i_mount != tip->i_mount) {
 		error = XFS_ERROR(EINVAL);

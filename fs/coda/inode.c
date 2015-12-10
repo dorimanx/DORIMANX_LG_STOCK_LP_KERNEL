@@ -129,7 +129,7 @@ static int get_device_index(struct coda_mount_data *data)
 	file = fget(data->fd);
 	inode = NULL;
 	if(file)
-		inode = file->f_path.dentry->d_inode;
+		inode = file_inode(f.file);
 	
 	if(!inode || !S_ISCHR(inode->i_mode) ||
 	   imajor(inode) != CODA_PSDEV_MAJOR) {

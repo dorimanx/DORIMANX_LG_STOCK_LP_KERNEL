@@ -4099,7 +4099,7 @@ void i915_gem_free_all_phys_object(struct drm_device *dev)
 void i915_gem_detach_phys_object(struct drm_device *dev,
 				 struct drm_i915_gem_object *obj)
 {
-	struct address_space *mapping = obj->base.filp->f_path.dentry->d_inode->i_mapping;
+	struct address_space *mapping = file_inode(obj->base.filp)->i_mapping;
 	char *vaddr;
 	int i;
 	int page_count;
@@ -4135,7 +4135,7 @@ i915_gem_attach_phys_object(struct drm_device *dev,
 			    int id,
 			    int align)
 {
-	struct address_space *mapping = obj->base.filp->f_path.dentry->d_inode->i_mapping;
+	struct address_space *mapping = file_inode(obj->base.filp)->i_mapping;
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	int ret = 0;
 	int page_count;

@@ -130,7 +130,7 @@ static struct spu_context *coredump_next_context(int *fd)
 		if (!file || file->f_op != &spufs_context_fops)
 			continue;
 
-		ctx = SPUFS_I(file->f_dentry->d_inode)->i_ctx;
+		ctx = SPUFS_I(file_inode(file))->i_ctx;
 		if (ctx->flags & SPU_CREATE_NOSCHED)
 			continue;
 

@@ -1084,7 +1084,7 @@ static noinline int prepare_pages(struct btrfs_root *root, struct file *file,
 	struct extent_state *cached_state = NULL;
 	int i;
 	unsigned long index = pos >> PAGE_CACHE_SHIFT;
-	struct inode *inode = fdentry(file)->d_inode;
+	struct inode *inode = file_inode(file);
 	gfp_t mask = btrfs_alloc_write_mask(inode->i_mapping);
 	int err = 0;
 	int faili = 0;
@@ -1171,7 +1171,7 @@ static noinline ssize_t __btrfs_buffered_write(struct file *file,
 					       struct iov_iter *i,
 					       loff_t pos)
 {
-	struct inode *inode = fdentry(file)->d_inode;
+	struct inode *inode = file_inode(file);
 	struct btrfs_root *root = BTRFS_I(inode)->root;
 	struct page **pages = NULL;
 	unsigned long first_index;
@@ -1354,7 +1354,7 @@ static ssize_t btrfs_file_aio_write(struct kiocb *iocb,
 				    unsigned long nr_segs, loff_t pos)
 {
 	struct file *file = iocb->ki_filp;
-	struct inode *inode = fdentry(file)->d_inode;
+	struct inode *inode = file_inode(file);
 	struct btrfs_root *root = BTRFS_I(inode)->root;
 	loff_t *ppos = &iocb->ki_pos;
 	u64 start_pos;
@@ -1599,7 +1599,7 @@ static int btrfs_file_mmap(struct file	*filp, struct vm_area_struct *vma)
 static long btrfs_fallocate(struct file *file, int mode,
 			    loff_t offset, loff_t len)
 {
-	struct inode *inode = file->f_path.dentry->d_inode;
+	struct inode *inode = file_inode(file);
 	struct extent_state *cached_state = NULL;
 	u64 cur_offset;
 	u64 last_byte;

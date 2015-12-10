@@ -722,7 +722,7 @@ static int nfs_idmap_read_message(struct idmap_msg *im, struct key *key, struct 
 static ssize_t
 idmap_pipe_downcall(struct file *filp, const char __user *src, size_t mlen)
 {
-	struct rpc_inode *rpci = RPC_I(filp->f_path.dentry->d_inode);
+	struct rpc_inode *rpci = RPC_I(file_inode(filp));
 	struct idmap *idmap = (struct idmap *)rpci->private;
 	struct key_construction *cons;
 	struct idmap_msg im;

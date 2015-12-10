@@ -782,10 +782,10 @@ int get_ashmem_file(int fd, struct file **filp, struct file **vm_file,
 		char currtask_name[FIELD_SIZEOF(struct task_struct, comm) + 1];
 		pr_debug("filp %p rdev %d pid %u(%s) file %p(%ld)"
 			" dev id: %d\n", filp,
-			file->f_dentry->d_inode->i_rdev,
+			file_inode(file)->i_rdev,
 			current->pid, get_task_comm(currtask_name, current),
 			file, file_count(file),
-			MINOR(file->f_dentry->d_inode->i_rdev));
+			MINOR(file_inode(file)->i_rdev));
 		if (is_ashmem_file(file)) {
 			struct ashmem_area *asma = file->private_data;
 			*filp = file;
@@ -806,9 +806,9 @@ void put_ashmem_file(struct file *file)
 {
 	char currtask_name[FIELD_SIZEOF(struct task_struct, comm) + 1];
 	pr_debug("rdev %d pid %u(%s) file %p(%ld)" " dev id: %d\n",
-		file->f_dentry->d_inode->i_rdev, current->pid,
+		file_inode(file)->i_rdev, current->pid,
 		get_task_comm(currtask_name, current), file,
-		file_count(file), MINOR(file->f_dentry->d_inode->i_rdev));
+		file_count(file), MINOR(file_inode(file)->i_rdev));
 	if (file && is_ashmem_file(file))
 		fput(file);
 }

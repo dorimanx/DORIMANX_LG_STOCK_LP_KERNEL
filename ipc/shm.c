@@ -218,7 +218,7 @@ static void shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
 	if (!is_file_hugepages(shm_file))
 		shmem_lock(shm_file, 0, shp->mlock_user);
 	else if (shp->mlock_user)
-		user_shm_unlock(shm_file->f_path.dentry->d_inode->i_size,
+		user_shm_unlock(file_inode(shm_file)->i_size,
 						shp->mlock_user);
 	fput(shm_file);
 	ipc_rcu_putref(shp, shm_rcu_free);
@@ -564,7 +564,7 @@ static int newseg(struct ipc_namespace *ns, struct ipc_params *params)
 	 * shmid gets reported as "inode#" in /proc/pid/maps.
 	 * proc-ps tools use this. Changing this will break them.
 	 */
-	file->f_dentry->d_inode->i_ino = shp->shm_perm.id;
+	file_inode(file)->i_ino = shp->shm_perm.id;
 
 	ns->shm_tot += numpages;
 	error = shp->shm_perm.id;
@@ -714,7 +714,7 @@ static void shm_add_rss_swap(struct shmid_kernel *shp,
 {
 	struct inode *inode;
 
-	inode = shp->shm_file->f_path.dentry->d_inode;
+	inode = file_inode(shp->shm_file);
 
 	if (is_file_hugepages(shp->shm_file)) {
 		struct address_space *mapping = inode->i_mapping;
@@ -1270,7 +1270,7 @@ SYSCALL_DEFINE1(shmdt, char __user *, shmaddr)
 			(vma->vm_start - addr)/PAGE_SIZE == vma->vm_pgoff) {
 
 
-			size = vma->vm_file->f_path.dentry->d_inode->i_size;
+			size = file_inode(vma->vm_file)->i_size;
 			do_munmap(mm, vma->vm_start, vma->vm_end - vma->vm_start);
 			/*
 			 * We discovered the size of the shm segment, so

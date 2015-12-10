@@ -293,7 +293,7 @@ int cifs_get_file_info_unix(struct file *filp)
 	int xid;
 	FILE_UNIX_BASIC_INFO find_data;
 	struct cifs_fattr fattr;
-	struct inode *inode = filp->f_path.dentry->d_inode;
+	struct inode *inode = file_inode(filp);
 	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
 	struct cifsFileInfo *cfile = filp->private_data;
 	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
@@ -566,7 +566,7 @@ int cifs_get_file_info(struct file *filp)
 	int xid;
 	FILE_ALL_INFO find_data;
 	struct cifs_fattr fattr;
-	struct inode *inode = filp->f_path.dentry->d_inode;
+	struct inode *inode = file_inode(filp);
 	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
 	struct cifsFileInfo *cfile = filp->private_data;
 	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
@@ -1722,7 +1722,7 @@ cifs_invalidate_mapping(struct inode *inode)
 int cifs_revalidate_file_attr(struct file *filp)
 {
 	int rc = 0;
-	struct inode *inode = filp->f_path.dentry->d_inode;
+	struct inode *inode = file_inode(filp);
 	struct cifsFileInfo *cfile = (struct cifsFileInfo *) filp->private_data;
 
 	if (!cifs_inode_needs_reval(inode))
@@ -1779,7 +1779,7 @@ out:
 int cifs_revalidate_file(struct file *filp)
 {
 	int rc;
-	struct inode *inode = filp->f_path.dentry->d_inode;
+	struct inode *inode = file_inode(filp);
 
 	rc = cifs_revalidate_file_attr(filp);
 	if (rc)

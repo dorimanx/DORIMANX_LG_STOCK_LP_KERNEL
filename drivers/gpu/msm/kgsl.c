@@ -2601,7 +2601,7 @@ static int kgsl_get_phys_file(int fd, unsigned long *start, unsigned long *len,
 		return -1;
 	}
 
-	rdev = fbfile->f_dentry->d_inode->i_rdev;
+	rdev = file_inode(fbfile)->i_rdev;
 	info = MAJOR(rdev) == FB_MAJOR ? registered_fb[MINOR(rdev)] : NULL;
 	if (info) {
 		*start = info->fix.smem_start;

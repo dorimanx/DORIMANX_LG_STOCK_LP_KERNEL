@@ -602,10 +602,10 @@ static bool pft_is_inplace_inode(struct inode *inode)
  */
 static inline bool pft_is_inplace_file(struct file *filp)
 {
-	if (!filp || !filp->f_path.dentry || !filp->f_path.dentry->d_inode)
+	if (!filp || !filp->f_path.dentry || !file_inode(filp))
 		return false;
 
-	return pft_is_inplace_inode(filp->f_path.dentry->d_inode);
+	return pft_is_inplace_inode(file_inode(filp));
 }
 
 /**
@@ -1360,13 +1360,13 @@ static int pft_set_inplace_file(struct pft_command *command, int size)
 	}
 
 	/* Verify the file is not already open by other than PFM */
-	if (!filp->f_path.dentry || !filp->f_path.dentry->d_inode) {
+	if (!filp->f_path.dentry || !file_inode(filp)) {
 		pr_err("failed to get inode of inplace-file.\n");
 		pft_set_response(PFT_CMD_RESP_GENERAL_ERROR);
 		return 0;
 	}
 
-	inode = filp->f_path.dentry->d_inode;
+	inode = file_inode(filp);
 	writecount = atomic_read(&inode->i_writecount);
 	if (writecount > 1) {
 		pr_err("file %s is opened %d times for write.\n",

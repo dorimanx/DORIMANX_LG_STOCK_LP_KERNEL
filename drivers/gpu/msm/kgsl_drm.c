@@ -535,7 +535,7 @@ kgsl_gem_create_fd_ioctl(struct drm_device *dev, void *data,
 		return -EBADF;
 	}
 
-	rdev = file->f_dentry->d_inode->i_rdev;
+	rdev = file_inode(file)->i_rdev;
 
 	/* Only framebuffer objects are supported ATM */
 

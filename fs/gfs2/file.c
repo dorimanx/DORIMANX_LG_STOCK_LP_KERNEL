@@ -155,7 +155,7 @@ static const u32 gfs2_to_fsflags[32] = {
 
 static int gfs2_get_flags(struct file *filp, u32 __user *ptr)
 {
-	struct inode *inode = filp->f_path.dentry->d_inode;
+	struct inode *inode = file_inode(filp);
 	struct gfs2_inode *ip = GFS2_I(inode);
 	struct gfs2_holder gh;
 	int error;
@@ -214,7 +214,7 @@ void gfs2_set_inode_flags(struct inode *inode)
  */
 static int do_gfs2_set_flags(struct file *filp, u32 reqflags, u32 mask)
 {
-	struct inode *inode = filp->f_path.dentry->d_inode;
+	struct inode *inode = file_inode(filp);
 	struct gfs2_inode *ip = GFS2_I(inode);
 	struct gfs2_sbd *sdp = GFS2_SB(inode);
 	struct buffer_head *bh;
@@ -290,7 +290,7 @@ out_drop_write:
 
 static int gfs2_set_flags(struct file *filp, u32 __user *ptr)
 {
-	struct inode *inode = filp->f_path.dentry->d_inode;
+	struct inode *inode = file_inode(filp);
 	u32 fsflags, gfsflags;
 
 	if (get_user(fsflags, ptr))
@@ -359,7 +359,7 @@ static int gfs2_allocate_page_backing(struct page *page)
 static int gfs2_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
 	struct page *page = vmf->page;
-	struct inode *inode = vma->vm_file->f_path.dentry->d_inode;
+	struct inode *inode = file_inode(vma->vm_file);
 	struct gfs2_inode *ip = GFS2_I(inode);
 	struct gfs2_sbd *sdp = GFS2_SB(inode);
 	unsigned long last_index;
@@ -740,7 +740,7 @@ static void calc_max_reserv(struct gfs2_inode *ip, loff_t max, loff_t *len,
 static long gfs2_fallocate(struct file *file, int mode, loff_t offset,
 			   loff_t len)
 {
-	struct inode *inode = file->f_path.dentry->d_inode;
+	struct inode *inode = file_inode(file);
 	struct gfs2_sbd *sdp = GFS2_SB(inode);
 	struct gfs2_inode *ip = GFS2_I(inode);
 	unsigned int data_blocks = 0, ind_blocks = 0, rblocks;
@@ -910,7 +910,7 @@ static int do_flock(struct file *file, int cmd, struct file_lock *fl)
 {
 	struct gfs2_file *fp = file->private_data;
 	struct gfs2_holder *fl_gh = &fp->f_fl_gh;
-	struct gfs2_inode *ip = GFS2_I(file->f_path.dentry->d_inode);
+	struct gfs2_inode *ip = GFS2_I(file_inode(file));
 	struct gfs2_glock *gl;
 	unsigned int state;
 	int flags;

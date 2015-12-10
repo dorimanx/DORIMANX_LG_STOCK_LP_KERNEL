@@ -195,7 +195,7 @@ static int ceph_releasepage(struct page *page, gfp_t g)
  */
 static int readpage_nounlock(struct file *filp, struct page *page)
 {
-	struct inode *inode = filp->f_dentry->d_inode;
+	struct inode *inode = file_inode(filp);
 	struct ceph_inode_info *ci = ceph_inode(inode);
 	struct ceph_osd_client *osdc = 
 		&ceph_inode_to_client(inode)->client->osdc;
@@ -374,7 +374,7 @@ out:
 static int ceph_readpages(struct file *file, struct address_space *mapping,
 			  struct list_head *page_list, unsigned nr_pages)
 {
-	struct inode *inode = file->f_dentry->d_inode;
+	struct inode *inode = file_inode(file);
 	struct ceph_fs_client *fsc = ceph_inode_to_client(inode);
 	int rc = 0;
 	int max = 0;
@@ -981,7 +981,7 @@ static int ceph_update_writeable_page(struct file *file,
 			    loff_t pos, unsigned len,
 			    struct page *page)
 {
-	struct inode *inode = file->f_dentry->d_inode;
+	struct inode *inode = file_inode(file);
 	struct ceph_inode_info *ci = ceph_inode(inode);
 	struct ceph_mds_client *mdsc = ceph_inode_to_client(inode)->mdsc;
 	loff_t page_off = pos & PAGE_CACHE_MASK;
@@ -1090,7 +1090,7 @@ static int ceph_write_begin(struct file *file, struct address_space *mapping,
 			    loff_t pos, unsigned len, unsigned flags,
 			    struct page **pagep, void **fsdata)
 {
-	struct inode *inode = file->f_dentry->d_inode;
+	struct inode *inode = file_inode(file);
 	struct page *page;
 	pgoff_t index = pos >> PAGE_CACHE_SHIFT;
 	int r;
@@ -1120,7 +1120,7 @@ static int ceph_write_end(struct file *file, struct address_space *mapping,
 			  loff_t pos, unsigned len, unsigned copied,
 			  struct page *page, void *fsdata)
 {
-	struct inode *inode = file->f_dentry->d_inode;
+	struct inode *inode = file_inode(file);
 	struct ceph_fs_client *fsc = ceph_inode_to_client(inode);
 	struct ceph_mds_client *mdsc = fsc->mdsc;
 	unsigned from = pos & (PAGE_CACHE_SIZE - 1);
@@ -1188,7 +1188,7 @@ const struct address_space_operations ceph_aops = {
  */
 static int ceph_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
-	struct inode *inode = vma->vm_file->f_dentry->d_inode;
+	struct inode *inode = file_inode(vma->vm_file);
 	struct page *page = vmf->page;
 	struct ceph_mds_client *mdsc = ceph_inode_to_client(inode)->mdsc;
 	loff_t off = page_offset(page);

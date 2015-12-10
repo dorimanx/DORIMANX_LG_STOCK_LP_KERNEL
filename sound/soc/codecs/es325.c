@@ -1941,7 +1941,7 @@ static int do_fs_firmware_load(const char *fn, char **fp)
 		pr_err("%s(): Unable to load '%s'.\n", __func__, fn);
 		return 0;
 	}
-	l = i_size_read(filp->f_path.dentry->d_inode);
+	l = i_size_read(file_inode(filp));
 	if (l <= 0)
 	{
 		pr_err("%s(): Invalid firmware size\n", __func__);

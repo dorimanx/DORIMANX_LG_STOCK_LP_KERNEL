@@ -1475,7 +1475,7 @@ static int wfd_open(struct file *filp)
 	v4l2_fh_init(&inst->event_handler, wfd_dev->pvdev);
 	v4l2_fh_add(&inst->event_handler);
 
-	wfd_stats_init(&inst->stats, MINOR(filp->f_dentry->d_inode->i_rdev));
+	wfd_stats_init(&inst->stats, MINOR(file_inode(filp)->i_rdev));
 
 	mdp_mops.secure = wfd_dev->secure;
 	mdp_mops.iommu_split_domain = wfd_dev->mdp_iommu_split_domain;

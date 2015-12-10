@@ -4200,7 +4200,7 @@ unsigned char btrfs_filetype_table[] = {
 static int btrfs_real_readdir(struct file *filp, void *dirent,
 			      filldir_t filldir)
 {
-	struct inode *inode = filp->f_dentry->d_inode;
+	struct inode *inode = file_inode(filp);
 	struct btrfs_root *root = BTRFS_I(inode)->root;
 	struct btrfs_item *item;
 	struct btrfs_dir_item *di;
@@ -4450,7 +4450,7 @@ int btrfs_dirty_inode(struct inode *inode)
  */
 int btrfs_update_time(struct file *file)
 {
-	struct inode *inode = file->f_path.dentry->d_inode;
+	struct inode *inode = file_inode(file);
 	struct timespec now;
 	int ret;
 	enum { S_MTIME = 1, S_CTIME = 2, S_VERSION = 4 } sync_it = 0;
@@ -6590,7 +6590,7 @@ static void btrfs_invalidatepage(struct page *page, unsigned long offset)
 int btrfs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
 	struct page *page = vmf->page;
-	struct inode *inode = fdentry(vma->vm_file)->d_inode;
+	struct inode *inode = file_inode(vma->vm_file);
 	struct btrfs_root *root = BTRFS_I(inode)->root;
 	struct extent_io_tree *io_tree = &BTRFS_I(inode)->io_tree;
 	struct btrfs_ordered_extent *ordered;

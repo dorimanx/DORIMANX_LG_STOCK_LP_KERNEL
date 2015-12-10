@@ -171,7 +171,7 @@ ext4_file_dio_write(struct kiocb *iocb, struct iov_iter *iter, loff_t pos)
 static ssize_t
 ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *iter, loff_t pos)
 {
-	struct inode *inode = iocb->ki_filp->f_path.dentry->d_inode;
+	struct inode *inode = file_inode(iocb->ki_filp);
 	ssize_t ret;
 
 	/*
