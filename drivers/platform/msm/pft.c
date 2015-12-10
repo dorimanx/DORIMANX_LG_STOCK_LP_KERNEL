@@ -586,7 +586,7 @@ static bool pft_is_inplace_inode(struct inode *inode)
 	if (!pft_dev->inplace_file || !pft_dev->inplace_file->f_path.dentry)
 		return false;
 
-	return (pft_dev->inplace_file->f_path.dentry->d_inode == inode);
+	return (file_inode(pft_dev->inplace_file) == inode);
 }
 
 /**

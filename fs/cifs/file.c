@@ -2369,7 +2369,7 @@ ssize_t cifs_strict_writev(struct kiocb *iocb, const struct iovec *iov,
 {
 	struct inode *inode;
 
-	inode = iocb->ki_filp->f_path.dentry->d_inode;
+	inode = file_inode(iocb->ki_filp);
 
 	if (CIFS_I(inode)->clientCanCacheAll)
 		return generic_file_aio_write(iocb, iov, nr_segs, pos);
