@@ -440,7 +440,7 @@ static void do_epoch_check(struct subsys_device *dev)
 	if (time_first && n >= max_restarts_check) {
 		if ((curr_time->tv_sec - time_first->tv_sec) <
 				max_history_time_check)
-			PR_BUG("Subsystems have crashed %d times in less than "
+			pr_err("Subsystems have crashed %d times in less than "
 				"%ld seconds!", max_restarts_check,
 				max_history_time_check);
 			handle_recovery(dev);
@@ -544,7 +544,7 @@ static void subsystem_shutdown(struct subsys_device *dev, void *data)
 #ifdef CONFIG_LGE_HANDLE_PANIC
 		lge_set_magic_subsystem(name, LGE_ERR_SUB_SD);
 #endif
-		PR_BUG("subsys-restart: [%p]: Failed to shutdown %s!",
+		pr_err("subsys-restart: [%p]: Failed to shutdown %s!",
 			current, name);
 		handle_recovery(dev);
 	}
@@ -574,15 +574,14 @@ static void subsystem_powerup(struct subsys_device *dev, void *data)
 	if (dev->desc->powerup(dev->desc) < 0) {
 
 #ifdef CONFIG_LGE_HANDLE_PANIC
-        lge_set_magic_subsystem(name, LGE_ERR_SUB_PWR);
+        	lge_set_magic_subsystem(name, LGE_ERR_SUB_PWR);
 #endif
 		notify_each_subsys_device(&dev, 1, SUBSYS_POWERUP_FAILURE,
 								NULL);
 
 		if (system_state != SYSTEM_RESTART && system_state != SYSTEM_POWER_OFF) {
-			PR_BUG("[%p]: Powerup error: %s!", current, name);
+			pr_err("[%p]: Powerup error: %s!", current, name);
 			handle_recovery(dev);
-			enable_all_irqs(dev);
 		} else {
 			pr_info("[%p]: Powerup abort: %s\n", current, name);
 			handle_recovery(dev);
@@ -590,12 +589,13 @@ static void subsystem_powerup(struct subsys_device *dev, void *data)
 			return;
 		}
 	}
+	enable_all_irqs(dev);
 
 	ret = wait_for_err_ready(dev);
 	if (ret) {
 		notify_each_subsys_device(&dev, 1, SUBSYS_POWERUP_FAILURE,
 								NULL);
-		PR_BUG("[%p]: Timed out waiting for error ready: %s!",
+		pr_err("[%p]: Timed out waiting for error ready: %s!",
 			current, name);
 		handle_recovery(dev);
 	}
@@ -870,7 +870,7 @@ static void __subsystem_restart_dev(struct subsys_device *dev)
 			__pm_stay_awake(&dev->ssr_wlock);
 			queue_work(ssr_wq, &dev->work);
 		} else {
-			PR_BUG("Subsystem %s crashed during SSR!", name);
+			pr_err("Subsystem %s crashed during SSR!", name);
 			handle_recovery(dev);
 		}
 	}
@@ -940,7 +940,7 @@ int subsystem_restart_dev(struct subsys_device *dev)
 #ifdef CONFIG_LGE_HANDLE_PANIC
 		lge_set_magic_subsystem(name, LGE_ERR_SUB_UNK);
 #endif
-		pr_err("subsys-restart: no action taken for %s\n", name);
+		panic("subsys-restart: no action taken for %s\n", name);
 		break;
 	}
 	module_put(dev->owner);

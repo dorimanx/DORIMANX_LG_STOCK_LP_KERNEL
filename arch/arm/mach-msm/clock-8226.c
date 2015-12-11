@@ -25,7 +25,6 @@
 #include <mach/socinfo.h>
 #include <mach/rpm-smd.h>
 #include <mach/clock-generic.h>
-#include <mach/subsystem_restart.h>
 
 #include "clock-local2.h"
 #include "clock-pll.h"
@@ -3726,39 +3725,39 @@ static void __init msm8226_clock_pre_init(void)
 {
 	virt_bases[GCC_BASE] = ioremap(GCC_CC_PHYS, GCC_CC_SIZE);
 	if (!virt_bases[GCC_BASE])
-		PR_BUG("clock-8226: Unable to ioremap GCC memory!");
+		panic("clock-8226: Unable to ioremap GCC memory!");
 
 	virt_bases[MMSS_BASE] = ioremap(MMSS_CC_PHYS, MMSS_CC_SIZE);
 	if (!virt_bases[MMSS_BASE])
-		PR_BUG("clock-8226: Unable to ioremap MMSS_CC memory!");
+		panic("clock-8226: Unable to ioremap MMSS_CC memory!");
 
 	virt_bases[LPASS_BASE] = ioremap(LPASS_CC_PHYS, LPASS_CC_SIZE);
 	if (!virt_bases[LPASS_BASE])
-		PR_BUG("clock-8226: Unable to ioremap LPASS_CC memory!");
+		panic("clock-8226: Unable to ioremap LPASS_CC memory!");
 
 	virt_bases[APCS_BASE] = ioremap(APCS_KPSS_GLB_PHYS,
 		APCS_KPSS_GLB_SIZE);
 	if (!virt_bases[APCS_BASE])
-		PR_BUG("clock-8226: Unable to ioremap APCS_GCC_CC memory!");
+		panic("clock-8226: Unable to ioremap APCS_GCC_CC memory!");
 
 	virt_bases[APCS_PLL_BASE] = ioremap(APCS_KPSS_SH_PLL_PHYS,
 		APCS_KPSS_SH_PLL_SIZE);
 	if (!virt_bases[APCS_PLL_BASE])
-		PR_BUG("clock-8226: Unable to ioremap APCS_GCC_CC memory!");
+		panic("clock-8226: Unable to ioremap APCS_GCC_CC memory!");
 
 	clk_ops_local_pll.enable = sr_hpm_lp_pll_clk_enable;
 
 	vdd_dig.regulator[0] = regulator_get(NULL, "vdd_dig");
 	if (IS_ERR(vdd_dig.regulator[0]))
-		PR_BUG("clock-8226: Unable to get the vdd_dig regulator!");
+		panic("clock-8226: Unable to get the vdd_dig regulator!");
 
 	vdd_sr2_pll.regulator[0] = regulator_get(NULL, "vdd_sr2_pll");
 	if (IS_ERR(vdd_sr2_pll.regulator[0]))
-		PR_BUG("clock-8226: Unable to get the sr2_pll regulator!");
+		panic("clock-8226: Unable to get the sr2_pll regulator!");
 
 	vdd_sr2_pll.regulator[1] = regulator_get(NULL, "vdd_sr2_dig");
 	if (IS_ERR(vdd_sr2_pll.regulator[1]))
-		PR_BUG("clock-8226: Unable to get the vdd_sr2_dig regulator!");
+		panic("clock-8226: Unable to get the vdd_sr2_dig regulator!");
 
 
 	enable_rpm_scaling();

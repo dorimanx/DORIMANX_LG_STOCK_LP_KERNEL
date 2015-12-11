@@ -19,8 +19,6 @@
 
 #define SUBSYS_NAME_MAX_LENGTH 40
 
-#define PR_BUG(m...) do { pr_crit(m); BUG(); } while (0)
-
 struct subsys_device;
 
 enum {
