@@ -377,8 +377,6 @@ static int mmc_read_ext_csd(struct mmc_card *card, u8 *ext_csd)
 	card->ext_csd.raw_card_type = ext_csd[EXT_CSD_CARD_TYPE];
 	mmc_select_card_type(card);
 
-	card->ext_csd.raw_driver_strength = ext_csd[EXT_CSD_DRIVER_STRENGTH];
-
 	card->ext_csd.raw_s_a_timeout = ext_csd[EXT_CSD_S_A_TIMEOUT];
 	card->ext_csd.raw_erase_timeout_mult =
 		ext_csd[EXT_CSD_ERASE_TIMEOUT_MULT];
@@ -1357,8 +1355,7 @@ static int mmc_select_hs400(struct mmc_card *card, u8 *ext_csd)
 	*/
 	if (card->cid.manfid == 17) {
 		err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
-				EXT_CSD_HS_TIMING,
-				EXT_CSD_HS_TIMING_HS400 |
+				EXT_CSD_HS_TIMING, 67 |
 				(card->ext_csd.drv_type << 4),
 				0);
 	} else {
