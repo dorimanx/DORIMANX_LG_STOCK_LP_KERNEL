@@ -564,6 +564,9 @@ static ssize_t store_scaling_min_freq
 	if (ret)
 		pr_err("cpufreq: Frequency verification failed\n");
 
+	if (new_policy.min > 960000)
+		new_policy.min = 300000;
+
 #if defined(CONFIG_MULTI_CPU_POLICY_LIMIT) && \
 		defined(CONFIG_MSM_CPUFREQ_LIMITER)
 	if (limited_cpu_freq > 0) {
@@ -595,7 +598,6 @@ static ssize_t store_scaling_max_freq
 #if defined(CONFIG_MULTI_CPU_POLICY_LIMIT) && \
 		defined(CONFIG_MSM_CPUFREQ_LIMITER)
 	unsigned int limited_cpu_freq, cpu;
-	unsigned int old_max_freq = 0;
 	bool apply_limit = false;
 #endif
 	struct cpufreq_policy new_policy;
@@ -608,7 +610,6 @@ static ssize_t store_scaling_max_freq
 		defined(CONFIG_MSM_CPUFREQ_LIMITER)
 	cpu = policy->cpu;
 	limited_cpu_freq = get_max_lock(cpu);
-	old_max_freq = new_policy.user_policy.max;
 #endif
 
 	new_policy.max = new_policy.user_policy.max;
@@ -624,16 +625,9 @@ static ssize_t store_scaling_max_freq
 #if defined(CONFIG_MULTI_CPU_POLICY_LIMIT) && \
 		defined(CONFIG_MSM_CPUFREQ_LIMITER)
 	if (limited_cpu_freq > 0) {
-		if (cpu == 0) {
-			if (new_policy.max > old_max_freq) {
-				new_policy.max = limited_cpu_freq;
-				apply_limit = true;
-			}
-		} else {
-			if (new_policy.max > limited_cpu_freq) {
-				new_policy.max = limited_cpu_freq;
-				apply_limit = true;
-			}
+		if (new_policy.max > limited_cpu_freq) {
+			new_policy.max = limited_cpu_freq;
+			apply_limit = true;
 		}
 	}
 #endif
@@ -641,8 +635,8 @@ static ssize_t store_scaling_max_freq
 	policy->user_policy.max = new_policy.max;
 
 	/* for debug only
-	pr_info("CPU[%u], old_max_freq[%u], new_policy.max[%u], limited_cpu_freq[%u]\n",
-			cpu, old_max_freq, new_policy.max, limited_cpu_freq);
+	pr_info("CPU[%u], new_policy.max[%u], limited_cpu_freq[%u]\n",
+			cpu, new_policy.max, limited_cpu_freq);
 	*/
 
 	ret = __cpufreq_set_policy(policy, &new_policy);
