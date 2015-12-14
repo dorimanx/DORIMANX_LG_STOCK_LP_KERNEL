@@ -33,6 +33,7 @@
 #include <linux/of.h>
 #include <linux/of_platform.h>
 #include <linux/rbtree.h>
+#include <linux/err.h>
 #include <mach/socinfo.h>
 #include <mach/msm_smd.h>
 #include <mach/rpm-smd.h>
