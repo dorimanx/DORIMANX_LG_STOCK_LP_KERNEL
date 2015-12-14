@@ -89,6 +89,10 @@ static struct delayed_work check_temp_work;
 static int intelli_enabled = 1;
 bool core_control = true;
 
+#ifdef CONFIG_ALUCARD_TOUCHSCREEN_BOOST
+int cpu_temp_for_touch_boost;
+#endif
+
 /* dummy parameter for rom thermal and apps */
 static bool enabled = true;
 
@@ -817,7 +821,7 @@ static void __ref do_freq_control(long temp)
 	}
 
 	if (debug_mode == 1)
-		printk(KERN_ERR "pre-check do_freq_control temp[%ld], \
+		printk(KERN_INFO "pre-check do_freq_control temp[%ld], \
 				limit_idx[%d], limit_idx_low[%d], \
 				limited_idx_high[%d]\n",
 				temp, limit_idx, limit_idx_low,
@@ -850,7 +854,7 @@ static void __ref do_freq_control(long temp)
 	}
 
 	if (debug_mode == 1)
-		printk(KERN_ERR "do_freq_control temp[%ld], \
+		printk(KERN_INFO "do_freq_control temp[%ld], \
 				limit_idx[%d], max_freq[%d], \
 				limited_max_freq[%d]\n",
 				temp, limit_idx, max_freq,
@@ -903,6 +907,10 @@ static void __ref check_temp(struct work_struct *work)
 		else
 			limit_init = 1;
 	}
+
+#ifdef CONFIG_ALUCARD_TOUCHSCREEN_BOOST
+	cpu_temp_for_touch_boost = temp;
+#endif
 
 	do_core_control(temp);
 	do_psm();

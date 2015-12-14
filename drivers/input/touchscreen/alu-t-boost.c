@@ -30,6 +30,7 @@
 #include <linux/slab.h>
 #include <linux/input.h>
 #include <linux/time.h>
+#include <linux/msm_thermal.h>
 
 /*
  * debug = 1 will print all
@@ -82,7 +83,8 @@ static void do_input_boost_rem(struct work_struct *work)
 	for_each_possible_cpu(cpu) {
 		if (limit.user_boost_freq_lock[cpu] > 0) {
 			dprintk("Removing input boost for CPU%u\n", cpu);
-			set_cpu_min_lock(cpu, limit.user_min_freq_lock[cpu]);
+			set_cpu_boost_min_lock(cpu,
+					limit.user_min_freq_lock[cpu]);
 			limit.user_boost_freq_lock[cpu] = 0;
 		}
 	}
@@ -92,6 +94,12 @@ static void do_input_boost(struct work_struct *work)
 {
 	unsigned int cpu;
 	unsigned nr_cpus = nr_boost_cpus;
+
+	if (cpu_temp_for_touch_boost > 70) {
+		dprintk("Input boost skipped! cpu temp is %d\n",
+			cpu_temp_for_touch_boost);
+		return;
+	}
 
 	cancel_delayed_work_sync(&input_boost_rem);
 
@@ -109,14 +117,15 @@ static void do_input_boost(struct work_struct *work)
 		limit.user_boost_freq_lock[cpu] = input_boost_freq;
 
 		dprintk("Input boost for CPU%u\n", cpu);
-		set_cpu_min_lock(cpu, limit.user_boost_freq_lock[cpu]);
+		set_cpu_boost_min_lock(cpu, limit.user_boost_freq_lock[cpu]);
 
 		if (cpu_online(cpu)) {
 			cur = cpufreq_quick_get(cpu);
 			if (cur < limit.user_boost_freq_lock[cpu] && cur > 0) {
 				policy.cpu = cpu;
 				cpufreq_driver_target(&policy,
-					limit.user_boost_freq_lock[cpu], CPUFREQ_RELATION_L);
+					limit.user_boost_freq_lock[cpu],
+							CPUFREQ_RELATION_L);
 			}
 		}
 	}

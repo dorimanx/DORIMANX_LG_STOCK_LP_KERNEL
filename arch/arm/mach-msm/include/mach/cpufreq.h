@@ -18,6 +18,7 @@ extern int devfreq_msm_cpufreq_update_bw(void);
 extern int register_devfreq_msm_cpufreq(void);
 extern unsigned int get_cpu_min_lock(unsigned int cpu);
 extern void set_cpu_min_lock(unsigned int cpu, int freq);
+extern void set_cpu_boost_min_lock(unsigned int cpu, int freq);
 extern unsigned int get_max_lock(unsigned int cpu);
 extern void set_max_lock(unsigned int cpu, unsigned int freq);
 
@@ -35,6 +36,10 @@ static unsigned int get_cpu_min_lock(unsigned int cpu)
 	return -ENOSYS;
 }
 static void set_cpu_min_lock(unsigned int cpu, int freq)
+{
+	return -ENOSYS;
+}
+static void set_cpu_boost_min_lock(unsigned int cpu, int freq)
 {
 	return -ENOSYS;
 }
