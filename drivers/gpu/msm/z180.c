@@ -17,6 +17,7 @@
 #include "kgsl.h"
 #include "kgsl_cffdump.h"
 #include "kgsl_sharedmem.h"
+#include "kgsl_trace.h"
 
 #include "z180.h"
 #include "z180_reg.h"
@@ -516,7 +517,7 @@ z180_cmdstream_issueibcmds(struct kgsl_device_private *dev_priv,
 error_put:
 	kgsl_mem_entry_put(entry);
 error:
-	kgsl_trace_issueibcmds(device, context->id, cmdbatch, numibs,
+	trace_kgsl_issueibcmds(device, context->id, cmdbatch, numibs,
 		*timestamp, cmdbatch ? cmdbatch->flags : 0, result, 0);
 
 	kgsl_active_count_put(device);
