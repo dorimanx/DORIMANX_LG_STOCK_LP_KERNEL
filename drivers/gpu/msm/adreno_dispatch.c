@@ -667,7 +667,7 @@ int adreno_dispatcher_queue_cmd(struct adreno_device *adreno_dev,
 	 */
 
 	if ((drawctxt->base.flags & KGSL_CONTEXT_CTX_SWITCH) ||
-		(cmdbatch->flags & KGSL_CONTEXT_CTX_SWITCH))
+		(cmdbatch->flags & KGSL_CMDBATCH_CTX_SWITCH))
 		set_bit(CMDBATCH_FLAG_FORCE_PREAMBLE, &cmdbatch->priv);
 
 	/*
