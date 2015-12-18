@@ -900,6 +900,11 @@ static void process_init_reply(struct fuse_conn *fc, struct fuse_req *req)
 				fc->async_dio = 1;
 			if (arg->flags & FUSE_WRITEBACK_CACHE)
 				fc->writeback_cache = 1;
+			if (arg->flags & FUSE_STACKED_IO) {
+				fc->stacked_io = 1;
+				pr_info("FUSE: Stacked io is enabled [%s : %d]!\n",
+					current->comm, current->pid);
+			}
 			if (arg->time_gran && arg->time_gran <= 1000000000)
 				fc->sb->s_time_gran = arg->time_gran;
 			else
