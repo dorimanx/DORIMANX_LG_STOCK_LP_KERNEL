@@ -4371,8 +4371,8 @@ int kgsl_device_platform_probe(struct kgsl_device *device)
 				PM_QOS_CPU_DMA_LATENCY,
 				PM_QOS_DEFAULT_VALUE);
 
-	device->events_wq = alloc_workqueue("kgsl-events",
-					    WQ_MEM_RECLAIM | WQ_HIGHPRI, 0);
+
+	device->events_wq = create_workqueue("kgsl-events");
 
 	kgsl_add_event_group(&device->global_events, NULL);
 	kgsl_add_event_group(&device->iommu_events, NULL);
