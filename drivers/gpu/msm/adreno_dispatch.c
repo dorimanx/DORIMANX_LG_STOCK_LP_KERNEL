@@ -426,10 +426,7 @@ static int sendcmd(struct adreno_device *adreno_dev,
 	if (dispatcher->inflight == 1) {
 		if (ret == 0) {
 			fault_detect_read(device);
-
-			if (!test_and_set_bit(ADRENO_DISPATCHER_ACTIVE,
-				&dispatcher->priv))
-				init_completion(&dispatcher->idle_gate);
+			init_completion(&dispatcher->idle_gate);
 		} else {
 			kgsl_active_count_put(device);
 			clear_bit(ADRENO_DISPATCHER_POWER, &dispatcher->priv);
@@ -1724,10 +1721,7 @@ done:
 		/* There is nothing left in the pipeline.  Shut 'er down boys */
 
 		kgsl_mutex_lock(&device->mutex, &device->mutex_owner);
-
-		if (test_and_clear_bit(ADRENO_DISPATCHER_ACTIVE,
-			&dispatcher->priv))
-			complete_all(&dispatcher->idle_gate);
+		complete_all(&dispatcher->idle_gate);
 
 		/*
 		 * Stop the fault timer before decrementing the active count to
