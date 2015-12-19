@@ -6868,8 +6868,7 @@ static bool update_sd_pick_busiest(struct lb_env *env,
 	    power_cost_at_freq(env->dst_cpu, 0) <
 	    power_cost_at_freq(cpu, 0) &&
 	    !is_task_migration_throttled(cpu_rq(cpu)->curr) &&
-	    is_cpu_throttling_imminent(cpumask_first(sched_group_cpus(sg)))) {
-
+	    is_cpu_throttling_imminent(cpu)) {
 		env->flags |= LBF_PWR_ACTIVE_BALANCE;
 		return true;
 	}
