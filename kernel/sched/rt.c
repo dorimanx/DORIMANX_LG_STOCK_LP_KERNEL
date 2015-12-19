@@ -1546,7 +1546,7 @@ static int find_lowest_rq_hmp(struct task_struct *task)
 		trace_sched_cpu_load(rq, idle_cpu(i),
 				     mostly_idle_cpu(i), cpu_cost);
 
-		if (sched_boost() && cpu_capacity(i) != max_capacity)
+		if (sched_boost() && capacity(rq) != max_capacity)
 			continue;
 
 		if (cpu_cost < min_cost && !sched_cpu_high_irqload(i)) {
