@@ -7545,7 +7545,7 @@ more_balance:
 		double_rq_lock(env.dst_rq, busiest);
 
 		/* The world might have changed. Validate assumptions */
-		if (busiest->nr_running <= 1) {
+		if (busiest->cfs.h_nr_running <= 1) {
 			double_rq_unlock(env.dst_rq, busiest);
 			local_irq_restore(flags);
 			env.flags &= ~LBF_ALL_PINNED;
