@@ -850,7 +850,7 @@ static inline void check_for_high_latency(struct task_struct *p, u64 latency_us)
 		if (do_panic)
 			panic(fmt, p->comm, p->pid, latency_us);
 		else
-			printk_sched(fmt, p->comm, p->pid, latency_us);
+			printk_deferred(fmt, p->comm, p->pid, latency_us);
 	}
 }
 #else
@@ -879,7 +879,7 @@ update_stats_wait_end(struct cfs_rq *cfs_rq, struct sched_entity *se,
 		u64 delta;
 		struct sched_max_latency *max;
 
-		delta = rq_clock(rq_of(cfs_rq) - se->statistics.wait_start;
+		delta = rq_clock(rq_of(cfs_rq)) - se->statistics.wait_start;
 		trace_sched_stat_wait(task_of(se), delta);
 
 		delta = delta >> 10;
