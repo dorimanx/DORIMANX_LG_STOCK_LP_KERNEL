@@ -132,7 +132,9 @@ static void update_dl_migration(struct dl_rq *dl_rq)
 
 static void inc_dl_migration(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
 {
-	if (dl_se->nr_cpus_allowed > 1)
+	struct task_struct *p = dl_task_of(dl_se);
+
+	if (p->nr_cpus_allowed > 1)
 		dl_rq->dl_nr_migratory++;
 
 	update_dl_migration(dl_rq);
@@ -140,7 +142,9 @@ static void inc_dl_migration(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
 
 static void dec_dl_migration(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
 {
-	if (dl_se->nr_cpus_allowed > 1)
+	struct task_struct *p = dl_task_of(dl_se);
+
+	if (p->nr_cpus_allowed > 1)
 		dl_rq->dl_nr_migratory--;
 
 	update_dl_migration(dl_rq);
@@ -879,7 +883,7 @@ static void enqueue_task_dl(struct rq *rq, struct task_struct *p, int flags)
 
 	enqueue_dl_entity(&p->dl, pi_se, flags);
 
-	if (!task_current(rq, p) && p->dl.nr_cpus_allowed > 1)
+	if (!task_current(rq, p) && p->nr_cpus_allowed > 1)
 		enqueue_pushable_dl_task(rq, p);
 }
 
@@ -931,9 +935,7 @@ select_task_rq_dl(struct task_struct *p, int sd_flag, int flags)
 {
 	struct task_struct *curr;
 	struct rq *rq;
-	int cpu;
-
-	cpu = task_cpu(p);
+	int cpu = task_cpu(p);
 
 	if (sd_flag != SD_BALANCE_WAKE && sd_flag != SD_BALANCE_FORK)
 		goto out;
@@ -953,9 +955,9 @@ select_task_rq_dl(struct task_struct *p, int sd_flag, int flags)
 	 * try to make it stay here, it might be important.
 	 */
 	if (unlikely(dl_task(curr)) &&
-	    (curr->dl.nr_cpus_allowed < 2 ||
+	    (curr->nr_cpus_allowed < 2 ||
 	     !dl_entity_preempt(&p->dl, &curr->dl)) &&
-	    (p->dl.nr_cpus_allowed > 1)) {
+	    (p->nr_cpus_allowed > 1)) {
 		int target = find_later_rq(p);
 
 		if (target != -1)
@@ -973,7 +975,7 @@ static void check_preempt_equal_dl(struct rq *rq, struct task_struct *p)
 	 * Current can't be migrated, useless to reschedule,
 	 * let's hope p can move out.
 	 */
-	if (rq->curr->dl.nr_cpus_allowed == 1 ||
+	if (rq->curr->nr_cpus_allowed == 1 ||
 	    cpudl_find(&rq->rd->cpudl, rq->curr, NULL) == -1)
 		return;
 
@@ -981,7 +983,7 @@ static void check_preempt_equal_dl(struct rq *rq, struct task_struct *p)
 	 * p is migratable, so let's not schedule it and
 	 * see if it is pushed or pulled somewhere else.
 	 */
-	if (p->dl.nr_cpus_allowed != 1 &&
+	if (p->nr_cpus_allowed != 1 &&
 	    cpudl_find(&rq->rd->cpudl, p, NULL) != -1)
 		return;
 
@@ -1067,7 +1069,7 @@ static void put_prev_task_dl(struct rq *rq, struct task_struct *p)
 {
 	update_curr_dl(rq);
 
-	if (on_dl_rq(&p->dl) && p->dl.nr_cpus_allowed > 1)
+	if (on_dl_rq(&p->dl) && p->nr_cpus_allowed > 1)
 		enqueue_pushable_dl_task(rq, p);
 }
 
@@ -1092,12 +1094,7 @@ static void task_fork_dl(struct task_struct *p)
 static void task_dead_dl(struct task_struct *p)
 {
 	struct hrtimer *timer = &p->dl.dl_timer;
-
-#ifdef CONFIG_SMP
-	struct dl_bw *dl_b = &task_rq(p)->rd->dl_bw;
-#else
-	struct dl_bw *dl_b = &task_rq(p)->dl.dl_bw;
-#endif
+	struct dl_bw *dl_b = dl_bw_of(task_cpu(p));
 
 	/*
 	 * Since we are TASK_DEAD we won't slip out of the domain!
@@ -1127,8 +1124,10 @@ static void set_curr_task_dl(struct rq *rq)
 static int pick_dl_task(struct rq *rq, struct task_struct *p, int cpu)
 {
 	if (!task_running(rq, p) &&
-	    cpumask_test_cpu(cpu, tsk_cpus_allowed(p)))
+	    (cpu < 0 || cpumask_test_cpu(cpu, &p->cpus_allowed)) &&
+	    (p->nr_cpus_allowed > 1))
 		return 1;
+
 	return 0;
 }
 
@@ -1167,7 +1166,7 @@ static int find_later_rq(struct task_struct *task)
 	if (unlikely(!later_mask))
 		return -1;
 
-	if (task->dl.nr_cpus_allowed == 1)
+	if (task->nr_cpus_allowed == 1)
 		return -1;
 
 	/*
@@ -1302,7 +1301,7 @@ static struct task_struct *pick_next_pushable_dl_task(struct rq *rq)
 
 	BUG_ON(rq->cpu != task_cpu(p));
 	BUG_ON(task_current(rq, p));
-	BUG_ON(p->dl.nr_cpus_allowed <= 1);
+	BUG_ON(p->nr_cpus_allowed <= 1);
 
 	BUG_ON(!p->on_rq);
 	BUG_ON(!dl_task(p));
@@ -1340,7 +1339,7 @@ retry:
 	 */
 	if (dl_task(rq->curr) &&
 	    dl_time_before(next_task->dl.deadline, rq->curr->dl.deadline) &&
-	    rq->curr->dl.nr_cpus_allowed > 1) {
+	    rq->curr->nr_cpus_allowed > 1) {
 		resched_task(rq->curr);
 		return 0;
 	}
@@ -1498,9 +1497,9 @@ static void task_woken_dl(struct rq *rq, struct task_struct *p)
 	if (!task_running(rq, p) &&
 	    !test_tsk_need_resched(rq->curr) &&
 	    has_pushable_dl_tasks(rq) &&
-	    p->dl.nr_cpus_allowed > 1 &&
+	    p->nr_cpus_allowed > 1 &&
 	    dl_task(rq->curr) &&
-	    (rq->curr->dl.nr_cpus_allowed < 2 ||
+	    (rq->curr->nr_cpus_allowed < 2 ||
 	     dl_entity_preempt(&rq->curr->dl, &p->dl))) {
 		push_dl_tasks(rq);
 	}
@@ -1527,7 +1526,7 @@ static void set_cpus_allowed_dl(struct task_struct *p,
 	 * Only update if the process changes its state from whether it
 	 * can migrate or not.
 	 */
-	if ((p->dl.nr_cpus_allowed > 1) == (weight > 1))
+	if ((p->nr_cpus_allowed > 1) == (weight > 1))
 		return;
 
 	rq = task_rq(p);
