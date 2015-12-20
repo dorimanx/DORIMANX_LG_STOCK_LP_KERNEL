@@ -1742,6 +1742,9 @@ unsigned int min_capacity = 1024; /* min(rq->capacity) */
 unsigned int max_possible_capacity = 1024; /* max(rq->max_possible_capacity) */
 unsigned int max_load_scale_factor = 1024; /* max possible load scale factor */
 
+/* Mask of all CPUs that have  max_possible_capacity */
+cpumask_t mpc_mask = CPU_MASK_ALL;
+
 /* Window size (in ns) */
 __read_mostly unsigned int sched_ravg_window = 10000000;
 
@@ -3043,6 +3046,7 @@ static int cpufreq_notifier_policy(struct notifier_block *nb,
 
 		if (mpc > highest_mpc) {
 			highest_mpc = mpc;
+			cpumask_copy(&mpc_mask, &cluster->cpus);
 		}
 
 		mplsf = div_u64(((u64) cluster->load_scale_factor) *
