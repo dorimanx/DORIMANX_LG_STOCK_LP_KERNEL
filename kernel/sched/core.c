@@ -72,8 +72,8 @@
 #include <linux/slab.h>
 #include <linux/init_task.h>
 #include <linux/binfmts.h>
-#include <linux/cpufreq.h>
 #include <linux/context_tracking.h>
+#include <linux/cpufreq.h>
 
 #include <asm/switch_to.h>
 #include <asm/tlb.h>
@@ -3234,7 +3234,6 @@ void set_task_cpu(struct task_struct *p, unsigned int new_cpu)
 
 		if (p->sched_class->migrate_task_rq)
 			p->sched_class->migrate_task_rq(p, new_cpu);
-
 		p->se.nr_migrations++;
 		perf_sw_event(PERF_COUNT_SW_CPU_MIGRATIONS, 1, NULL, 0);
 
@@ -10035,6 +10034,11 @@ void __init sched_init_smp(void)
 
 	sched_init_numa();
 
+	/*
+	 * There's no userspace yet to cause hotplug operations; hence all the
+	 * cpu masks are stable and all blatant races in the below code cannot
+	 * happen.
+	 */
 	mutex_lock(&sched_domains_mutex);
 	init_sched_domains(cpu_active_mask);
 	cpumask_andnot(non_isolated_cpus, cpu_possible_mask, cpu_isolated_map);
@@ -10231,12 +10235,17 @@ void __init sched_init(void)
 		rq->hmp_flags = 0;
 		rq->mostly_idle_load = pct_to_real(20);
 		rq->mostly_idle_nr_run = 3;
+		rq->mostly_idle_freq = 0;
 		rq->cur_irqload = 0;
 		rq->avg_irqload = 0;
 		rq->irqload_ts = 0;
-		rq->cluster = &init_cluster;
-		rq->mostly_idle_freq = 0;
 		rq->prefer_idle = 1;
+		/*
+		 * All cpus part of same cluster by default. This avoids the
+		 * need to check for rq->cluster being non-NULL in hot-paths
+		 * like select_best_cpu()
+		 */
+		rq->cluster = &init_cluster;
 #ifdef CONFIG_SCHED_FREQ_INPUT
 		rq->old_busy_time = 0;
 		rq->curr_runnable_sum = rq->prev_runnable_sum = 0;
