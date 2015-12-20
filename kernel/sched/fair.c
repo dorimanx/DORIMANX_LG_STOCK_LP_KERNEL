@@ -3014,13 +3014,6 @@ void check_for_migration(struct rq *rq, struct task_struct *p)
 					&rq->active_balance_work);
 }
 
-static inline int is_task_migration_throttled(struct task_struct *p)
-{
-	u64 delta = sched_clock() - p->run_start;
-
-	return delta < sched_min_runtime;
-}
-
 static inline int nr_big_tasks(struct rq *rq)
 {
 	return rq->hmp_stats.nr_big_tasks;
@@ -3040,6 +3033,12 @@ static inline int is_cpu_throttling_imminent(int cpu)
 	return throttling;
 }
 
+static inline int is_task_migration_throttled(struct task_struct *p)
+{
+	u64 delta = sched_clock() - p->run_start;
+
+	return delta < sched_min_runtime;
+}
 #else	/* CONFIG_SCHED_HMP */
 
 #define sysctl_sched_enable_power_aware 0
