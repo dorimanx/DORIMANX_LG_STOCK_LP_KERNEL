@@ -44,7 +44,7 @@ module_param_named(reclaim_avg_efficiency, reclaim_avg_efficiency,
 
 /* The vmpressure region where process reclaim operates */
 static unsigned long pressure_min = 50;
-static unsigned long pressure_max = 100;
+static unsigned long pressure_max = 80;
 module_param_named(pressure_min, pressure_min, ulong, S_IRUGO | S_IWUSR);
 module_param_named(pressure_max, pressure_max, ulong, S_IRUGO | S_IWUSR);
 
