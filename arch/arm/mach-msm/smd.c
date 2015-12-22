@@ -1,7 +1,7 @@
 /* arch/arm/mach-msm/smd.c
  *
  * Copyright (C) 2007 Google, Inc.
- * Copyright (c) 2008-2014, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2008-2015, The Linux Foundation. All rights reserved.
  * Author: Brian Swetland <swetland@google.com>
  *
  * This software is licensed under the terms of the GNU General Public
@@ -2702,7 +2702,7 @@ static irqreturn_t smsm_irq_handler(int irq, void *data)
 			smd_fake_irq_handler(0);
 
 		} else if (modm & SMSM_RESET) {
-			pr_err("\nSMSM: Modem SMSM state changed to SMSM_RESET.");
+			pr_err("SMSM: Modem SMSM state changed to SMSM_RESET.\n");
 			if (!disable_smsm_reset_handshake) {
 				apps |= SMSM_RESET;
 				flush_cache_all();
