@@ -40,24 +40,24 @@
 			interrupt-parent = <&pm8941_gpios>;
 			interrupts = <30 0x2>;
 			summit,stat-gpio = <&pm8941_gpios 30 0x02>;
-			summit,chg-current-ma = <1200>;
+			summit,chg-current-ma = <1600>;
 			summit,term-current-ma = <100>;
 
 			lge,no-init-cable = <0 0 0>;
 			lge,cable-mhl-1k = <5000 500 500>;
-			lge,cable-u-28p7k = <5500 1200 500>;
-			lge,cable-28p7k = <6000 1200 500>;
+			lge,cable-u-28p7k = <5500 1600 500>;
+			lge,cable-28p7k = <6000 1600 500>;
 			lge,cable-56k = <200000 1500 1500>;
-			lge,cable-100k = <239000 1200 500>;
+			lge,cable-100k = <239000 1600 500>;
 			lge,cable-130k = <340000 1500 1500>;
-			lge,cable-180k = <400000 1200 500>;
-			lge,cable-200k = <410000 1200 500>;
-			lge,cable-220k = <485000 1200 500>;
-			lge,cable-270k = <560000 1200 500>;
-			lge,cable-330k = <735000 1200 500>;
-			lge,cable-620k = <955000 1200 500>;
+			lge,cable-180k = <400000 1600 500>;
+			lge,cable-200k = <410000 1600 500>;
+			lge,cable-220k = <485000 1600 500>;
+			lge,cable-270k = <560000 1600 500>;
+			lge,cable-330k = <735000 1600 500>;
+			lge,cable-620k = <955000 1600 500>;
 			lge,cable-910k = <1140000 1500 1500>;
-			lge,cable-none = <1900000 1200  500>;
+			lge,cable-none = <1900000 1600  500>;
 		};
 
 		bq24192@6b {
