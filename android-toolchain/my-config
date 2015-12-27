@@ -28,7 +28,6 @@ CT_DEBUG_INTERACTIVE=y
 #
 CT_LOCAL_TARBALLS_DIR="${CT_TOP_DIR}/src"
 CT_SAVE_TARBALLS=y
-CT_CUSTOM_LOCATION_ROOT_DIR=""
 CT_WORK_DIR="${CT_TOP_DIR}/.build"
 CT_PREFIX_DIR="${CT_TOP_DIR}/builds/${CT_TARGET}"
 CT_INSTALL_DIR="${CT_PREFIX_DIR}"
@@ -227,6 +226,7 @@ CT_KERNEL_VERSION="3.4.110"
 CT_KERNEL_linux=y
 CT_KERNEL_bare_metal_AVAILABLE=y
 CT_KERNEL_linux_AVAILABLE=y
+# CT_KERNEL_LINUX_CUSTOM is not set
 # CT_KERNEL_V_4_3 is not set
 # CT_KERNEL_V_4_2 is not set
 # CT_KERNEL_V_4_1 is not set
@@ -237,7 +237,6 @@ CT_KERNEL_linux_AVAILABLE=y
 CT_KERNEL_V_3_4=y
 # CT_KERNEL_V_3_2 is not set
 # CT_KERNEL_V_2_6_32 is not set
-# CT_KERNEL_LINUX_CUSTOM is not set
 CT_KERNEL_windows_AVAILABLE=y
 
 #
@@ -264,6 +263,8 @@ CT_BINUTILS_binutils=y
 #
 # GNU binutils
 #
+# CT_BINUTILS_CUSTOM is not set
+CT_BINUTILS_VERSION="2.25.1"
 # CT_CC_BINUTILS_SHOW_LINARO is not set
 CT_BINUTILS_V_2_25_1=y
 # CT_BINUTILS_V_2_25 is not set
@@ -276,8 +277,6 @@ CT_BINUTILS_V_2_25_1=y
 # CT_BINUTILS_V_2_20_1a is not set
 # CT_BINUTILS_V_2_19_1a is not set
 # CT_BINUTILS_V_2_18a is not set
-# CT_BINUTILS_CUSTOM is not set
-CT_BINUTILS_VERSION="2.25.1"
 CT_BINUTILS_2_25_1_or_later=y
 CT_BINUTILS_2_25_or_later=y
 CT_BINUTILS_2_24_or_later=y
@@ -294,8 +293,6 @@ CT_BINUTILS_HAS_PLUGINS=y
 CT_BINUTILS_HAS_PKGVERSION_BUGURL=y
 CT_BINUTILS_FORCE_LD_BFD=y
 CT_BINUTILS_LINKER_LD=y
-# CT_BINUTILS_LINKER_LD_GOLD is not set
-# CT_BINUTILS_LINKER_GOLD_LD is not set
 CT_BINUTILS_LINKERS_LIST="ld"
 CT_BINUTILS_LINKER_DEFAULT="bfd"
 CT_BINUTILS_EXTRA_CONFIG_ARRAY=""
@@ -318,6 +315,7 @@ CT_LIBC_glibc=y
 CT_LIBC_avr_libc_AVAILABLE=y
 CT_LIBC_glibc_AVAILABLE=y
 CT_THREADS="nptl"
+# CT_LIBC_GLIBC_CUSTOM is not set
 # CT_CC_GLIBC_SHOW_LINARO is not set
 CT_LIBC_GLIBC_V_2_22=y
 # CT_LIBC_GLIBC_V_2_21 is not set
@@ -337,7 +335,6 @@ CT_LIBC_GLIBC_V_2_22=y
 # CT_LIBC_GLIBC_V_2_10_1 is not set
 # CT_LIBC_GLIBC_V_2_9 is not set
 # CT_LIBC_GLIBC_V_2_8 is not set
-# CT_LIBC_GLIBC_CUSTOM is not set
 CT_LIBC_GLIBC_2_20_or_later=y
 CT_LIBC_GLIBC_2_17_or_later=y
 CT_LIBC_mingw_AVAILABLE=y
@@ -383,11 +380,12 @@ CT_CC_CORE_PASSES_NEEDED=y
 CT_CC_CORE_PASS_1_NEEDED=y
 CT_CC_CORE_PASS_2_NEEDED=y
 CT_CC_gcc=y
+# CT_CC_GCC_CUSTOM is not set
+CT_CC_GCC_VERSION="5.2.0"
 # CT_CC_GCC_SHOW_LINARO is not set
 CT_CC_GCC_V_5_2_0=y
 # CT_CC_GCC_V_4_9_3 is not set
 # CT_CC_GCC_V_4_8_5 is not set
-# CT_CC_GCC_CUSTOM is not set
 CT_CC_GCC_4_8_or_later=y
 CT_CC_GCC_4_9_or_later=y
 CT_CC_GCC_5=y
@@ -404,7 +402,6 @@ CT_CC_GCC_USE_MPC=y
 CT_CC_GCC_USE_LIBELF=y
 CT_CC_GCC_HAS_LIBQUADMATH=y
 CT_CC_GCC_HAS_LIBSANITIZER=y
-CT_CC_GCC_VERSION="5.2.0"
 # CT_CC_LANG_FORTRAN is not set
 CT_CC_GCC_ENABLE_CXX_FLAGS=""
 CT_CC_GCC_CORE_EXTRA_CONFIG_ARRAY=""
@@ -467,39 +464,10 @@ CT_CC_LANG_OTHERS=""
 # Debug facilities
 #
 # CT_DEBUG_dmalloc is not set
-# CT_DMALLOC_V_5_5_2 is not set
 # CT_DEBUG_duma is not set
-# CT_DUMA_V_2_5_15 is not set
 # CT_DEBUG_gdb is not set
-# CT_GDB_V_7_10 is not set
-# CT_GDB_V_7_9_1 is not set
-# CT_GDB_V_7_9 is not set
-# CT_GDB_V_7_8_2 is not set
-# CT_GDB_V_7_8_1 is not set
-# CT_GDB_V_7_8 is not set
-# CT_GDB_V_7_7_1 is not set
-# CT_GDB_V_7_7 is not set
-# CT_GDB_V_7_6_1 is not set
-# CT_GDB_V_7_5_1 is not set
-# CT_GDB_V_7_4_1 is not set
-# CT_GDB_V_7_4 is not set
-# CT_GDB_V_7_3_1 is not set
-# CT_GDB_V_7_3a is not set
-# CT_GDB_V_7_2a is not set
-# CT_GDB_V_7_1a is not set
-# CT_GDB_V_7_0_1a is not set
-# CT_GDB_V_7_0a is not set
-# CT_GDB_V_6_8a is not set
 # CT_DEBUG_ltrace is not set
 # CT_DEBUG_strace is not set
-# CT_STRACE_V_4_10 is not set
-# CT_STRACE_V_4_9 is not set
-# CT_STRACE_V_4_8 is not set
-# CT_STRACE_V_4_7 is not set
-# CT_STRACE_V_4_6 is not set
-# CT_STRACE_V_4_5_20 is not set
-# CT_STRACE_V_4_5_19 is not set
-# CT_STRACE_V_4_5_18 is not set
 
 #
 # Companion libraries
@@ -560,8 +528,6 @@ CT_MPC_VERSION="1.0.3"
 CT_LIBELF_V_0_8_13=y
 # CT_LIBELF_V_0_8_12 is not set
 CT_LIBELF_VERSION="0.8.13"
-# CT_EXPAT_V_2_1_0 is not set
-# CT_NCURSES_V_6_0 is not set
 
 #
 # Companion libraries common options
