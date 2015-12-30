@@ -28,7 +28,6 @@ LANG=C
 
 # location
 KERNELDIR=$(readlink -f .);
-export PATH=$PATH:tools/lz4demo
 
 CLEANUP()
 {
