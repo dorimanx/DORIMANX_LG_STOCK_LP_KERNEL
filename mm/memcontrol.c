@@ -7019,7 +7019,6 @@ struct cgroup_subsys mem_cgroup_subsys = {
 	.base_cftypes = mem_cgroup_files,
 	.early_init = 0,
 	.use_id = 1,
-	.__DEPRECATED_clear_css_refs = true,
 };
 
 #ifdef CONFIG_MEMCG_SWAP
