@@ -149,49 +149,51 @@ struct dentry *msm_vidc_debugfs_init_core(struct msm_vidc_core *core,
 		goto failed_create_dir;
 	}
 
-	snprintf(debugfs_name, MAX_DEBUGFS_NAME, "core%d", 0);
+	snprintf(debugfs_name, MAX_DEBUGFS_NAME, "core%d", core->id);
 	dir = debugfs_create_dir(debugfs_name, parent);
 	if (!dir) {
 		dprintk(VIDC_ERR, "Failed to create debugfs for msm_vidc\n");
 		goto failed_create_dir;
 	}
 	if (!debugfs_create_file("info", S_IRUGO, dir, core, &core_info_fops)) {
-		dprintk(VIDC_ERR, "debugfs_create_file: fail\n");
+		dprintk(VIDC_ERR, "debugfs_create_file info core%d: fail\n", core->id);
 		goto failed_create_dir;
 	}
 	if (!debugfs_create_u32("debug_level", S_IRUGO | S_IWUSR,
 			parent,	&msm_vidc_debug)) {
-		dprintk(VIDC_ERR, "debugfs_create_file: fail\n");
+#if 0 /* ignore fail on boot as it's loaded anyway! */
+		dprintk(VIDC_ERR, "debugfs_create_file debug_level: fail\n");
+#endif
 		goto failed_create_dir;
 	}
 	if (!debugfs_create_u32("fw_level", S_IRUGO | S_IWUSR,
 			parent, &msm_fw_debug)) {
-		dprintk(VIDC_ERR, "debugfs_create_file: fail\n");
+		dprintk(VIDC_ERR, "debugfs_create_file fw_level: fail\n");
 		goto failed_create_dir;
 	}
 	if (!debugfs_create_file("trigger_ssr", S_IWUSR,
 			dir, core, &ssr_fops)) {
-		dprintk(VIDC_ERR, "debugfs_create_file: fail\n");
+		dprintk(VIDC_ERR, "debugfs_create_file trigger_ssr core%d: fail\n", core->id);
 		goto failed_create_dir;
 	}
 	if (!debugfs_create_u32("fw_debug_mode", S_IRUGO | S_IWUSR,
 			parent, &msm_fw_debug_mode)) {
-		dprintk(VIDC_ERR, "debugfs_create_file: fail\n");
+		dprintk(VIDC_ERR, "debugfs_create_file fw_debug_mode: fail\n");
 		goto failed_create_dir;
 	}
 	if (!debugfs_create_u32("fw_low_power_mode", S_IRUGO | S_IWUSR,
 			parent, &msm_fw_low_power_mode)) {
-		dprintk(VIDC_ERR, "debugfs_create_file: fail\n");
+		dprintk(VIDC_ERR, "debugfs_create_file fw_low_power_mode: fail\n");
 		goto failed_create_dir;
 	}
 	if (!debugfs_create_u32("debug_output", S_IRUGO | S_IWUSR,
 			parent, &msm_vidc_debug_out)) {
-		dprintk(VIDC_ERR, "debugfs_create_file: fail\n");
+		dprintk(VIDC_ERR, "debugfs_create_file debug_output: fail\n");
 		goto failed_create_dir;
 	}
 	if (!debugfs_create_u32("hw_rsp_timeout", S_IRUGO | S_IWUSR,
 			parent, &msm_vidc_hw_rsp_timeout)) {
-		dprintk(VIDC_ERR, "debugfs_create_file: fail\n");
+		dprintk(VIDC_ERR, "debugfs_create_file hw_rsp_timeout: fail\n");
 		goto failed_create_dir;
 	}
 	if (!debugfs_create_u32("firmware_unload_delay", S_IRUGO | S_IWUSR,
