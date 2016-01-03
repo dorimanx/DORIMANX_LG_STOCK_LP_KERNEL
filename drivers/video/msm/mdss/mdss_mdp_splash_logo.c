@@ -597,7 +597,7 @@ int mdss_mdp_splash_init(struct msm_fb_data_type *mfd)
 
 	rc = mdss_mdp_splash_parse_dt(mfd);
 	if (rc) {
-		pr_err("splash memory reserve failed\n");
+		pr_debug("splash memory reserve failed\n");
 		goto end;
 	}
 

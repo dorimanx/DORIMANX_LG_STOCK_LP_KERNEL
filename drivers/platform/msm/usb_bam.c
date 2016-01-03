@@ -1028,8 +1028,10 @@ static void usb_bam_ipa_create_resources(void)
 		usb_prod_create_params.reg_params.user_data = &ipa_rm_bams[i];
 		ret = ipa_rm_create_resource(&usb_prod_create_params);
 		if (ret) {
+#ifdef CONFIG_IPA
 			pr_err("%s: Failed to create USB_PROD resource\n",
 								__func__);
+#endif
 			return;
 		}
 

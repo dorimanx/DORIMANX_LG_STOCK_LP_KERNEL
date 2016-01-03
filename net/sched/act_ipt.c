@@ -325,8 +325,10 @@ static int __init ipt_init_module(void)
 	if (ret1 < 0)
 		printk("Failed to load xt action\n");
 	ret2 = tcf_register_action(&act_ipt_ops);
+#if 0 /* we already loaded act_xt_ops as should, no need to print fail */
 	if (ret2 < 0)
 		printk("Failed to load ipt action\n");
+#endif
 
 	if (ret1 < 0 && ret2 < 0)
 		return ret1;
