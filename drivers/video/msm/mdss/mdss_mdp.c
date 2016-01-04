@@ -2398,6 +2398,7 @@ static int mdss_mdp_parse_dt_misc(struct platform_device *pdev)
 	if (rc)
 		pr_debug("max bandwidth (high) property not specified\n");
 
+#if 0 /* no such dtsi config for LG G2 board */
 	mdata->nclk_lvl = mdss_mdp_parse_dt_prop_len(pdev,
 					"qcom,mdss-clk-levels");
 
@@ -2414,6 +2415,7 @@ static int mdss_mdp_parse_dt_misc(struct platform_device *pdev)
 		if (rc)
 			pr_debug("clock levels not found\n");
 	}
+#endif
 
 	return 0;
 }
@@ -2424,12 +2426,12 @@ static int mdss_mdp_parse_dt_ad_cfg(struct platform_device *pdev)
 	u32 *ad_offsets = NULL;
 	int rc;
 
+#if 0 /* This config is removed by LG from common panel dtsi */
 	mdata->nad_cfgs = mdss_mdp_parse_dt_prop_len(pdev, "qcom,mdss-ad-off");
-
-	if (mdata->nad_cfgs == 0) {
-		mdata->ad_cfgs = NULL;
-		return 0;
-	}
+#else
+	mdata->ad_cfgs = NULL;
+	return 0;
+#endif
 
 	if (mdata->nad_cfgs > mdata->nmixers_intf)
 		return -EINVAL;
