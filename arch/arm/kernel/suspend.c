@@ -9,7 +9,6 @@
 #include <asm/smp_plat.h>
 #include <asm/suspend.h>
 #include <asm/tlbflush.h>
-#include <asm/psci.h>
 
 extern void cpu_resume_mmu(void);
 
@@ -51,12 +50,7 @@ void __cpu_suspend_save(u32 *ptr, u32 ptrsz, u32 sp, u32 *save_ptr)
 }
 int cpu_suspend(unsigned long arg)
 {
-#if defined(CONFIG_ARM_PSCI)
-	return cpu_psci_cpu_suspend(arg);
-#else
-	WARN_ONCE(true, "PSCI is not enabled\n");
 	return 0;
-#endif
 }
 /*
  * Hide the first two arguments to __cpu_suspend - these are an implementation
