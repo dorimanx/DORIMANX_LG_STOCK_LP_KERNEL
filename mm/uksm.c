@@ -4710,6 +4710,12 @@ int try_to_unmap_ksm(struct page *page, enum ttu_flags flags,
 	stable_node = page_stable_node(page);
 	if (!stable_node)
 		return SWAP_FAIL;
+
+	if (target_vma) {
+		unsigned long address = vma_address(page, target_vma);
+		ret = try_to_unmap_one(page, target_vma, address, flags);
+		goto out;
+	}
 again:
 	hlist_for_each_entry(node_vma, &stable_node->hlist, hlist) {
 		hlist_for_each_entry(rmap_item, &node_vma->rmap_hlist, hlist) {
