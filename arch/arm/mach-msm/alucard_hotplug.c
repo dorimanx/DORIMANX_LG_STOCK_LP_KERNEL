@@ -227,6 +227,8 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 	delay = msecs_to_jiffies(hotplug_tuners_ins.hotplug_sampling_rate);
 	if (num_online_cpus() > 1) {
 		delay -= jiffies % delay;
+		/* We want hotplug governor to do sampling just one jiffy later on cpu governor sampling */
+		delay++;
 	}
 
 	queue_delayed_work_on(BOOT_CPU, alucard_hp_wq,
@@ -328,6 +330,8 @@ static void hotplug_start(void)
 	delay = msecs_to_jiffies(hotplug_tuners_ins.hotplug_sampling_rate);
 	if (num_online_cpus() > 1) {
 		delay -= jiffies % delay;
+		/* We want hotplug governor to do sampling just one jiffy later on cpu governor sampling */
+		delay++;
 	}
 
 	INIT_DEFERRABLE_WORK(&alucard_hotplug_work, hotplug_work_fn);
