@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -20,6 +20,7 @@
 #include <linux/delay.h>
 
 #include <asm/cacheflush.h>
+#include <asm/compiler.h>
 
 #include <mach/scm.h>
 
@@ -92,6 +93,32 @@ struct scm_response {
 	u32	is_complete;
 };
 
+#ifdef CONFIG_ARM64
+
+#define R0_STR "x0"
+#define R1_STR "x1"
+#define R2_STR "x2"
+#define R3_STR "x3"
+#define R4_STR "x4"
+#define R5_STR "x5"
+
+/* Outer caches unsupported on ARM64 platforms */
+#define outer_inv_range(x, y)
+#define outer_flush_range(x, y)
+
+#define __cpuc_flush_dcache_area __flush_dcache_area
+
+#else
+
+#define R0_STR "r0"
+#define R1_STR "r1"
+#define R2_STR "r2"
+#define R3_STR "r3"
+#define R4_STR "r4"
+#define R5_STR "r5"
+
+#endif
+
 /**
  * scm_command_to_response() - Get a pointer to a scm_response
  * @cmd: command
@@ -150,18 +177,18 @@ static u32 smc(u32 cmd_addr)
 {
 	int context_id;
 	register u32 r0 asm("r0") = 1;
-	register u32 r1 asm("r1") = (u32)&context_id;
+	register u32 r1 asm("r1") = (uintptr_t)&context_id;
 	register u32 r2 asm("r2") = cmd_addr;
 	do {
 		asm volatile(
-			__asmeq("%0", "r0")
-			__asmeq("%1", "r0")
-			__asmeq("%2", "r1")
-			__asmeq("%3", "r2")
+			__asmeq("%0", R0_STR)
+			__asmeq("%1", R0_STR)
+			__asmeq("%2", R1_STR)
+			__asmeq("%3", R2_STR)
 #ifdef REQUIRES_SEC
 			".arch_extension sec\n"
 #endif
-			"smc	#0	@ switch to secure world\n"
+			"smc	#0\n"
 			: "=r" (r0)
 			: "r" (r0), "r" (r1), "r" (r2)
 			: "r3");
@@ -191,7 +218,8 @@ static int __scm_call(const struct scm_command *cmd)
 	return ret;
 }
 
-static void scm_inv_range(unsigned long start, unsigned long end)
+#ifndef CONFIG_ARM64
+void scm_inv_range(unsigned long start, unsigned long end)
 {
 	u32 cacheline_size, ctr;
 
@@ -209,6 +237,14 @@ static void scm_inv_range(unsigned long start, unsigned long end)
 	dsb();
 	isb();
 }
+EXPORT_SYMBOL(scm_inv_range);
+#else
+
+static void scm_inv_range(unsigned long start, unsigned long end)
+{
+	dmac_inv_range((void *)start, (void *)end);
+}
+#endif
 
 /**
  * scm_call_common() - Send an SCM command
@@ -323,6 +359,96 @@ int scm_call_noalloc(u32 svc_id, u32 cmd_id, const void *cmd_buf,
 
 }
 
+#ifdef CONFIG_ARM64
+
+static int __scm_call_armv8_64(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4, u64 x5,
+				u64 *ret1, u64 *ret2, u64 *ret3)
+{
+	register u64 r0 asm("r0") = x0;
+	register u64 r1 asm("r1") = x1;
+	register u64 r2 asm("r2") = x2;
+	register u64 r3 asm("r3") = x3;
+	register u64 r4 asm("r4") = x4;
+	register u64 r5 asm("r5") = x5;
+
+	do {
+		asm volatile(
+			__asmeq("%0", R0_STR)
+			__asmeq("%1", R1_STR)
+			__asmeq("%2", R2_STR)
+			__asmeq("%3", R3_STR)
+			__asmeq("%4", R0_STR)
+			__asmeq("%5", R1_STR)
+			__asmeq("%6", R2_STR)
+			__asmeq("%7", R3_STR)
+			__asmeq("%8", R4_STR)
+			__asmeq("%9", R5_STR)
+#ifdef REQUIRES_SEC
+			".arch_extension sec\n"
+#endif
+			"smc	#0\n"
+			: "=r" (r0), "=r" (r1), "=r" (r2), "=r" (r3)
+			: "r" (r0), "r" (r1), "r" (r2), "r" (r3), "r" (r4),
+			  "r" (r5)
+			: "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13",
+			  "x14", "x15", "x16", "x17");
+	} while (r0 == SCM_INTERRUPTED);
+
+	if (ret1)
+		*ret1 = r1;
+	if (ret2)
+		*ret2 = r2;
+	if (ret3)
+		*ret3 = r3;
+
+	return r0;
+}
+
+static int __scm_call_armv8_32(u32 w0, u32 w1, u32 w2, u32 w3, u32 w4, u32 w5,
+				u64 *ret1, u64 *ret2, u64 *ret3)
+{
+	register u32 r0 asm("r0") = w0;
+	register u32 r1 asm("r1") = w1;
+	register u32 r2 asm("r2") = w2;
+	register u32 r3 asm("r3") = w3;
+	register u32 r4 asm("r4") = w4;
+	register u32 r5 asm("r5") = w5;
+
+	do {
+		asm volatile(
+			__asmeq("%0", R0_STR)
+			__asmeq("%1", R1_STR)
+			__asmeq("%2", R2_STR)
+			__asmeq("%3", R3_STR)
+			__asmeq("%4", R0_STR)
+			__asmeq("%5", R1_STR)
+			__asmeq("%6", R2_STR)
+			__asmeq("%7", R3_STR)
+			__asmeq("%8", R4_STR)
+			__asmeq("%9", R5_STR)
+#ifdef REQUIRES_SEC
+			".arch_extension sec\n"
+#endif
+			"smc	#0\n"
+			: "=r" (r0), "=r" (r1), "=r" (r2), "=r" (r3)
+			: "r" (r0), "r" (r1), "r" (r2), "r" (r3), "r" (r4),
+			  "r" (r5)
+			: "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13",
+			  "x14", "x15", "x16", "x17");
+	} while (r0 == SCM_INTERRUPTED);
+
+	if (ret1)
+		*ret1 = r1;
+	if (ret2)
+		*ret2 = r2;
+	if (ret3)
+		*ret3 = r3;
+
+	return r0;
+}
+
+#else
+
 static int __scm_call_armv8_64(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4, u64 x5,
 				u64 *ret1, u64 *ret2, u64 *ret3)
 {
@@ -333,6 +459,8 @@ static int __scm_call_armv8_32(u32 w0, u32 w1, u32 w2, u32 w3, u32 w4, u32 w5,
 {
 	return 0;
 }
+
+#endif
 
 struct scm_extra_arg {
 	union {
@@ -615,24 +743,60 @@ s32 scm_call_atomic1(u32 svc, u32 cmd, u32 arg1)
 {
 	int context_id;
 	register u32 r0 asm("r0") = SCM_ATOMIC(svc, cmd, 1);
-	register u32 r1 asm("r1") = (u32)&context_id;
+	register u32 r1 asm("r1") = (uintptr_t)&context_id;
 	register u32 r2 asm("r2") = arg1;
 
 	asm volatile(
-		__asmeq("%0", "r0")
-		__asmeq("%1", "r0")
-		__asmeq("%2", "r1")
-		__asmeq("%3", "r2")
+		__asmeq("%0", R0_STR)
+		__asmeq("%1", R0_STR)
+		__asmeq("%2", R1_STR)
+		__asmeq("%3", R2_STR)
 #ifdef REQUIRES_SEC
 			".arch_extension sec\n"
 #endif
-		"smc	#0	@ switch to secure world\n"
+		"smc	#0\n"
 		: "=r" (r0)
 		: "r" (r0), "r" (r1), "r" (r2)
 		: "r3");
 	return r0;
 }
 EXPORT_SYMBOL(scm_call_atomic1);
+
+/**
+ * scm_call_atomic1_1() - SCM command with one argument and one return value
+ * @svc_id: service identifier
+ * @cmd_id: command identifier
+ * @arg1: first argument
+ * @ret1: first return value
+ *
+ * This shall only be used with commands that are guaranteed to be
+ * uninterruptable, atomic and SMP safe.
+ */
+s32 scm_call_atomic1_1(u32 svc, u32 cmd, u32 arg1, u32 *ret1)
+{
+	int context_id;
+	register u32 r0 asm("r0") = SCM_ATOMIC(svc, cmd, 1);
+	register u32 r1 asm("r1") = (uintptr_t)&context_id;
+	register u32 r2 asm("r2") = arg1;
+
+	asm volatile(
+		__asmeq("%0", R0_STR)
+		__asmeq("%1", R1_STR)
+		__asmeq("%2", R0_STR)
+		__asmeq("%3", R1_STR)
+		__asmeq("%4", R2_STR)
+#ifdef REQUIRES_SEC
+			".arch_extension sec\n"
+#endif
+		"smc	#0\n"
+		: "=r" (r0), "=r" (r1)
+		: "r" (r0), "r" (r1), "r" (r2)
+		: "r3");
+	if (ret1)
+		*ret1 = r1;
+	return r0;
+}
+EXPORT_SYMBOL(scm_call_atomic1_1);
 
 /**
  * scm_call_atomic2() - Send an atomic SCM command with two arguments
@@ -648,20 +812,20 @@ s32 scm_call_atomic2(u32 svc, u32 cmd, u32 arg1, u32 arg2)
 {
 	int context_id;
 	register u32 r0 asm("r0") = SCM_ATOMIC(svc, cmd, 2);
-	register u32 r1 asm("r1") = (u32)&context_id;
+	register u32 r1 asm("r1") = (uintptr_t)&context_id;
 	register u32 r2 asm("r2") = arg1;
 	register u32 r3 asm("r3") = arg2;
 
 	asm volatile(
-		__asmeq("%0", "r0")
-		__asmeq("%1", "r0")
-		__asmeq("%2", "r1")
-		__asmeq("%3", "r2")
-		__asmeq("%4", "r3")
+		__asmeq("%0", R0_STR)
+		__asmeq("%1", R0_STR)
+		__asmeq("%2", R1_STR)
+		__asmeq("%3", R2_STR)
+		__asmeq("%4", R3_STR)
 #ifdef REQUIRES_SEC
 			".arch_extension sec\n"
 #endif
-		"smc	#0	@ switch to secure world\n"
+		"smc	#0\n"
 		: "=r" (r0)
 		: "r" (r0), "r" (r1), "r" (r2), "r" (r3));
 	return r0;
@@ -683,22 +847,22 @@ s32 scm_call_atomic3(u32 svc, u32 cmd, u32 arg1, u32 arg2, u32 arg3)
 {
 	int context_id;
 	register u32 r0 asm("r0") = SCM_ATOMIC(svc, cmd, 3);
-	register u32 r1 asm("r1") = (u32)&context_id;
+	register u32 r1 asm("r1") = (uintptr_t)&context_id;
 	register u32 r2 asm("r2") = arg1;
 	register u32 r3 asm("r3") = arg2;
 	register u32 r4 asm("r4") = arg3;
 
 	asm volatile(
-		__asmeq("%0", "r0")
-		__asmeq("%1", "r0")
-		__asmeq("%2", "r1")
-		__asmeq("%3", "r2")
-		__asmeq("%4", "r3")
-		__asmeq("%5", "r4")
+		__asmeq("%0", R0_STR)
+		__asmeq("%1", R0_STR)
+		__asmeq("%2", R1_STR)
+		__asmeq("%3", R2_STR)
+		__asmeq("%4", R3_STR)
+		__asmeq("%5", R4_STR)
 #ifdef REQUIRES_SEC
 			".arch_extension sec\n"
 #endif
-		"smc	#0	@ switch to secure world\n"
+		"smc	#0\n"
 		: "=r" (r0)
 		: "r" (r0), "r" (r1), "r" (r2), "r" (r3), "r" (r4));
 	return r0;
@@ -711,24 +875,24 @@ s32 scm_call_atomic4_3(u32 svc, u32 cmd, u32 arg1, u32 arg2,
 	int ret;
 	int context_id;
 	register u32 r0 asm("r0") = SCM_ATOMIC(svc, cmd, 4);
-	register u32 r1 asm("r1") = (u32)&context_id;
+	register u32 r1 asm("r1") = (uintptr_t)&context_id;
 	register u32 r2 asm("r2") = arg1;
 	register u32 r3 asm("r3") = arg2;
 	register u32 r4 asm("r4") = arg3;
 	register u32 r5 asm("r5") = arg4;
 
 	asm volatile(
-		__asmeq("%0", "r0")
-		__asmeq("%1", "r1")
-		__asmeq("%2", "r2")
-		__asmeq("%3", "r0")
-		__asmeq("%4", "r1")
-		__asmeq("%5", "r2")
-		__asmeq("%6", "r3")
+		__asmeq("%0", R0_STR)
+		__asmeq("%1", R1_STR)
+		__asmeq("%2", R2_STR)
+		__asmeq("%3", R0_STR)
+		__asmeq("%4", R1_STR)
+		__asmeq("%5", R2_STR)
+		__asmeq("%6", R3_STR)
 #ifdef REQUIRES_SEC
 			".arch_extension sec\n"
 #endif
-		"smc	#0	@ switch to secure world\n"
+		"smc	#0\n"
 		: "=r" (r0), "=r" (r1), "=r" (r2)
 		: "r" (r0), "r" (r1), "r" (r2), "r" (r3), "r" (r4), "r" (r5));
 	ret = r0;
@@ -753,17 +917,17 @@ u32 scm_get_version(void)
 	mutex_lock(&scm_lock);
 
 	r0 = 0x1 << 8;
-	r1 = (u32)&context_id;
+	r1 = (uintptr_t)&context_id;
 	do {
 		asm volatile(
-			__asmeq("%0", "r0")
-			__asmeq("%1", "r1")
-			__asmeq("%2", "r0")
-			__asmeq("%3", "r1")
+			__asmeq("%0", R0_STR)
+			__asmeq("%1", R1_STR)
+			__asmeq("%2", R0_STR)
+			__asmeq("%3", R1_STR)
 #ifdef REQUIRES_SEC
 			".arch_extension sec\n"
 #endif
-			"smc	#0	@ switch to secure world\n"
+			"smc	#0\n"
 			: "=r" (r0), "=r" (r1)
 			: "r" (r0), "r" (r1)
 			: "r2", "r3");
