@@ -24,9 +24,11 @@
 #define SCM_SVC_MP			0xC
 #define SCM_SVC_DCVS			0xD
 #define SCM_SVC_ES			0x10
+#define SCM_SVC_HDCP			0x11
 #define SCM_SVC_TZSCHEDULER		0xFC
 
 #define SCM_FUSE_READ			0x7
+#define SCM_CMD_HDCP			0x01
 
 #define DEFINE_SCM_BUFFER(__n) \
 static char __n[PAGE_SIZE] __aligned(PAGE_SIZE);
@@ -111,6 +113,15 @@ extern int scm_is_call_available(u32 svc_id, u32 cmd_id);
 extern int scm_get_feat_version(u32 feat);
 extern bool is_scm_armv8(void);
 
+extern void scm_inv_range(unsigned long start, unsigned long end);
+
+#define SCM_HDCP_MAX_REG 5
+
+struct scm_hdcp_req {
+	u32 addr;
+	u32 val;
+};
+
 #else
 
 static inline int scm_call(u32 svc_id, u32 cmd_id, const void *cmd_buf,
@@ -176,6 +187,11 @@ static inline int scm_is_call_available(u32 svc_id, u32 cmd_id)
 static inline int scm_get_feat_version(u32 feat)
 {
 	return 0;
+}
+
+static inline void scm_inv_range(unsigned long start, unsigned long end)
+{
+	return;
 }
 
 static inline bool is_scm_armv8(void)
