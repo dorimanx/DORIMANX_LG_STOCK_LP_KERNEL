@@ -44,7 +44,7 @@
 #include "adsprpc_compat.h"
 #include "adsprpc_shared.h"
 #include <linux/msm_audio_ion.h>
-#include <soc/qcom/scm.h>
+#include <mach/scm.h>
 
 #define TZ_PIL_PROTECT_MEM_SUBSYS_ID 0x0C
 #define TZ_PIL_CLEAR_PROTECT_MEM_SUBSYS_ID 0x0D
@@ -400,7 +400,8 @@ static int fastrpc_buf_alloc(struct fastrpc_file *fl, ssize_t size,
 
 	VERIFY(err, !msm_audio_ion_alloc(DEVICE_NAME, &(buf->client),
 				&(buf->handle), buf->size,
-				&(buf->phys), &len, &(buf->virt)));
+				(ion_phys_addr_t *)&(buf->phys),
+				&len, &(buf->virt)));
 	if (err) {
 		pr_err("%s: Error allocating audio ion buf size: %zd\n",
 				__func__, buf->size);
