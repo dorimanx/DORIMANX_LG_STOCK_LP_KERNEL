@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -26,6 +26,37 @@
 #include "msm-buspm-dev.h"
 
 #define MSM_BUSPM_DRV_NAME "msm-buspm-dev"
+
+#ifdef CONFIG_COMPAT
+static long
+msm_buspm_dev_compat_ioctl(struct file *filp, unsigned int cmd,
+						unsigned long arg);
+#else
+#define msm_buspm_dev_compat_ioctl NULL
+#endif
+
+static long
+msm_buspm_dev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
+static int msm_buspm_dev_mmap(struct file *filp, struct vm_area_struct *vma);
+static int msm_buspm_dev_release(struct inode *inode, struct file *filp);
+static int msm_buspm_dev_open(struct inode *inode, struct file *filp);
+
+static const struct file_operations msm_buspm_dev_fops = {
+	.owner		= THIS_MODULE,
+	.mmap		= msm_buspm_dev_mmap,
+	.open		= msm_buspm_dev_open,
+	.unlocked_ioctl	= msm_buspm_dev_ioctl,
+	.compat_ioctl	= msm_buspm_dev_compat_ioctl,
+	.llseek		= noop_llseek,
+	.release	= msm_buspm_dev_release,
+};
+
+struct miscdevice msm_buspm_misc = {
+	.minor	= MISC_DYNAMIC_MINOR,
+	.name	= MSM_BUSPM_DRV_NAME,
+	.fops	= &msm_buspm_dev_fops,
+};
+
 
 enum msm_buspm_spdm_res {
 	SPDM_RES_ID = 0,
@@ -67,7 +98,8 @@ static void msm_buspm_dev_free(struct file *filp)
 
 	if (dev && dev->vaddr) {
 		pr_debug("freeing memory at 0x%p\n", dev->vaddr);
-		dma_free_coherent(NULL, dev->buflen, dev->vaddr, dev->paddr);
+		dma_free_coherent(msm_buspm_misc.this_device, dev->buflen,
+							dev->vaddr, dev->paddr);
 		dev->paddr = 0L;
 		dev->vaddr = NULL;
 	}
@@ -102,10 +134,11 @@ msm_buspm_dev_alloc(struct file *filp, struct buspm_alloc_params data)
 		msm_buspm_dev_free(filp);
 
 	/* Allocate uncached memory */
-	vaddr = dma_alloc_coherent(NULL, data.size, &paddr, GFP_KERNEL);
+	vaddr = dma_alloc_coherent(msm_buspm_misc.this_device, data.size,
+							&paddr, GFP_KERNEL);
 
 	if (vaddr == NULL) {
-		pr_err("allocation of 0x%x bytes failed", data.size);
+		pr_err("allocation of 0x%zu bytes failed", data.size);
 		return -ENOMEM;
 	}
 
@@ -139,7 +172,7 @@ static int msm_bus_rpm_req(u32 rsc_type, u32 key, u32 hwid,
 		goto err;
 	}
 
-	pr_debug("Added Key: %d, Val: %u, size: %d\n", key,
+	pr_debug("Added Key: %d, Val: %u, size: %zu\n", key,
 		(uint32_t)val, sizeof(uint32_t));
 	msg_id = msm_rpm_send_request(rpm_req);
 	if (!msg_id) {
@@ -198,7 +231,7 @@ msm_buspm_dev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 	case MSM_BUSPM_IOC_ALLOC:
 		pr_debug("cmd = 0x%x (ALLOC)\n", cmd);
-		retval = __get_user(alloc_data.size, (size_t __user *)arg);
+		retval = __get_user(alloc_data.size, (uint32_t __user *)arg);
 
 		if (retval == 0)
 			retval = msm_buspm_dev_alloc(filp, alloc_data);
@@ -217,13 +250,13 @@ msm_buspm_dev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		break;
 
 	case MSM_BUSPM_IOC_RDBUF:
-		pr_debug("Read Buffer: 0x%x%x%x%x\n",
-				dbgbuf[0], dbgbuf[1], dbgbuf[2], dbgbuf[3]);
-
 		if (!buf) {
 			retval = -EINVAL;
 			break;
 		}
+
+		pr_debug("Read Buffer: 0x%x%x%x%x\n",
+				dbgbuf[0], dbgbuf[1], dbgbuf[2], dbgbuf[3]);
 
 		if (copy_from_user(&xfer, (void __user *)arg, sizeof(xfer))) {
 			retval = -EFAULT;
@@ -297,20 +330,14 @@ static int msm_buspm_dev_mmap(struct file *filp, struct vm_area_struct *vma)
 	return 0;
 }
 
-static const struct file_operations msm_buspm_dev_fops = {
-	.owner		= THIS_MODULE,
-	.mmap		= msm_buspm_dev_mmap,
-	.open		= msm_buspm_dev_open,
-	.unlocked_ioctl	= msm_buspm_dev_ioctl,
-	.llseek		= noop_llseek,
-	.release	= msm_buspm_dev_release,
-};
-
-struct miscdevice msm_buspm_misc = {
-	.minor	= MISC_DYNAMIC_MINOR,
-	.name	= MSM_BUSPM_DRV_NAME,
-	.fops	= &msm_buspm_dev_fops,
-};
+#ifdef CONFIG_COMPAT
+static long
+msm_buspm_dev_compat_ioctl(struct file *filp, unsigned int cmd,
+						unsigned long arg)
+{
+	return msm_buspm_dev_ioctl(filp, cmd, (unsigned long)compat_ptr(arg));
+}
+#endif
 
 static int __init msm_buspm_dev_init(void)
 {
@@ -319,6 +346,10 @@ static int __init msm_buspm_dev_init(void)
 	ret = misc_register(&msm_buspm_misc);
 	if (ret < 0)
 		pr_err("%s: Cannot register misc device\n", __func__);
+
+	if (msm_buspm_misc.this_device->coherent_dma_mask == 0)
+		msm_buspm_misc.this_device->coherent_dma_mask =
+							DMA_BIT_MASK(32);
 
 	return ret;
 }
