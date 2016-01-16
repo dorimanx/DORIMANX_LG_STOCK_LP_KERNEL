@@ -504,8 +504,6 @@ struct msm_rpm_ack_msg {
 
 LIST_HEAD(msm_rpm_ack_list);
 
-static struct tasklet_struct data_tasklet;
-
 static DECLARE_COMPLETION(data_ready);
 
 static void msm_rpm_notify_sleep_chain(struct rpm_message_header *hdr,
@@ -702,7 +700,7 @@ static void msm_rpm_notify(void *data, unsigned event)
 
 	switch (event) {
 	case SMD_EVENT_DATA:
-		tasklet_schedule(&data_tasklet);
+		complete(&data_ready);
 		break;
 	case SMD_EVENT_OPEN:
 		complete(&pdata->smd_open);
@@ -908,21 +906,26 @@ error:
 	return 0;
 }
 
-static void data_fn_tasklet(unsigned long data)
+static void msm_rpm_smd_work(struct work_struct *work)
 {
 	uint32_t msg_id;
 	int errno;
 	char buf[MAX_ERR_BUFFER_SIZE] = {0};
 
-	spin_lock(&msm_rpm_data.smd_lock_read);
-	while (smd_is_pkt_avail(msm_rpm_data.ch_info)) {
-		if (msm_rpm_read_smd_data(buf))
-			break;
-		msg_id = msm_rpm_get_msg_id_from_ack(buf);
-		errno = msm_rpm_get_error_from_ack(buf);
-		msm_rpm_process_ack(msg_id, errno);
+	while (1) {
+		while (wait_for_completion_interruptible(
+			&data_ready) != 0);
+
+		spin_lock(&msm_rpm_data.smd_lock_read);
+		while (smd_is_pkt_avail(msm_rpm_data.ch_info)) {
+			if (msm_rpm_read_smd_data(buf))
+				break;
+			msg_id = msm_rpm_get_msg_id_from_ack(buf);
+			errno = msm_rpm_get_error_from_ack(buf);
+			msm_rpm_process_ack(msg_id, errno);
+		}
+		spin_unlock(&msm_rpm_data.smd_lock_read);
 	}
-	spin_unlock(&msm_rpm_data.smd_lock_read);
 }
 
 static void msm_rpm_log_request(struct msm_rpm_request *cdata)
@@ -1308,7 +1311,7 @@ wait_ack_cleanup:
 	spin_unlock_irqrestore(&msm_rpm_data.smd_lock_read, flags);
 
 	if (smd_is_pkt_avail(msm_rpm_data.ch_info))
-		tasklet_schedule(&data_tasklet);
+		complete(&data_ready);
 	return rc;
 }
 EXPORT_SYMBOL(msm_rpm_wait_for_ack_noirq);
@@ -1448,8 +1451,7 @@ static int __devinit msm_rpm_dev_probe(struct platform_device *pdev)
 
 	spin_lock_init(&msm_rpm_data.smd_lock_write);
 	spin_lock_init(&msm_rpm_data.smd_lock_read);
-	tasklet_init(&data_tasklet, data_fn_tasklet, 0);
-
+	INIT_WORK(&msm_rpm_data.work, msm_rpm_smd_work);
 
 	wait_for_completion(&msm_rpm_data.smd_open);
 
