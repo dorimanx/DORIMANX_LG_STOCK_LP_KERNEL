@@ -962,9 +962,6 @@ static int c_show(struct seq_file *m, void *v)
 {
 	int i;
 
-	seq_printf(m, "Processor\t: %s rev %d (%s)\n",
-		   cpu_name, read_cpuid_id() & 15, elf_platform);
-
 #if defined(CONFIG_SMP)
 	for_each_present_cpu(i) {
 		/*
