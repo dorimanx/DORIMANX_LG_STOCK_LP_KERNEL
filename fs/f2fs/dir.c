@@ -190,7 +190,7 @@ static struct f2fs_dir_entry *find_in_level(struct inode *dir,
 		}
 
 		de = find_in_block(dentry_page, fname, namehash, &max_slots,
-							res_page);
+								res_page);
 		if (de)
 			break;
 
@@ -213,8 +213,8 @@ static struct f2fs_dir_entry *find_in_level(struct inode *dir,
  * and the entry itself. Page is returned mapped and unlocked.
  * Entry is guaranteed to be valid.
  */
-struct f2fs_dir_entry *f2fs_find_entry(struct inode *dir, struct qstr *child,
-		struct page **res_page)
+struct f2fs_dir_entry *f2fs_find_entry(struct inode *dir,
+			struct qstr *child, struct page **res_page)
 {
 	unsigned long npages = dir_blocks(dir);
 	struct f2fs_dir_entry *de = NULL;

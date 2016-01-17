@@ -209,8 +209,8 @@ struct dentry *f2fs_get_parent(struct dentry *child)
 static int __recover_dot_dentries(struct inode *dir, nid_t pino)
 {
 	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
-	struct qstr dot = {.len = 1, .name = "."};
-	struct qstr dotdot = {.len = 2, .name = ".."};
+	struct qstr dot = QSTR_INIT(".", 1);
+	struct qstr dotdot = QSTR_INIT("..", 2);
 	struct f2fs_dir_entry *de;
 	struct page *page;
 	int err = 0;
