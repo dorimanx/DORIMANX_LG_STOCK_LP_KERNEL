@@ -9,7 +9,6 @@
  * published by the Free Software Foundation.
  */
 #include <linux/fs.h>
-#include <linux/namei.h>
 #include <linux/f2fs_fs.h>
 #include <linux/pagemap.h>
 #include <linux/sched.h>
@@ -122,7 +121,7 @@ static inline void set_cold_files(struct f2fs_sb_info *sbi, struct inode *inode,
 }
 
 static int f2fs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
-						struct nameidata *nd)
+		       struct nameidata *nd)
 {
 	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
 	struct inode *inode;
@@ -254,7 +253,7 @@ out:
 }
 
 static struct dentry *f2fs_lookup(struct inode *dir, struct dentry *dentry,
-		struct nameidata *nd)
+					struct nameidata *nd)
 {
 	struct inode *inode = NULL;
 	struct f2fs_dir_entry *de;
