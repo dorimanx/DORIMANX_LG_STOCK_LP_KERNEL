@@ -132,9 +132,9 @@
 
 	qcom,msm-thermal {
 		qcom,limit-temp = <78>;
-		qcom,temp-hysteresis = <5>;
-		qcom,core-limit-temp = <90>;
-		qcom,core-temp-hysteresis = <5>;
+		qcom,temp-hysteresis = <10>;
+		qcom,core-limit-temp = <80>;
+		qcom,core-temp-hysteresis = <10>;
 
 /* disabled
 		qcom,vdd-apps-rstr{
