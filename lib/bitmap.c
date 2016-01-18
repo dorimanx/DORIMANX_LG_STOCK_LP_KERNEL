@@ -292,7 +292,7 @@ void bitmap_clear(unsigned long *map, unsigned int start, int len)
 EXPORT_SYMBOL(bitmap_clear);
 
 /**
- * bitmap_find_next_zero_area - find a contiguous aligned zero area
+ * bitmap_find_next_zero_area_off - find a contiguous aligned zero area
  * @map: The address to base the search on
  * @size: The bitmap size in bits
  * @start: The bitnumber to start searching at
@@ -331,7 +331,7 @@ again:
 EXPORT_SYMBOL(bitmap_find_next_zero_area_off);
 
 /*
- * Bitmap printing & parsing functions: first version by Bill Irwin,
+ * Bitmap printing & parsing functions: first version by Nadia Yvette Chambers,
  * second version by Paul Jackson, third by Joe Korty.
  */
 
@@ -820,7 +820,7 @@ EXPORT_SYMBOL(bitmap_bitremap);
  * read it, you're overqualified for your current job.)
  *
  * In other words, @orig is mapped onto (surjectively) @dst,
- * using the the map { <n, m> | the n-th bit of @relmap is the
+ * using the map { <n, m> | the n-th bit of @relmap is the
  * m-th set bit of @relmap }.
  *
  * Any set bits in @orig above bit number W, where W is the
@@ -868,7 +868,7 @@ EXPORT_SYMBOL(bitmap_bitremap);
  *
  *  Further lets say we use the following code, invoking
  *  bitmap_fold() then bitmap_onto, as suggested above to
- *  avoid the possitility of an empty @dst result:
+ *  avoid the possibility of an empty @dst result:
  *
  *	unsigned long *tmp;	// a temporary bitmap's bits
  *
