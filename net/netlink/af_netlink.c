@@ -620,7 +620,7 @@ static int netlink_mmap_sendmsg(struct sock *sk, struct msghdr *msg,
 
 		netlink_increment_head(ring);
 
-		NETLINK_CB(skb).portid	  = nlk->portid;
+		NETLINK_CB(skb).pid	  = nlk->pid;
 		NETLINK_CB(skb).dst_group = dst_group;
 		NETLINK_CB(skb).creds	  = siocb->scm->creds;
 
@@ -2425,7 +2425,7 @@ static int netlink_dump(struct sock *sk)
 	if (!netlink_rx_is_mmaped(sk) &&
 	    atomic_read(&sk->sk_rmem_alloc) >= sk->sk_rcvbuf)
 		goto errout_skb;
-	skb = netlink_alloc_skb(sk, alloc_size, nlk->portid, GFP_KERNEL);
+	skb = netlink_alloc_skb(sk, alloc_size, nlk->pid, GFP_KERNEL);
 	if (!skb)
 		goto errout_skb;
 	netlink_skb_set_owner_r(skb, sk);
@@ -2557,7 +2557,7 @@ void netlink_ack(struct sk_buff *in_skb, struct nlmsghdr *nlh, int err)
 		payload += nlmsg_len(nlh);
 
 	skb = netlink_alloc_skb(in_skb->sk, nlmsg_total_size(payload),
-				NETLINK_CB(in_skb).portid, GFP_KERNEL);
+				NETLINK_CB(in_skb).pid, GFP_KERNEL);
 	if (!skb) {
 		struct sock *sk;
 

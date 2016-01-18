@@ -51,7 +51,7 @@ static inline struct netlink_sock *nlk_sk(struct sock *sk)
 	return container_of(sk, struct netlink_sock, sk);
 }
 
-struct nl_portid_hash {
+struct nl_pid_hash {
 	struct hlist_head	*table;
 	unsigned long		rehash_time;
 
@@ -65,7 +65,7 @@ struct nl_portid_hash {
 };
 
 struct netlink_table {
-	struct nl_portid_hash	hash;
+	struct nl_pid_hash	hash;
 	struct hlist_head	mc_list;
 	struct listeners __rcu	*listeners;
 	unsigned int		flags;
