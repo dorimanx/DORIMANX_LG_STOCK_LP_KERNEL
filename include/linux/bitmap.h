@@ -39,8 +39,6 @@
  * bitmap_equal(src1, src2, nbits)		Are *src1 and *src2 equal?
  * bitmap_intersects(src1, src2, nbits) 	Do *src1 and *src2 overlap?
  * bitmap_subset(src1, src2, nbits)		Is *src1 a subset of *src2?
- * bitmap_empty(src, nbits)			Are all bits zero in *src?
- * bitmap_full(src, nbits)			Are all bits set in *src?
  * bitmap_weight(src, nbits)			Hamming Weight: number set bits
  * bitmap_set(dst, pos, nbits)			Set specified bit area
  * bitmap_clear(dst, pos, nbits)		Clear specified bit area
@@ -90,8 +88,6 @@
  * lib/bitmap.c provides these functions:
  */
 
-extern int __bitmap_empty(const unsigned long *bitmap, unsigned int nbits);
-extern int __bitmap_full(const unsigned long *bitmap, unsigned int nbits);
 extern int __bitmap_equal(const unsigned long *bitmap1,
 			  const unsigned long *bitmap2, unsigned int nbits);
 extern void __bitmap_complement(unsigned long *dst, const unsigned long *src,

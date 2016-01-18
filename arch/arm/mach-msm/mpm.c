@@ -412,7 +412,7 @@ bool msm_mpm_irqs_detectable(bool from_idle)
 		}
 
 	}
-	return (bool)__bitmap_empty(apps_irq_bitmap, MSM_MPM_NR_APPS_IRQS);
+	return (bool)bitmap_empty(apps_irq_bitmap, MSM_MPM_NR_APPS_IRQS);
 }
 
 bool msm_mpm_gpio_irqs_detectable(bool from_idle)
