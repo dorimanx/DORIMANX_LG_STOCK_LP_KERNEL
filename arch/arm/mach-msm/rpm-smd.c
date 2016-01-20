@@ -1235,7 +1235,7 @@ int msm_rpm_wait_for_ack(uint32_t msg_id)
 		return rc;
 
 	rt_mutex_lock(&msm_rpm_smd_lock);
-	if (!wait_for_completion_timeout(&elem->ack, 50*HZ)) {
+	if (!wait_for_completion_timeout(&elem->ack, 100*HZ)) {
 		pr_err("%s TIMEOUT msg_id %d\n", __func__, msg_id);
 		BUG();
 	}
