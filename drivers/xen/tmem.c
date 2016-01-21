@@ -235,7 +235,7 @@ static int __init no_cleancache(char *s)
 }
 __setup("nocleancache", no_cleancache);
 
-static struct cleancache_ops __initdata tmem_cleancache_ops = {
+static const struct cleancache_ops tmem_cleancache_ops = {
 	.put_page = tmem_cleancache_put_page,
 	.get_page = tmem_cleancache_get_page,
 	.invalidate_page = tmem_cleancache_flush_page,
