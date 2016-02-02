@@ -305,16 +305,16 @@ u64 gen_pool_alloc_aligned(struct gen_pool *pool, size_t size,
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(chunk, &pool->chunks, next_chunk) {
-		unsigned long chunk_size;
+		unsigned long chunk_len;
 		if (size > atomic_read(&chunk->avail))
 			continue;
-		chunk_size = chunk_size(chunk) >> order; 
+		chunk_len = chunk_size(chunk) >> order;
 
 retry:
-		start_bit = bitmap_find_next_zero_area_off(chunk->bits, chunk_size,
+		start_bit = bitmap_find_next_zero_area_off(chunk->bits, chunk_len,
 						   0, nbits, align_mask,
 						   chunk->start_addr >> order);
-		if (start_bit >= chunk_size)
+		if (start_bit >= chunk_len)
 			continue;
 		remain = bitmap_set_ll(chunk->bits, start_bit, nbits);
 		if (remain) {
@@ -466,7 +466,7 @@ EXPORT_SYMBOL(gen_pool_set_algo);
  * @nr: The number of zeroed bits we're looking for
  * @data: additional data - unused
  */
-unsigned long gen_pool_first_fit(unsigned long *map, unsigned long size,
+u64 gen_pool_first_fit(unsigned long *map, unsigned long size,
 		unsigned long start, unsigned int nr, void *data)
 {
 	return bitmap_find_next_zero_area(map, size, start, nr, 0);
@@ -485,7 +485,7 @@ EXPORT_SYMBOL(gen_pool_first_fit);
  * Iterate over the bitmap to find the smallest free region
  * which we can allocate the memory.
  */
-unsigned long gen_pool_best_fit(unsigned long *map, unsigned long size,
+u64 gen_pool_best_fit(unsigned long *map, unsigned long size,
 		unsigned long start, unsigned int nr, void *data)
 {
 	unsigned long start_bit = size;
