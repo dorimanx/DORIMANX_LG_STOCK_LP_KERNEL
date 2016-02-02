@@ -168,8 +168,11 @@ static int lmk_vmpressure_notifier(struct notifier_block *nb,
 	unsigned long pressure = action;
 	int array_size = ARRAY_SIZE(lowmem_adj);
 
-	if (!enable_adaptive_lmk)
+	if (!enable_adaptive_lmk) {
+		if (lmk_vm_pressure > 0)
+			lmk_vm_pressure = 0;
 		return 0;
+	}
 
 	/* update lmk_vm_pressure state */
 	lmk_vm_pressure = action;
