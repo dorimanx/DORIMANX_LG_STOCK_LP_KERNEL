@@ -3095,6 +3095,8 @@ static void addrconf_dad_start(struct inet6_ifaddr *ifp, u32 flags)
 {
 	struct inet6_dev *idev = ifp->idev;
 	struct net_device *dev = idev->dev;
+	bool notify = false;
+
 // LGE_CHANGE_S, [LGE_DATA][LGP_DATA_TCPIP_SLAAC_IPV6_ALLOCATION_BOOSTER], heeyeon.nah@lge.com, 2013-07-02
 #ifdef CONFIG_LGP_DATA_TCPIP_SLAAC_IPV6_ALLOCATION_BOOSTER
     int ipv6AddrType = 0; //initializing
@@ -3174,7 +3176,7 @@ static void addrconf_dad_start(struct inet6_ifaddr *ifp, u32 flags)
 			/* Because optimistic nodes can use this address,
 			 * notify listeners. If DAD fails, RTM_DELADDR is sent.
 			 */
-			ipv6_ifa_notify(RTM_NEWADDR, ifp);
+			notify = true;
 		}
 	}
 
@@ -3182,6 +3184,8 @@ static void addrconf_dad_start(struct inet6_ifaddr *ifp, u32 flags)
 out:
 	spin_unlock(&ifp->lock);
 	read_unlock_bh(&idev->lock);
+	if (notify)
+		ipv6_ifa_notify(RTM_NEWADDR, ifp);
 }
 static void addrconf_dad_timer(unsigned long data)
 {
