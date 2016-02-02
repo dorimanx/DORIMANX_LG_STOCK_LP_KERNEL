@@ -128,7 +128,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 	unsigned int min_load = 100;
 	unsigned int avg_load = 0;
 	unsigned int n = 0;
-	unsigned int sum_load, sum_freq;
+	unsigned int sum_load = 0, sum_freq = 0;
 	bool rq_avg_calc = true;
 	int online_cpus, delay, ret;
 	cpumask_var_t cpus;
@@ -195,6 +195,8 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 			offcpu = cpu;
 		}
 	}
+	if (!sum_freq)
+		goto next_loop;
 
 	avg_freq = adjust_avg_freq(BOOT_CPU, (sum_freq / n));
 
@@ -282,6 +284,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 		}
 	}
 
+next_loop:
 	delay = msecs_to_jiffies(hotplug_tuners_ins.hotplug_sampling_rate);
 	if (num_online_cpus() > 1) {
 		delay -= jiffies % delay;
