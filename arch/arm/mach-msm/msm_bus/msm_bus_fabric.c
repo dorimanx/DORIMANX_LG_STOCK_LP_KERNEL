@@ -60,7 +60,7 @@ static int msm_bus_fabric_add_node(struct msm_bus_fabric *fabric,
 	int status = -ENOMEM, ctx;
 	MSM_BUS_DBG("msm_bus_fabric_add_node: ID %d Gw: %d\n",
 		info->node_info->priv_id, info->node_info->gateway);
-	status = radix_tree_preload(GFP_ATOMIC);
+	status = radix_tree_maybe_preload(GFP_ATOMIC);
 	if (status)
 		goto out;
 
