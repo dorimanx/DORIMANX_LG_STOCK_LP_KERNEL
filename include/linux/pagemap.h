@@ -254,6 +254,8 @@ typedef int filler_t(void *, struct page *);
 
 pgoff_t page_cache_next_hole(struct address_space *mapping,
                              pgoff_t index, unsigned long max_scan);
+pgoff_t page_cache_prev_hole(struct address_space *mapping,
+			     pgoff_t index, unsigned long max_scan);
 
 extern struct page * find_get_page(struct address_space *mapping,
 				pgoff_t index);
