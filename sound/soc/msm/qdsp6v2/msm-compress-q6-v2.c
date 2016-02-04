@@ -3164,10 +3164,17 @@ static int lge_dsp_sound_mabl_allparam_get(struct snd_kcontrol *kcontrol,
 }
 #endif
 
+static int msm_compr_gapless_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol);
+static int msm_compr_gapless_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol);
 
 /* System Pin has no volume control */
 static const struct snd_kcontrol_new msm_compr_lge_effect_controls[] = {
-
+	SOC_SINGLE_EXT("Compress Gapless Playback",
+			0, 0, 1, 0,
+			msm_compr_gapless_get,
+			msm_compr_gapless_put),
 #ifdef CONFIG_SND_LGE_EFFECT
 	SOC_SINGLE_EXT("Offload Effect Enable",
 			MSM_FRONTEND_DAI_MULTIMEDIA4,
