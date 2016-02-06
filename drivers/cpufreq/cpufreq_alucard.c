@@ -606,6 +606,9 @@ static void alucard_check_cpu(struct cpufreq_alucard_cpuinfo *this_alucard_cpuin
 			else
 				this_alucard_cpuinfo->down_rate = 1;
 		}
+	} else {
+		this_alucard_cpuinfo->up_rate = 1;
+		this_alucard_cpuinfo->down_rate = 1;
 	}
 }
 
