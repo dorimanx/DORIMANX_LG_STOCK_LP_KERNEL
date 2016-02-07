@@ -5,10 +5,10 @@
 # It is necessary for linking the library.
 
 # The name that we can dlopen(3).
-dlname='libbfd-2.25.1.so'
+dlname='libbfd-2.26.20160125.so'
 
 # Names of this library.
-library_names='libbfd-2.25.1.so libbfd-2.25.1.so libbfd.so'
+library_names='libbfd-2.26.20160125.so libbfd-2.26.20160125.so libbfd.so'
 
 # The name of the static archive.
 old_library='libbfd.a'
@@ -17,7 +17,7 @@ old_library='libbfd.a'
 inherited_linker_flags=''
 
 # Libraries that this one depends upon.
-dependency_libs=' -L/android-kernel/crosstool-ng/.build/arm-LG-linux-gnueabi/build/build-binutils-for-target/bfd/../libiberty/pic -liberty -ldl'
+dependency_libs=' -L/android-kernel/crosstool-ng/.build/arm-LG-linux-gnueabi/build/build-binutils-for-target/bfd/../libiberty/pic -liberty -L/android-kernel/crosstool-ng/.build/arm-LG-linux-gnueabi/build/build-binutils-for-target/zlib -lz -ldl'
 
 # Names of additional weak libraries provided by this library
 weak_library_names=''

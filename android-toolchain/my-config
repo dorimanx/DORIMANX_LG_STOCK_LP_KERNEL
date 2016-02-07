@@ -264,28 +264,19 @@ CT_BINUTILS_binutils=y
 # GNU binutils
 #
 # CT_BINUTILS_CUSTOM is not set
-CT_BINUTILS_VERSION="2.25.1"
-# CT_CC_BINUTILS_SHOW_LINARO is not set
-CT_BINUTILS_V_2_25_1=y
-# CT_BINUTILS_V_2_25 is not set
+CT_BINUTILS_VERSION="2.26"
+CT_CC_BINUTILS_SHOW_LINARO=y
+CT_BINUTILS_V_2_26=y
+# CT_BINUTILS_V_2_25_1 is not set
+# CT_BINUTILS_LINARO_V_2_25 is not set
+# CT_BINUTILS_LINARO_V_2_24 is not set
 # CT_BINUTILS_V_2_24 is not set
 # CT_BINUTILS_V_2_23_2 is not set
-# CT_BINUTILS_V_2_23_1 is not set
-# CT_BINUTILS_V_2_22 is not set
-# CT_BINUTILS_V_2_21_53 is not set
-# CT_BINUTILS_V_2_21_1a is not set
-# CT_BINUTILS_V_2_20_1a is not set
-# CT_BINUTILS_V_2_19_1a is not set
-# CT_BINUTILS_V_2_18a is not set
+CT_BINUTILS_2_26_or_later=y
 CT_BINUTILS_2_25_1_or_later=y
 CT_BINUTILS_2_25_or_later=y
 CT_BINUTILS_2_24_or_later=y
-CT_BINUTILS_2_23_or_later=y
-CT_BINUTILS_2_22_or_later=y
-CT_BINUTILS_2_21_or_later=y
-CT_BINUTILS_2_20_or_later=y
-CT_BINUTILS_2_19_or_later=y
-CT_BINUTILS_2_18_or_later=y
+CT_BINUTILS_2_23_2_or_later=y
 CT_BINUTILS_HAS_HASH_STYLE=y
 CT_BINUTILS_HAS_GOLD=y
 CT_BINUTILS_GOLD_SUPPORTS_ARCH=y
@@ -316,9 +307,10 @@ CT_LIBC_avr_libc_AVAILABLE=y
 CT_LIBC_glibc_AVAILABLE=y
 CT_THREADS="nptl"
 # CT_LIBC_GLIBC_CUSTOM is not set
-# CT_CC_GLIBC_SHOW_LINARO is not set
+CT_CC_GLIBC_SHOW_LINARO=y
 CT_LIBC_GLIBC_V_2_22=y
 # CT_LIBC_GLIBC_V_2_21 is not set
+# CT_LIBC_GLIBC_LINARO_V_2_20 is not set
 # CT_LIBC_GLIBC_V_2_20 is not set
 # CT_LIBC_GLIBC_V_2_19 is not set
 # CT_LIBC_GLIBC_V_2_18 is not set
@@ -382,9 +374,12 @@ CT_CC_CORE_PASS_2_NEEDED=y
 CT_CC_gcc=y
 # CT_CC_GCC_CUSTOM is not set
 CT_CC_GCC_VERSION="5.3.0"
-# CT_CC_GCC_SHOW_LINARO is not set
+CT_CC_GCC_SHOW_LINARO=y
 CT_CC_GCC_V_5_3_0=y
+# CT_CC_GCC_V_linaro_5_2 is not set
+# CT_CC_GCC_V_linaro_4_9 is not set
 # CT_CC_GCC_V_4_9_3 is not set
+# CT_CC_GCC_V_linaro_4_8 is not set
 # CT_CC_GCC_V_4_8_5 is not set
 CT_CC_GCC_4_8_or_later=y
 CT_CC_GCC_4_9_or_later=y
@@ -406,7 +401,6 @@ CT_CC_GCC_HAS_LIBSANITIZER=y
 CT_CC_GCC_ENABLE_CXX_FLAGS=""
 CT_CC_GCC_CORE_EXTRA_CONFIG_ARRAY=""
 CT_CC_GCC_EXTRA_CONFIG_ARRAY=""
-CT_CC_GCC_EXTRA_ENV_ARRAY=""
 CT_CC_GCC_STATIC_LIBSTDCXX=y
 # CT_CC_GCC_SYSTEM_ZLIB is not set
 
@@ -492,7 +486,8 @@ CT_LIBICONV_V_1_14=y
 CT_LIBICONV_VERSION="1.14"
 CT_GETTEXT_V_0_19_6=y
 CT_GETTEXT_VERSION="0.19.6"
-CT_GMP_V_6_0_0=y
+CT_GMP_V_6_1_0=y
+# CT_GMP_V_6_0_0 is not set
 # CT_GMP_V_5_1_3 is not set
 # CT_GMP_V_5_1_1 is not set
 # CT_GMP_V_5_0_2 is not set
@@ -501,7 +496,7 @@ CT_GMP_V_6_0_0=y
 # CT_GMP_V_4_3_1 is not set
 # CT_GMP_V_4_3_0 is not set
 CT_GMP_5_0_2_or_later=y
-CT_GMP_VERSION="6.0.0a"
+CT_GMP_VERSION="6.1.0"
 CT_MPFR_V_3_1_3=y
 # CT_MPFR_V_3_1_2 is not set
 # CT_MPFR_V_3_1_0 is not set
