@@ -76,7 +76,7 @@ ENTRY(__get_user_8)
 6: TUSER(ldr)	r3, [r0]
 #endif
 	mov	r0, #0
-	ret	lr
+	mov	pc, lr
 ENDPROC(__get_user_8)
 
 #ifdef __ARMEB__
@@ -89,14 +89,14 @@ ENTRY(__get_user_32t_8)
 7:	ldr	r2, [r0, #4]
 #endif
 	mov	r0, #0
-	ret	lr
+	mov	pc, lr
 ENDPROC(__get_user_32t_8)
 
 ENTRY(__get_user_64t_1)
 	check_uaccess r0, 1, r1, r2, __get_user_bad8
 8: TUSER(ldrb)	r3, [r0]
 	mov	r0, #0
-	ret	lr
+	mov	pc, lr
 ENDPROC(__get_user_64t_1)
 
 ENTRY(__get_user_64t_2)
@@ -112,14 +112,14 @@ rb	.req	r0
 #endif
 	orr	r3, rb, r3, lsl #8
 	mov	r0, #0
-	ret	lr
+	mov	pc, lr
 ENDPROC(__get_user_64t_2)
 
 ENTRY(__get_user_64t_4)
 	check_uaccess r0, 4, r1, r2, __get_user_bad8
 11: TUSER(ldr)	r3, [r0]
 	mov	r0, #0
-	ret	lr
+	mov	pc, lr
 ENDPROC(__get_user_64t_4)
 #endif
 
