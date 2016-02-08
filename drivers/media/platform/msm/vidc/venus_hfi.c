@@ -492,13 +492,12 @@ static void venus_hfi_write_register(struct venus_hfi_device *device, u32 reg,
 		dprintk(VIDC_ERR, "Invalid params: %p\n", device);
 		return;
 	}
-
-	base_addr = device->hal_data->register_base_addr;
 	if (device->clk_state != ENABLED_PREPARED) {
 		dprintk(VIDC_WARN,
 			"HFI Write register failed : Clocks are OFF\n");
 		return;
 	}
+
 	reg &= REG_ADDR_OFFSET_BITMASK;
 	if (reg == (u32)VIDC_CPU_CS_SCIACMDARG2) {
 		/* workaround to offset of FW bias */
@@ -517,29 +516,30 @@ static void venus_hfi_write_register(struct venus_hfi_device *device, u32 reg,
 		value -= HFI_SIM_FW_BIAS;
 	}
 
-	hwiosymaddr = ((u32)base_addr + (hwiosymaddr));
-	dprintk(VIDC_DBG, "Base addr: 0x%x, written to: 0x%x, Value: 0x%x...",
-			(u32)base_addr, hwiosymaddr, value);
-	writel_relaxed(value, hwiosymaddr);
+	base_addr = device->hal_data->register_base_addr;
+	dprintk(VIDC_DBG, "Base addr: 0x%p, written to: 0x%x, Value: 0x%x...\n",
+		base_addr, hwiosymaddr, value);
+	base_addr += hwiosymaddr;
+	writel_relaxed(value, base_addr);
 	wmb();
 }
 
 static int venus_hfi_read_register(struct venus_hfi_device *device, u32 reg)
 {
-	int rc ;
+	int rc = 0;
 	u8 *base_addr;
 	if (!device) {
 		dprintk(VIDC_ERR, "Invalid params: %p\n", device);
 		return -EINVAL;
 	}
-
-	base_addr = device->hal_data->register_base_addr;
 	if (device->clk_state != ENABLED_PREPARED) {
 		dprintk(VIDC_WARN,
 			"HFI Read register failed : Clocks are OFF\n");
 		return -EINVAL;
 	}
-	rc = readl_relaxed((u32)base_addr + reg);
+	base_addr = device->hal_data->register_base_addr;
+
+	rc = readl_relaxed(base_addr + reg);
 	rmb();
 	return rc;
 }
@@ -1253,7 +1253,7 @@ static int venus_hfi_halt_axi(struct venus_hfi_device *device)
 	venus_hfi_write_register(device, VENUS_VBIF_AXI_HALT_CTRL0, reg, 0);
 
 	/* Request for AXI bus port halt */
-	rc = readl_poll_timeout((u32)device->hal_data->register_base_addr
+	rc = readl_poll_timeout(device->hal_data->register_base_addr
 			+ VENUS_VBIF_AXI_HALT_CTRL1,
 			reg, reg & VENUS_VBIF_AXI_HALT_CTRL1_HALT_ACK,
 			POLL_INTERVAL_US,
