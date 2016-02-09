@@ -366,7 +366,8 @@ static int tsens_tz_degc_to_code(int degc, int idx)
 
 static void msm_tsens_get_temp(int sensor_hw_num, unsigned long *temp)
 {
-	unsigned int code, sensor_addr;
+	unsigned int code;
+	void __iomem *sensor_addr;
 	int sensor_sw_id = -EINVAL, rc = 0;
 
 	if (!tmdev->prev_reading_avail) {
@@ -377,8 +378,7 @@ static void msm_tsens_get_temp(int sensor_hw_num, unsigned long *temp)
 		tmdev->prev_reading_avail = true;
 	}
 
-	sensor_addr =
-		(unsigned int)TSENS_S0_STATUS_ADDR(tmdev->tsens_addr);
+	sensor_addr = TSENS_S0_STATUS_ADDR(tmdev->tsens_addr);
 	code = readl_relaxed(sensor_addr +
 			(sensor_hw_num << TSENS_STATUS_ADDR_OFFSET));
 	/* Obtain SW index to map the corresponding thermal zone's
@@ -639,13 +639,14 @@ static void tsens_scheduler_fn(struct work_struct *work)
 	struct tsens_tm_device *tm = container_of(work, struct tsens_tm_device,
 						tsens_work);
 	unsigned int i, status, threshold;
-	unsigned int sensor_status_addr, sensor_status_ctrl_addr;
+	void __iomem *sensor_status_addr;
+	void __iomem *sensor_status_ctrl_addr;
 	int sensor_sw_id = -EINVAL, rc = 0;
 
 	sensor_status_addr =
-		(unsigned int)TSENS_S0_STATUS_ADDR(tmdev->tsens_addr);
+		TSENS_S0_STATUS_ADDR(tmdev->tsens_addr);
 	sensor_status_ctrl_addr =
-		(unsigned int)TSENS_S0_UPPER_LOWER_STATUS_CTRL_ADDR
+		TSENS_S0_UPPER_LOWER_STATUS_CTRL_ADDR
 		(tmdev->tsens_addr);
 	for (i = 0; i < tm->tsens_num_sensor; i++) {
 		bool upper_thr = false, lower_thr = false;
