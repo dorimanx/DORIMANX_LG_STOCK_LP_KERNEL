@@ -119,7 +119,7 @@ static ssize_t hfsplus_direct_IO(int rw, struct kiocb *iocb,
 	struct inode *inode = file_inode(file)->i_mapping->host;
 	ssize_t ret;
 
-	ret = blockdev_direct_IO(rw, iocb, inode, iter, offset,
+	ret = blockdev_direct_IO(rw, iocb, inode, iov, offset, nr_segs,
 				 hfsplus_get_block);
 
 	/*
@@ -128,7 +128,7 @@ static ssize_t hfsplus_direct_IO(int rw, struct kiocb *iocb,
 	 */
 	if (unlikely((rw & WRITE) && ret < 0)) {
 		loff_t isize = i_size_read(inode);
-		loff_t end = offset + iov_iter_count(iter);
+		loff_t end = offset + iov_length(iov, nr_segs);
 
 		if (end > isize)
 			vmtruncate(inode, isize);
@@ -368,9 +368,9 @@ static const struct inode_operations hfsplus_file_inode_operations = {
 static const struct file_operations hfsplus_file_operations = {
 	.llseek		= generic_file_llseek,
 	.read		= do_sync_read,
-	.read_iter	= generic_file_read_iter,
+	.aio_read	= generic_file_aio_read,
 	.write		= do_sync_write,
-	.write_iter	= generic_file_write_iter,
+	.aio_write	= generic_file_aio_write,
 	.mmap		= generic_file_mmap,
 	.splice_read	= generic_file_splice_read,
 	.fsync		= hfsplus_file_fsync,

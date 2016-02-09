@@ -39,8 +39,6 @@
 #include <asm/kmap_types.h>
 #include <asm/uaccess.h>
 
-#include "read_write.h"
-
 #define AIO_RING_MAGIC			0xa10a10a1
 #define AIO_RING_COMPAT_FEATURES	1
 #define AIO_RING_INCOMPAT_FEATURES	0
@@ -1011,14 +1009,14 @@ static ssize_t aio_run_iocb(struct kiocb *req, bool compat)
 	case IOCB_CMD_PREADV:
 		mode	= FMODE_READ;
 		rw	= READ;
-		rw_op	= do_aio_read;
+		rw_op	= file->f_op->aio_read;
 		goto rw_common;
 
 	case IOCB_CMD_PWRITE:
 	case IOCB_CMD_PWRITEV:
 		mode	= FMODE_WRITE;
 		rw	= WRITE;
-		rw_op	= do_aio_write;
+		rw_op	= file->f_op->aio_write;
 		goto rw_common;
 rw_common:
 		if (unlikely(!(file->f_mode & mode)))
@@ -1042,7 +1040,7 @@ rw_common:
 		req->ki_left = ret;
 
 		ret = aio_rw_vect_retry(req, rw, rw_op);
- 		break;
+		break;
 
 	case IOCB_CMD_FDSYNC:
 		if (!file->f_op->aio_fsync)

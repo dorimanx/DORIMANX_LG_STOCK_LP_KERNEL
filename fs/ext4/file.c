@@ -72,11 +72,12 @@ void ext4_unwritten_wait(struct inode *inode)
  * or one thread will zero the other's data, causing corruption.
  */
 static int
-ext4_unaligned_aio(struct inode *inode, struct iov_iter *iter, loff_t pos)
+ext4_unaligned_aio(struct inode *inode, const struct iovec *iov,
+		   unsigned long nr_segs, loff_t pos)
 {
 	struct super_block *sb = inode->i_sb;
 	int blockmask = sb->s_blocksize - 1;
-	size_t count = iov_iter_count(iter);
+	size_t count = iov_length(iov, nr_segs);
 	loff_t final_size = pos + count;
 
 	if (pos >= i_size_read(inode))
@@ -89,7 +90,8 @@ ext4_unaligned_aio(struct inode *inode, struct iov_iter *iter, loff_t pos)
 }
 
 static ssize_t
-ext4_file_dio_write(struct kiocb *iocb, struct iov_iter *iter, loff_t pos)
+ext4_file_dio_write(struct kiocb *iocb, const struct iovec *iov,
+		    unsigned long nr_segs, loff_t pos)
 {
 	struct file *file = iocb->ki_filp;
 	struct inode *inode = file->f_mapping->host;
@@ -97,11 +99,11 @@ ext4_file_dio_write(struct kiocb *iocb, struct iov_iter *iter, loff_t pos)
 	int unaligned_aio = 0;
 	ssize_t ret;
 	int overwrite = 0;
-	size_t length = iov_iter_count(iter);
+	size_t length = iov_length(iov, nr_segs);
 
 	if (ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS) &&
 	    !is_sync_kiocb(iocb))
-		unaligned_aio = ext4_unaligned_aio(inode, iter, pos);
+		unaligned_aio = ext4_unaligned_aio(inode, iov, nr_segs, pos);
 
 	/* Unaligned direct AIO must be serialized; see comment above */
 	if (unaligned_aio) {
@@ -150,7 +152,7 @@ ext4_file_dio_write(struct kiocb *iocb, struct iov_iter *iter, loff_t pos)
 			overwrite = 1;
 	}
 
-	ret = __generic_file_write_iter(iocb, iter, &iocb->ki_pos);
+	ret = __generic_file_aio_write(iocb, iov, nr_segs, &iocb->ki_pos);
 	mutex_unlock(&inode->i_mutex);
 
 	if (ret > 0 || ret == -EIOCBQUEUED) {
@@ -169,7 +171,8 @@ ext4_file_dio_write(struct kiocb *iocb, struct iov_iter *iter, loff_t pos)
 }
 
 static ssize_t
-ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *iter, loff_t pos)
+ext4_file_write(struct kiocb *iocb, const struct iovec *iov,
+		unsigned long nr_segs, loff_t pos)
 {
 	struct inode *inode = file_inode(iocb->ki_filp);
 	ssize_t ret;
@@ -181,24 +184,22 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *iter, loff_t pos)
 
 	if (!(ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS))) {
 		struct ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
-		size_t length = iov_iter_count(iter);
+		size_t length = iov_length(iov, nr_segs);
 
 		if ((pos > sbi->s_bitmap_maxbytes ||
 		    (pos == sbi->s_bitmap_maxbytes && length > 0)))
 			return -EFBIG;
 
 		if (pos + length > sbi->s_bitmap_maxbytes) {
-			ret = iov_iter_shorten(iter,
-					sbi->s_bitmap_maxbytes - pos);
-			if (ret)
-				return ret;
+			nr_segs = iov_shorten((struct iovec *)iov, nr_segs,
+					      sbi->s_bitmap_maxbytes - pos);
 		}
 	}
 
 	if (unlikely(iocb->ki_filp->f_flags & O_DIRECT))
-		ret = ext4_file_dio_write(iocb, iter, pos);
+		ret = ext4_file_dio_write(iocb, iov, nr_segs, pos);
 	else
-		ret = generic_file_write_iter(iocb, iter, pos);
+		ret = generic_file_aio_write(iocb, iov, nr_segs, pos);
 
 	return ret;
 }
@@ -307,8 +308,8 @@ const struct file_operations ext4_file_operations = {
 	.llseek		= ext4_llseek,
 	.read		= do_sync_read,
 	.write		= do_sync_write,
-	.read_iter	= generic_file_read_iter,
-	.write_iter	= ext4_file_write_iter,
+	.aio_read	= generic_file_aio_read,
+	.aio_write	= ext4_file_write,
 	.unlocked_ioctl = ext4_ioctl,
 #ifdef CONFIG_COMPAT
 	.compat_ioctl	= ext4_compat_ioctl,
