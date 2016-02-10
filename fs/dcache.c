@@ -83,7 +83,6 @@ static struct notifier_block dcache_state_notif;
  *   dentry1->d_lock
  *     dentry2->d_lock
  */
-
 int sysctl_vfs_cache_pressure __read_mostly = 100;
 
 #ifdef CONFIG_STATE_NOTIFIER
@@ -1004,7 +1003,6 @@ void shrink_dcache_for_umount(struct super_block *sb)
 	}
 }
 
-
 /*
  * Search for at least 1 mount point in the dentry's subdirs.
  * We descend to the next level whenever the d_subdirs
@@ -1068,7 +1066,7 @@ ascend:
 		spin_unlock(&child->d_lock);
 		spin_lock(&this_parent->d_lock);
 
-		/* might go back up the wrong parent if we have had a rename */
+		/* might go back up the wrong parent if we have had a rename. */
 		if (!locked && read_seqretry(&rename_lock, seq))
 			goto rename_retry;
 		/* go into the first sibling still alive */
@@ -1194,7 +1192,7 @@ ascend:
 		spin_unlock(&child->d_lock);
 		spin_lock(&this_parent->d_lock);
 
-		/* might go back up the wrong parent if we have had a rename */
+		/* might go back up the wrong parent if we have had a rename. */
 		if (!locked && read_seqretry(&rename_lock, seq))
 			goto rename_retry;
 		/* go into the first sibling still alive */
@@ -2789,9 +2787,9 @@ char *simple_dname(struct dentry *dentry, char *buffer, int buflen)
 	/* these dentries are never renamed, so d_lock is not needed */
 	if (prepend(&end, &buflen, " (deleted)", 11) ||
 	    prepend_name(&end, &buflen, &dentry->d_name) ||
-	    prepend(&end, &buflen, "/", 1))  
+	    prepend(&end, &buflen, "/", 1))
 		end = ERR_PTR(-ENAMETOOLONG);
-	return end;  
+	return end;
 }
 
 /*
@@ -3024,7 +3022,7 @@ ascend:
 		spin_unlock(&child->d_lock);
 		spin_lock(&this_parent->d_lock);
 
-		/* might go back up the wrong parent if we have had a rename */
+		/* might go back up the wrong parent if we have had a rename. */
 		if (!locked && read_seqretry(&rename_lock, seq))
 			goto rename_retry;
 		/* go into the first sibling still alive */
