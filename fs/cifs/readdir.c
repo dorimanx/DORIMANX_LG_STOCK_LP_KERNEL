@@ -117,7 +117,7 @@ cifs_prime_dcache(struct dentry *parent, struct qstr *name,
 	 * the wire call either way and this spares us an invalidation.
 	 */
 	if (fattr->cf_flags & CIFS_FATTR_NEED_REVAL)
-		return NULL;
+		return;
 
 	dentry = d_alloc(parent, name);
 	if (!dentry)
