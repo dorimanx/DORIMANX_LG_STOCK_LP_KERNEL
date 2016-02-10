@@ -2358,11 +2358,9 @@ int vfs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
 	error = dir->i_op->create(dir, dentry, mode, want_excl);
 	if (error)
 		return error;
-
 	error = security_inode_post_create(dir, dentry, mode);
 	if (error)
 		return error;
-
 	if (!error)
 		fsnotify_create(dir, dentry);
 	return error;
@@ -2803,7 +2801,7 @@ retry_lookup:
 			goto out;
 
 		if ((*opened & FILE_CREATED) ||
-		    !S_ISREG(file->f_path.dentry->d_inode->i_mode))
+		    !S_ISREG(file_inode(file)->i_mode))
 			will_truncate = false;
 
 		audit_inode(name, file->f_path.dentry, 0);
