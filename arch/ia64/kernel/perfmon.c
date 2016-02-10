@@ -2228,9 +2228,9 @@ pfm_alloc_file(pfm_context_t *ctx)
 	d_add(path.dentry, inode);
 
 	file = alloc_file(&path, FMODE_READ, &pfm_file_ops);
-	if (IS_ERR(file)) {
+	if (!file) {
 		path_put(&path);
-		return file;
+		return ERR_PTR(-ENFILE);
 	}
 
 	file->f_flags = O_RDONLY;

@@ -373,11 +373,11 @@ static struct file *sock_alloc_file(struct socket *sock, int flags)
 
 	file = alloc_file(&path, FMODE_READ | FMODE_WRITE,
 		  &socket_file_ops);
-	if (unlikely(IS_ERR(file))) {
+	if (unlikely(!file)) {
 		/* drop dentry, keep inode */
 		ihold(path.dentry->d_inode);
 		path_put(&path);
-		return file;
+		return ERR_PTR(-ENFILE);
 	}
 
 	sock->file = file;

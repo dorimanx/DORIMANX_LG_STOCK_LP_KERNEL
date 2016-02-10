@@ -948,7 +948,8 @@ struct file *hugetlb_file_setup(const char *name, size_t size,
 				vm_flags_t acctflag, struct user_struct **user,
 				int creat_flags, int page_size_log)
 {
-	struct file *file = ERR_PTR(-ENOMEM);
+	int error = -ENOMEM;
+	struct file *file;
 	struct inode *inode;
 	struct path path;
 	struct dentry *root;
@@ -986,26 +987,25 @@ struct file *hugetlb_file_setup(const char *name, size_t size,
 		goto out_shm_unlock;
 
 	path.mnt = mntget(hugetlbfs_vfsmount[hstate_idx]);
-	file = ERR_PTR(-ENOSPC);
+	error = -ENOSPC;
 	inode = hugetlbfs_get_inode(root->d_sb, NULL, S_IFREG | S_IRWXUGO, 0);
 	if (!inode)
 		goto out_dentry;
 
-	hstate = hstate_inode(inode);
-	size += addr & ~huge_page_mask(hstate);
-	num_pages = ALIGN(size, huge_page_size(hstate)) >>
-			huge_page_shift(hstate);
 	file = ERR_PTR(-ENOMEM);
-	if (hugetlb_reserve_pages(inode, 0, num_pages, NULL, acctflag))
+	if (hugetlb_reserve_pages(inode, 0,
+			size >> huge_page_shift(hstate_inode(inode)), NULL,
+			acctflag))
 		goto out_inode;
 
 	d_instantiate(path.dentry, inode);
 	inode->i_size = size;
 	clear_nlink(inode);
 
+	error = -ENFILE;
 	file = alloc_file(&path, FMODE_WRITE | FMODE_READ,
 			&hugetlbfs_file_operations);
-	if (IS_ERR(file))
+	if (!file)
 		goto out_dentry; /* inode is already attached */
 
 	return file;
@@ -1019,7 +1019,7 @@ out_shm_unlock:
 		user_shm_unlock(size, *user);
 		*user = NULL;
 	}
-	return file;
+	return ERR_PTR(error);
 }
 
 static int __init init_hugetlbfs_fs(void)
