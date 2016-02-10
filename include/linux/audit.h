@@ -676,7 +676,7 @@ static inline int auditsc_get_stamp(struct audit_context *ctx,
 }
 static inline uid_t audit_get_loginuid(struct task_struct *tsk)
 {
-	return 0;
+	return -1;
 }
 static inline int audit_get_sessionid(struct task_struct *tsk)
 {
