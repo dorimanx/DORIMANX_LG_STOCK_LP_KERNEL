@@ -37,128 +37,16 @@
 #include <asm/unaligned.h>
 #include "ecryptfs_kernel.h"
 
-#ifdef CONFIG_CRYPTO_FIPS
-#include <linux/fips.h>
-#include <crypto/rng.h>
-#define SEED_LEN 64
-#endif
-
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
-struct kmem_cache *ecryptfs_page_crypt_req_cache;
-struct kmem_cache *ecryptfs_extent_crypt_req_cache;
-
-#endif
 static int
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 ecryptfs_decrypt_page_offset(struct ecryptfs_crypt_stat *crypt_stat,
-#else
-ecryptfs_decrypt_page_offset(struct ecryptfs_extent_crypt_req *extent_crypt_req,
-#endif
 			     struct page *dst_page, int dst_offset,
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 			     struct page *src_page, int src_offset, int size,
 			     unsigned char *iv);
-#else
-			     struct page *src_page, int src_offset, int size);
-#endif
 static int
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 ecryptfs_encrypt_page_offset(struct ecryptfs_crypt_stat *crypt_stat,
-#else
-ecryptfs_encrypt_page_offset(struct ecryptfs_extent_crypt_req *extent_crypt_req,
-#endif
 			     struct page *dst_page, int dst_offset,
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 			     struct page *src_page, int src_offset, int size,
 			     unsigned char *iv);
-#else
-			     struct page *src_page, int src_offset, int size);
-#endif
-#ifdef CONFIG_CRYPTO_FIPS
-static int crypto_sec_reset_rng(struct crypto_rng *tfm)
-{
-	char *seed = NULL;
-	int read_bytes = 0;
-	int trialcount = 10;
-	int err = 0;
-	struct file *filp = NULL;
-	mm_segment_t oldfs;
-
-	seed = kmalloc(SEED_LEN, GFP_KERNEL);
-	if (!seed) {
-		ecryptfs_printk(KERN_ERR, "Failed to get memory space for seed\n");
-		goto out;
-	}
-
-	filp = filp_open("/dev/random", O_RDONLY, 0);
-	if (IS_ERR(filp)) {
-		ecryptfs_printk(KERN_ERR, "Failed to open /dev/random\n");
-		goto out;
-	}
-
-	oldfs = get_fs();
-	set_fs(KERNEL_DS);
-	memset((void *)seed, 0, SEED_LEN);
-
-	while (trialcount > 0) {
-		read_bytes += filp->f_op->read(filp, &(seed[read_bytes]), SEED_LEN-read_bytes, &filp->f_pos);
-
-		if (read_bytes != SEED_LEN)
-			trialcount--;
-		else
-			break;
-	}
-	set_fs(oldfs);
-
-	if (read_bytes != SEED_LEN) {
-		ecryptfs_printk(KERN_ERR, "Failed to get enough random bytes (read=%d/request=%d)\n", read_bytes, SEED_LEN);
-		err = -1;
-		goto out;
-	}
-
-	err = crypto_rng_reset(tfm, seed, SEED_LEN);
-
-out:
-	if (seed) kfree(seed);
-	if (filp) filp_close(filp, NULL);
-	return err;
-}
-
-/**
- * crypto_fips_rng_get_bytes
- * @data: Buffer to get random bytes
- * @len: the lengh of random bytes
- */
-static int crypto_sec_rng_get_bytes(u8 *data, unsigned int len)
-{
-	static struct crypto_rng *crypto_sec_rng = NULL;
-	struct crypto_rng *rng;
-	int err = 0;
-
-	if (!crypto_sec_rng) {
-		rng = crypto_alloc_rng("fips(ansi_cprng)", 0, 0);
-		err = PTR_ERR(rng);
-		if (IS_ERR(rng))
-			goto out;
-		err = crypto_sec_reset_rng(rng);
-		if (err) {
-			if (rng)
-				crypto_free_rng(rng);
-			goto out;
-		}
-		crypto_sec_rng = rng;
-	}
-
-	err = crypto_rng_get_bytes(crypto_sec_rng, data, len);
-
-	if (err != len)
-		ecryptfs_printk(KERN_ERR, "Error getting random bytes in SEC mode (err=%d, len=%d)\n", err, len);
-
-out:
-	return err;
-
-}
-#endif
 
 /**
  * ecryptfs_to_hex
@@ -193,69 +81,6 @@ void ecryptfs_from_hex(char *dst, char *src, int dst_size)
 		dst[x] = (unsigned char)simple_strtol(tmp, NULL, 16);
 	}
 }
-
-#ifdef CONFIG_CRYPTO_FIPS
-/**
- * ecryptfs_calculate_sha256 - calculates the sha256 of @src
- * @dst: Pointer to 32 bytes of allocated memory
- * @crypt_stat: Pointer to crypt_stat struct for the current inode
- * @src: Data to be sha256'd
- * @len: Length of @src
- *
- * Uses the allocated crypto context that crypt_stat references to
- * generate the SHA256 sum of the contents of src.
- */
-static int ecryptfs_calculate_sha256(char *dst,
-				  struct ecryptfs_crypt_stat *crypt_stat,
-				  char *src, int len)
-{
-	struct scatterlist sg;
-	struct hash_desc desc = {
-		.tfm = crypt_stat->hash_tfm,
-		.flags = CRYPTO_TFM_REQ_MAY_SLEEP
-	};
-	int rc = 0;
-
-	mutex_lock(&crypt_stat->cs_hash_tfm_mutex);
-	sg_init_one(&sg, (u8 *)src, len);
-	if (!desc.tfm) {
-		desc.tfm = crypto_alloc_hash(ECRYPTFS_SHA256_HASH, 0,
-					     CRYPTO_ALG_ASYNC);
-		if (IS_ERR(desc.tfm)) {
-			rc = PTR_ERR(desc.tfm);
-			ecryptfs_printk(KERN_ERR, "Error attempting to "
-					"allocate crypto context; rc = [%d]\n",
-					rc);
-			goto out;
-		}
-		crypt_stat->hash_tfm = desc.tfm;
-	}
-	rc = crypto_hash_init(&desc);
-	if (rc) {
-		printk(KERN_ERR
-		       "%s: Error initializing crypto hash; rc = [%d]\n",
-		       __func__, rc);
-		goto out;
-	}
-	rc = crypto_hash_update(&desc, &sg, len);
-	if (rc) {
-		printk(KERN_ERR
-		       "%s: Error updating crypto hash; rc = [%d]\n",
-		       __func__, rc);
-		goto out;
-	}
-	rc = crypto_hash_final(&desc, dst);
-	if (rc) {
-		printk(KERN_ERR
-		       "%s: Error finalizing crypto hash; rc = [%d]\n",
-		       __func__, rc);
-		goto out;
-	}
-out:
-	mutex_unlock(&crypt_stat->cs_hash_tfm_mutex);
-	return rc;
-}
-#endif
 
 /**
  * ecryptfs_calculate_md5 - calculates the md5 of @src
@@ -322,26 +147,11 @@ static int ecryptfs_crypto_api_algify_cipher_name(char **algified_name,
 						  char *cipher_name,
 						  char *chaining_modifier)
 {
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	int cipher_name_len = strlen(cipher_name);
 	int chaining_modifier_len = strlen(chaining_modifier);
-#else
-	int cipher_name_len;
-	int chaining_modifier_len;
-#endif
 	int algified_name_len;
 	int rc;
 
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
-	if (!strcmp(cipher_name, "aes") &&
-	    (!strcmp(chaining_modifier, "cbc") ||
-	     !strcmp(chaining_modifier, "xts")))
-		cipher_name = "fipsaes";
-
-	cipher_name_len = strlen(cipher_name);
-	chaining_modifier_len = strlen(chaining_modifier);
-
-#endif
 	algified_name_len = (chaining_modifier_len + cipher_name_len + 3);
 	(*algified_name) = kmalloc(algified_name_len, GFP_KERNEL);
 	if (!(*algified_name)) {
@@ -354,121 +164,6 @@ static int ecryptfs_crypto_api_algify_cipher_name(char **algified_name,
 out:
 	return rc;
 }
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
-/**
- * ecryptfs_alloc_page_crypt_req - allocates a page crypt request
- * @page: Page mapped from the eCryptfs inode for the file
- * @completion: Function that is called when the page crypt request completes.
- *              If this parameter is NULL, then the the
- *              page_crypt_completion::completion member is used to indicate
- *              the operation completion.
- *
- * Allocates a crypt request that is used for asynchronous page encrypt and
- * decrypt operations.
- */
-struct ecryptfs_page_crypt_req *ecryptfs_alloc_page_crypt_req(
-	struct page *page,
-	page_crypt_completion completion_func)
-{
-	struct ecryptfs_page_crypt_req *page_crypt_req;
-	page_crypt_req = kmem_cache_zalloc(ecryptfs_page_crypt_req_cache,
-					   GFP_KERNEL);
-	if (!page_crypt_req)
-		goto out;
-	page_crypt_req->page = page;
-	page_crypt_req->completion_func = completion_func;
-	if (!completion_func)
-		init_completion(&page_crypt_req->completion);
-out:
-	return page_crypt_req;
-}
-
-/**
- * ecryptfs_free_page_crypt_req - deallocates a page crypt request
- * @page_crypt_req: Request to deallocate
- *
- * Deallocates a page crypt request.  This request must have been
- * previously allocated by ecryptfs_alloc_page_crypt_req().
- */
-void ecryptfs_free_page_crypt_req(
-	struct ecryptfs_page_crypt_req *page_crypt_req)
-{
-	kmem_cache_free(ecryptfs_page_crypt_req_cache, page_crypt_req);
-}
-
-/**
- * ecryptfs_complete_page_crypt_req - completes a page crypt request
- * @page_crypt_req: Request to complete
- *
- * Completes the specified page crypt request by either invoking the
- * completion callback if one is present, or use the completion data structure.
- */
-static void ecryptfs_complete_page_crypt_req(
-		struct ecryptfs_page_crypt_req *page_crypt_req)
-{
-	if (page_crypt_req->completion_func)
-		page_crypt_req->completion_func(page_crypt_req);
-	else
-		complete(&page_crypt_req->completion);
-}
-
-/**
- * ecryptfs_alloc_extent_crypt_req - allocates an extent crypt request
- * @page_crypt_req: Pointer to the page crypt request that owns this extent
- *                  request
- * @crypt_stat: Pointer to crypt_stat struct for the current inode
- *
- * Allocates a crypt request that is used for asynchronous extent encrypt and
- * decrypt operations.
- */
-static struct ecryptfs_extent_crypt_req *ecryptfs_alloc_extent_crypt_req(
-		struct ecryptfs_page_crypt_req *page_crypt_req,
-		struct ecryptfs_crypt_stat *crypt_stat)
-{
-	struct ecryptfs_extent_crypt_req *extent_crypt_req;
-	extent_crypt_req = kmem_cache_zalloc(ecryptfs_extent_crypt_req_cache,
-					     GFP_KERNEL);
-	if (!extent_crypt_req)
-		goto out;
-	extent_crypt_req->req =
-		ablkcipher_request_alloc(crypt_stat->tfm, GFP_KERNEL);
-	if (!extent_crypt_req) {
-		kmem_cache_free(ecryptfs_extent_crypt_req_cache,
-				extent_crypt_req);
-		extent_crypt_req = NULL;
-		goto out;
-	}
-	atomic_inc(&page_crypt_req->num_refs);
-	extent_crypt_req->page_crypt_req = page_crypt_req;
-	extent_crypt_req->crypt_stat = crypt_stat;
-	ablkcipher_request_set_tfm(extent_crypt_req->req, crypt_stat->tfm);
-out:
-	return extent_crypt_req;
-}
-
-/**
- * ecryptfs_free_extent_crypt_req - deallocates an extent crypt request
- * @extent_crypt_req: Request to deallocate
- *
- * Deallocates an extent crypt request.  This request must have been
- * previously allocated by ecryptfs_alloc_extent_crypt_req().
- * If the extent crypt is the last operation for the page crypt request,
- * this function calls the page crypt completion function.
- */
-static void ecryptfs_free_extent_crypt_req(
-		struct ecryptfs_extent_crypt_req *extent_crypt_req)
-{
-	int num_refs;
-	struct ecryptfs_page_crypt_req *page_crypt_req =
-			extent_crypt_req->page_crypt_req;
-	BUG_ON(!page_crypt_req);
-	num_refs = atomic_dec_return(&page_crypt_req->num_refs);
-	if (!num_refs)
-		ecryptfs_complete_page_crypt_req(page_crypt_req);
-	ablkcipher_request_free(extent_crypt_req->req);
-	kmem_cache_free(ecryptfs_extent_crypt_req_cache, extent_crypt_req);
-}
-#endif
 
 /**
  * ecryptfs_derive_iv
@@ -485,11 +180,7 @@ int ecryptfs_derive_iv(char *iv, struct ecryptfs_crypt_stat *crypt_stat,
 		       loff_t offset)
 {
 	int rc = 0;
-#ifdef CONFIG_CRYPTO_FIPS
-	char dst[SHA256_HASH_SIZE];
-#else
 	char dst[MD5_DIGEST_SIZE];
-#endif
 	char src[ECRYPTFS_MAX_IV_BYTES + 16];
 
 	if (unlikely(ecryptfs_verbosity > 0)) {
@@ -507,11 +198,6 @@ int ecryptfs_derive_iv(char *iv, struct ecryptfs_crypt_stat *crypt_stat,
 		ecryptfs_printk(KERN_DEBUG, "source:\n");
 		ecryptfs_dump_hex(src, (crypt_stat->iv_bytes + 16));
 	}
-#ifdef CONFIG_CRYPTO_FIPS
-	if (get_cc_mode_state())
-		rc = ecryptfs_calculate_sha256(dst, crypt_stat, src, (crypt_stat->iv_bytes + 16));
-	else
-#endif
 	rc = ecryptfs_calculate_md5(dst, crypt_stat, src,
 				    (crypt_stat->iv_bytes + 16));
 	if (rc) {
@@ -557,11 +243,7 @@ void ecryptfs_destroy_crypt_stat(struct ecryptfs_crypt_stat *crypt_stat)
 	struct ecryptfs_key_sig *key_sig, *key_sig_tmp;
 
 	if (crypt_stat->tfm)
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 		crypto_free_blkcipher(crypt_stat->tfm);
-#else
-		crypto_free_ablkcipher(crypt_stat->tfm);
-#endif
 	if (crypt_stat->hash_tfm)
 		crypto_free_hash(crypt_stat->hash_tfm);
 	list_for_each_entry_safe(key_sig, key_sig_tmp,
@@ -640,43 +322,26 @@ int virt_to_scatterlist(const void *addr, int size, struct scatterlist *sg,
 
 /**
  * encrypt_scatterlist
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * @crypt_stat: Pointer to the crypt_stat struct to initialize.
- *else
- * @crypt_stat: Cryptographic context
- * @req: Async blkcipher request
- *endif
  * @dest_sg: Destination of encrypted data
  * @src_sg: Data to be encrypted
  * @size: Length of data to be encrypted
  * @iv: iv to use during encryption
  *
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * Returns the number of bytes encrypted; negative value on error
- *else
- * Returns zero if the encryption request was started successfully, else
- * non-zero.
- *endif
  */
 static int encrypt_scatterlist(struct ecryptfs_crypt_stat *crypt_stat,
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
-			       struct ablkcipher_request *req,
-#endif
 			       struct scatterlist *dest_sg,
 			       struct scatterlist *src_sg, int size,
 			       unsigned char *iv)
 {
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	struct blkcipher_desc desc = {
 		.tfm = crypt_stat->tfm,
 		.info = iv,
 		.flags = CRYPTO_TFM_REQ_MAY_SLEEP
 	};
-#endif
 	int rc = 0;
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 
-#endif
 	BUG_ON(!crypt_stat || !crypt_stat->tfm
 	       || !(crypt_stat->flags & ECRYPTFS_STRUCT_INITIALIZED));
 	if (unlikely(ecryptfs_verbosity > 0)) {
@@ -688,41 +353,23 @@ static int encrypt_scatterlist(struct ecryptfs_crypt_stat *crypt_stat,
 	/* Consider doing this once, when the file is opened */
 	mutex_lock(&crypt_stat->cs_tfm_mutex);
 	if (!(crypt_stat->flags & ECRYPTFS_KEY_SET)) {
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 		rc = crypto_blkcipher_setkey(crypt_stat->tfm, crypt_stat->key,
-#else
-		rc = crypto_ablkcipher_setkey(crypt_stat->tfm, crypt_stat->key,
-#endif
 					     crypt_stat->key_size);
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 		crypt_stat->flags |= ECRYPTFS_KEY_SET;
 	}
-#endif
 	if (rc) {
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 		ecryptfs_printk(KERN_ERR, "Error setting key; rc = [%d]\n",
-#else
-			ecryptfs_printk(KERN_ERR,
-					"Error setting key; rc = [%d]\n",
-#endif
 				rc);
 		mutex_unlock(&crypt_stat->cs_tfm_mutex);
 		rc = -EINVAL;
 		goto out;
 	}
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	ecryptfs_printk(KERN_DEBUG, "Encrypting [%d] bytes.\n", size);
 	crypto_blkcipher_encrypt_iv(&desc, dest_sg, src_sg, size);
-#else
-		crypt_stat->flags |= ECRYPTFS_KEY_SET;
-	}
-#endif
 	mutex_unlock(&crypt_stat->cs_tfm_mutex);
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
 	ecryptfs_printk(KERN_DEBUG, "Encrypting [%d] bytes.\n", size);
 	ablkcipher_request_set_crypt(req, src_sg, dest_sg, size, iv);
 	rc = crypto_ablkcipher_encrypt(req);
-#endif
 out:
 	return rc;
 }
@@ -741,52 +388,24 @@ static void ecryptfs_lower_offset_for_extent(loff_t *offset, loff_t extent_num,
 
 /**
  * ecryptfs_encrypt_extent
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * @enc_extent_page: Allocated page into which to encrypt the data in
  *                   @page
  * @crypt_stat: crypt_stat containing cryptographic context for the
  *              encryption operation
  * @page: Page containing plaintext data extent to encrypt
  * @extent_offset: Page extent offset for use in generating IV
- *else
- * @extent_crypt_req: Crypt request that describes the extent that needs to be
- *                    encrypted
- * @completion: Function that is called back when the encryption is completed
- *endif
  *
  * Encrypts one extent of data.
  *
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * Return zero on success; non-zero otherwise
- *else
- * Status code is returned in the completion routine (zero on success;
- * non-zero otherwise).
- *endif
  */
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 static int ecryptfs_encrypt_extent(struct page *enc_extent_page,
 				   struct ecryptfs_crypt_stat *crypt_stat,
 				   struct page *page,
 				   unsigned long extent_offset)
-#else
-static void ecryptfs_encrypt_extent(
-		struct ecryptfs_extent_crypt_req *extent_crypt_req,
-		crypto_completion_t completion)
-#endif
 {
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
-	struct page *enc_extent_page = extent_crypt_req->enc_extent_page;
-	struct ecryptfs_crypt_stat *crypt_stat = extent_crypt_req->crypt_stat;
-	struct page *page = extent_crypt_req->page_crypt_req->page;
-	unsigned long extent_offset = extent_crypt_req->extent_offset;
-
-#endif
 	loff_t extent_base;
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	char extent_iv[ECRYPTFS_MAX_IV_BYTES];
-#else
-	char *extent_iv = extent_crypt_req->extent_iv;
-#endif
 	int rc;
 
 	extent_base = (((loff_t)page->index)
@@ -799,29 +418,11 @@ static void ecryptfs_encrypt_extent(
 			(unsigned long long)(extent_base + extent_offset), rc);
 		goto out;
 	}
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	rc = ecryptfs_encrypt_page_offset(crypt_stat, enc_extent_page, 0,
-#else
-	ablkcipher_request_set_callback(extent_crypt_req->req,
-					CRYPTO_TFM_REQ_MAY_BACKLOG |
-					CRYPTO_TFM_REQ_MAY_SLEEP,
-					completion, extent_crypt_req);
-	rc = ecryptfs_encrypt_page_offset(extent_crypt_req, enc_extent_page, 0,
-#endif
 					  page, (extent_offset
 						 * crypt_stat->extent_size),
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 					  crypt_stat->extent_size, extent_iv);
 	if (rc < 0) {
-#else
-					  crypt_stat->extent_size);
-	if (!rc) {
-		/* Request completed synchronously */
-		struct crypto_async_request dummy;
-		dummy.data = extent_crypt_req;
-		completion(&dummy, rc);
-	} else if (rc != -EBUSY && rc != -EINPROGRESS) {
-#endif
 		printk(KERN_ERR "%s: Error attempting to encrypt page with "
 		       "page->index = [%ld], extent_offset = [%ld]; "
 		       "rc = [%d]\n", __func__, page->index, extent_offset,
@@ -830,148 +431,32 @@ static void ecryptfs_encrypt_extent(
 	}
 	rc = 0;
 out:
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	return rc;
-#else
-	if (rc) {
-		struct crypto_async_request dummy;
-		dummy.data = extent_crypt_req;
-		completion(&dummy, rc);
-	}
-#endif
 }
 
 /**
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * ecryptfs_encrypt_page
  * @page: Page mapped from the eCryptfs inode for the file; contains
  *        decrypted content that needs to be encrypted (to a temporary
  *        page; not in place) and written out to the lower file
- *else
- * ecryptfs_encrypt_extent_done
- * @req: The original extent encrypt request
- * @err: Result of the encryption operation
- *endif
  *
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * Encrypt an eCryptfs page. This is done on a per-extent basis. Note
  * that eCryptfs pages may straddle the lower pages -- for instance,
  * if the file was created on a machine with an 8K page size
  * (resulting in an 8K header), and then the file is copied onto a
  * host with a 32K page size, then when reading page 0 of the eCryptfs
- *else
- * This function is called when the extent encryption is completed.
- */
- #ifdef CONFIG_CRYPTO_DEV_KFIPS
-static void ecryptfs_encrypt_extent_done(
-		struct crypto_async_request *req,
-		int err)
-{
-	struct ecryptfs_extent_crypt_req *extent_crypt_req = req->data;
-	struct ecryptfs_page_crypt_req *page_crypt_req =
-				extent_crypt_req->page_crypt_req;
-	char *enc_extent_virt = NULL;
-	struct page *page = page_crypt_req->page;
-	struct page *enc_extent_page = extent_crypt_req->enc_extent_page;
-	struct ecryptfs_crypt_stat *crypt_stat = extent_crypt_req->crypt_stat;
-	loff_t extent_base;
-	unsigned long extent_offset = extent_crypt_req->extent_offset;
-	loff_t offset;
-	int rc = 0;
-
-	if (!err && unlikely(ecryptfs_verbosity > 0)) {
-		extent_base = (((loff_t)page->index)
-			       * (PAGE_CACHE_SIZE / crypt_stat->extent_size));
-        ecryptfs_printk(KERN_DEBUG, "Encrypt extent [0x%.16llx]; "
-									"rc = [%d]\n",
-                (unsigned long long)(extent_base +
-                extent_offset),
-                err);
-        ecryptfs_printk(KERN_DEBUG, "First 8 bytes after "
-                                    "encryption:\n");
-        ecryptfs_dump_hex((char *)(page_address(enc_extent_page)), 8);
-	} else if (err == -EINPROGRESS) {
-		/* Ignore wakeup after busy condition. */
-		return;
-	} else if (err) {
-		atomic_set(&page_crypt_req->rc, err);
-		printk(KERN_ERR "%s: Error encrypting extent; "
-		       "rc = [%d]\n", __func__, err);
-        goto out;
-    }
-
-	enc_extent_virt = kmap(enc_extent_page);
-	ecryptfs_lower_offset_for_extent(
-		&offset,
-		((((loff_t)page->index)
-		  * (PAGE_CACHE_SIZE
-		     / extent_crypt_req->crypt_stat->extent_size))
-		    + extent_crypt_req->extent_offset),
-		extent_crypt_req->crypt_stat);
-	rc = ecryptfs_write_lower(extent_crypt_req->inode, enc_extent_virt,
-				  offset,
-				  extent_crypt_req->crypt_stat->extent_size);
-	if (rc < 0) {
-		atomic_set(&page_crypt_req->rc, rc);
-		ecryptfs_printk(KERN_ERR, "Error attempting "
-				"to write lower page; rc = [%d]"
-				"\n", rc);
-		goto out;
-	}
- out:
-	if (enc_extent_virt)
-		kunmap(enc_extent_page);
-	__free_page(enc_extent_page);
-	ecryptfs_free_extent_crypt_req(extent_crypt_req);
-}
-#endif
-
-/**
- * ecryptfs_encrypt_page_async
- * @page_crypt_req: Page level encryption request which contains the page
- *                  mapped from the eCryptfs inode for the file; the page
- *                  contains decrypted content that needs to be encrypted
- *                  (to a temporary page; not in place) and written out to
- *                  the lower file
- *
- * Function that asynchronously encrypts an eCryptfs page.
- * This is done on a per-extent basis.  Note that eCryptfs pages may straddle
- * the lower pages -- for instance, if the file was created on a machine with
- * an 8K page size (resulting in an 8K header), and then the file is copied
- * onto a host with a 32K page size, then when reading page 0 of the eCryptfs
-
  * file, 24K of page 0 of the lower file will be read and decrypted,
  * and then 8K of page 1 of the lower file will be read and decrypted.
  *
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * Returns zero on success; negative on error
- *else
- * Status code is returned in the completion routine (zero on success;
- * negative on error).
- *endif
  */
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 int ecryptfs_encrypt_page(struct page *page)
-#else
-void ecryptfs_encrypt_page_async(
-	struct ecryptfs_page_crypt_req *page_crypt_req)
-#endif
 {
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
-	struct page *page = page_crypt_req->page;
-#endif
 	struct inode *ecryptfs_inode;
 	struct ecryptfs_crypt_stat *crypt_stat;
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	char *enc_extent_virt;
-#endif
 	struct page *enc_extent_page = NULL;
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	loff_t extent_offset;
-#else
-	struct ecryptfs_extent_crypt_req *extent_crypt_req = NULL;
-	loff_t extent_offset = 0;
-#endif
 	int rc = 0;
 
 	ecryptfs_inode = page->mapping->host;
@@ -985,13 +470,10 @@ void ecryptfs_encrypt_page_async(
 				"encrypted extent\n");
 		goto out;
 	}
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	enc_extent_virt = kmap(enc_extent_page);
-#endif
 	for (extent_offset = 0;
 	     extent_offset < (PAGE_CACHE_SIZE / crypt_stat->extent_size);
 	     extent_offset++) {
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 		loff_t offset;
 
 		rc = ecryptfs_encrypt_extent(enc_extent_page, crypt_stat, page,
@@ -1012,18 +494,8 @@ void ecryptfs_encrypt_page_async(
 			ecryptfs_printk(KERN_ERR, "Error attempting "
 					"to write lower page; rc = [%d]"
 					"\n", rc);
-#else
-		extent_crypt_req = ecryptfs_alloc_extent_crypt_req(
-					page_crypt_req, crypt_stat);
-		if (!extent_crypt_req) {
-			rc = -ENOMEM;
-			ecryptfs_printk(KERN_ERR,
-					"Failed to allocate extent crypt "
-					"request for encryption\n");
-#endif
 			goto out;
 		}
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
 		extent_crypt_req->inode = ecryptfs_inode;
 		extent_crypt_req->enc_extent_page = enc_extent_page;
 		extent_crypt_req->extent_offset = extent_offset;
@@ -1031,98 +503,23 @@ void ecryptfs_encrypt_page_async(
 		/* Error handling is done in the completion routine. */
 		ecryptfs_encrypt_extent(extent_crypt_req,
 					ecryptfs_encrypt_extent_done);
-#endif
 	}
 	rc = 0;
 out:
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	if (enc_extent_page) {
 		kunmap(enc_extent_page);
-#else
-	/* Only call the completion routine if we did not fire off any extent
-	 * encryption requests.  If at least one call to
-	 * ecryptfs_encrypt_extent succeeded, it will call the completion
-	 * routine.
-	 */
-	if (rc && extent_offset == 0) {
-		if (enc_extent_page)
-#endif
 		__free_page(enc_extent_page);
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
-		atomic_set(&page_crypt_req->rc, rc);
-		ecryptfs_complete_page_crypt_req(page_crypt_req);
 	}
-}
-
-/**
- * ecryptfs_encrypt_page
- * @page: Page mapped from the eCryptfs inode for the file; contains
- *        decrypted content that needs to be encrypted (to a temporary
- *        page; not in place) and written out to the lower file
- *
- * Encrypts an eCryptfs page synchronously.
- *
- * Returns zero on success; negative on error
- */
-int ecryptfs_encrypt_page(struct page *page)
-{
-	struct ecryptfs_page_crypt_req *page_crypt_req;
-	int rc;
-
-	page_crypt_req = ecryptfs_alloc_page_crypt_req(page, NULL);
-	if (!page_crypt_req) {
-		rc = -ENOMEM;
-		ecryptfs_printk(KERN_ERR,
-				"Failed to allocate page crypt request "
-				"for encryption\n");
-		goto out;
-#endif
-	}
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
-	ecryptfs_encrypt_page_async(page_crypt_req);
-	wait_for_completion(&page_crypt_req->completion);
-	rc = atomic_read(&page_crypt_req->rc);
-out:
-	if (page_crypt_req)
-		ecryptfs_free_page_crypt_req(page_crypt_req);
-#endif
 	return rc;
 }
 
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 static int ecryptfs_decrypt_extent(struct page *page,
 				   struct ecryptfs_crypt_stat *crypt_stat,
 				   struct page *enc_extent_page,
 				   unsigned long extent_offset)
-#else
-/**
- * ecryptfs_decrypt_extent
- * @extent_crypt_req: Crypt request that describes the extent that needs to be
- *                    decrypted
- * @completion: Function that is called back when the decryption is completed
- *
- * Decrypts one extent of data.
- *
- * Status code is returned in the completion routine (zero on success;
- * non-zero otherwise).
- */
-static void ecryptfs_decrypt_extent(
-		struct ecryptfs_extent_crypt_req *extent_crypt_req,
-		crypto_completion_t completion)
-#endif
 {
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
-	struct ecryptfs_crypt_stat *crypt_stat = extent_crypt_req->crypt_stat;
-	struct page *page = extent_crypt_req->page_crypt_req->page;
-	struct page *enc_extent_page = extent_crypt_req->enc_extent_page;
-	unsigned long extent_offset = extent_crypt_req->extent_offset;
-#endif
 	loff_t extent_base;
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	char extent_iv[ECRYPTFS_MAX_IV_BYTES];
-#else
-	char *extent_iv = extent_crypt_req->extent_iv;
-#endif
 	int rc;
 
 	extent_base = (((loff_t)page->index)
@@ -1135,30 +532,12 @@ static void ecryptfs_decrypt_extent(
 			(unsigned long long)(extent_base + extent_offset), rc);
 		goto out;
 	}
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	rc = ecryptfs_decrypt_page_offset(crypt_stat, page,
-#else
-	ablkcipher_request_set_callback(extent_crypt_req->req,
-					CRYPTO_TFM_REQ_MAY_BACKLOG |
-					CRYPTO_TFM_REQ_MAY_SLEEP,
-					completion, extent_crypt_req);
-	rc = ecryptfs_decrypt_page_offset(extent_crypt_req, page,
-#endif
 					  (extent_offset
 					   * crypt_stat->extent_size),
 					  enc_extent_page, 0,
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 					  crypt_stat->extent_size, extent_iv);
 	if (rc < 0) {
-#else
-					  crypt_stat->extent_size);
-	if (!rc) {
-		/* Request completed synchronously */
-		struct crypto_async_request dummy;
-		dummy.data = extent_crypt_req;
-		completion(&dummy, rc);
-	} else if (rc != -EBUSY && rc != -EINPROGRESS) {
-#endif
 		printk(KERN_ERR "%s: Error attempting to decrypt to page with "
 		       "page->index = [%ld], extent_offset = [%ld]; "
 		       "rc = [%d]\n", __func__, page->index, extent_offset,
@@ -1167,118 +546,32 @@ static void ecryptfs_decrypt_extent(
 	}
 	rc = 0;
 out:
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	return rc;
-#else
-	if (rc) {
-		struct crypto_async_request dummy;
-		dummy.data = extent_crypt_req;
-		completion(&dummy, rc);
-	}
-#endif
 }
 
 /**
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * ecryptfs_decrypt_page
  * @page: Page mapped from the eCryptfs inode for the file; data read
  *        and decrypted from the lower file will be written into this
  *        page
- *else
- * ecryptfs_decrypt_extent_done
- * @extent_crypt_req: The original extent decrypt request
- * @err: Result of the decryption operation
  *
- * This function is called when the extent decryption is completed.
- *end
- */
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
-static void ecryptfs_decrypt_extent_done(
-		struct crypto_async_request *req,
-		int err)
-{
-	struct ecryptfs_extent_crypt_req *extent_crypt_req = req->data;
-	struct ecryptfs_crypt_stat *crypt_stat = extent_crypt_req->crypt_stat;
-	struct page *page = extent_crypt_req->page_crypt_req->page;
-	unsigned long extent_offset = extent_crypt_req->extent_offset;
-	loff_t extent_base;
-
-	if (!err && unlikely(ecryptfs_verbosity > 0)) {
-		extent_base = (((loff_t)page->index)
-			       * (PAGE_CACHE_SIZE / crypt_stat->extent_size));
-        ecryptfs_printk(KERN_DEBUG, "Decrypt extent [0x%.16llx]; "
-				"rc = [%d]\n",
-				(unsigned long long)(extent_base +
-						     extent_offset),
-				err);
-        ecryptfs_printk(KERN_DEBUG, "First 8 bytes after "
-                                   "decryption:\n");
-        ecryptfs_dump_hex((char *)(page_address(page)
-                                 + (extent_offset
-                                 * crypt_stat->extent_size)), 8);
-	} else if (err == -EINPROGRESS) {
-		/* Ignore wakeup after busy condition. */
-		return;
-	} else if (err) {
-		atomic_set(&extent_crypt_req->page_crypt_req->rc, err);
-		printk(KERN_ERR "%s: Error decrypting extent; "
-		       "rc = [%d]\n", __func__, err);
-    }
-
-	__free_page(extent_crypt_req->enc_extent_page);
-	ecryptfs_free_extent_crypt_req(extent_crypt_req);
-}
-#endif
-
-/**
- * ecryptfs_decrypt_page_async
- * @page_crypt_req: Page level decryption request which contains the page
- *                  mapped from the eCryptfs inode for the file; data read
- *                  and decrypted from the lower file will be written into
- *                  this page
- *
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * Decrypt an eCryptfs page. This is done on a per-extent basis. Note
  * that eCryptfs pages may straddle the lower pages -- for instance,
  * if the file was created on a machine with an 8K page size
  * (resulting in an 8K header), and then the file is copied onto a
  * host with a 32K page size, then when reading page 0 of the eCryptfs
- *else
- * Function that asynchronously decrypts an eCryptfs page.
- * This is done on a per-extent basis. Note that eCryptfs pages may straddle
- * the lower pages -- for instance, if the file was created on a machine with
- * an 8K page size (resulting in an 8K header), and then the file is copied
- * onto a host with a 32K page size, then when reading page 0 of the eCryptfs
- *endif
  * file, 24K of page 0 of the lower file will be read and decrypted,
  * and then 8K of page 1 of the lower file will be read and decrypted.
  *
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * Returns zero on success; negative on error
- *else
- * Status code is returned in the completion routine (zero on success;
- * negative on error).
- *endif
  */
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 int ecryptfs_decrypt_page(struct page *page)
-#else
-void ecryptfs_decrypt_page_async(struct ecryptfs_page_crypt_req *page_crypt_req)
-#endif
 {
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
-	struct page *page = page_crypt_req->page;
-#endif
 	struct inode *ecryptfs_inode;
 	struct ecryptfs_crypt_stat *crypt_stat;
 	char *enc_extent_virt;
 	struct page *enc_extent_page = NULL;
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	unsigned long extent_offset;
-#else
-	struct ecryptfs_extent_crypt_req *extent_crypt_req = NULL;
-	unsigned long extent_offset = 0;
-#endif
 	int rc = 0;
 
 	ecryptfs_inode = page->mapping->host;
@@ -1289,11 +582,7 @@ void ecryptfs_decrypt_page_async(struct ecryptfs_page_crypt_req *page_crypt_req)
 	if (!enc_extent_page) {
 		rc = -ENOMEM;
 		ecryptfs_printk(KERN_ERR, "Error allocating memory for "
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 				"encrypted extent\n");
-#else
-				"decrypted extent\n");
-#endif
 		goto out;
 	}
 	enc_extent_virt = kmap(enc_extent_page);
@@ -1315,154 +604,55 @@ void ecryptfs_decrypt_page_async(struct ecryptfs_page_crypt_req *page_crypt_req)
 					"\n", rc);
 			goto out;
 		}
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 		rc = ecryptfs_decrypt_extent(page, crypt_stat, enc_extent_page,
 					     extent_offset);
 		if (rc) {
 			printk(KERN_ERR "%s: Error encrypting extent; "
 			       "rc = [%d]\n", __func__, rc);
-#else
-
-		extent_crypt_req = ecryptfs_alloc_extent_crypt_req(
-					page_crypt_req, crypt_stat);
-		if (!extent_crypt_req) {
-			rc = -ENOMEM;
-			ecryptfs_printk(KERN_ERR,
-					"Failed to allocate extent crypt "
-					"request for decryption\n");
-#endif
 			goto out;
 		}
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
-		extent_crypt_req->enc_extent_page = enc_extent_page;
-
-		/* Error handling is done in the completion routine. */
-		ecryptfs_decrypt_extent(extent_crypt_req,
-					ecryptfs_decrypt_extent_done);
-#endif
 	}
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
-	rc = 0;
-#endif
 out:
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	if (enc_extent_page) {
-#else
-	if (enc_extent_page)
-#endif
 		kunmap(enc_extent_page);
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 		__free_page(enc_extent_page);
-#else
-
-	/* Only call the completion routine if we did not fire off any extent
-	 * decryption requests.  If at least one call to
-	 * ecryptfs_decrypt_extent succeeded, it will call the completion
-	 * routine.
-	 */
-	if (rc && extent_offset == 0) {
-		atomic_set(&page_crypt_req->rc, rc);
-		ecryptfs_complete_page_crypt_req(page_crypt_req);
 	}
-#endif
-	}
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
-
-/**
- * ecryptfs_decrypt_page
- * @page: Page mapped from the eCryptfs inode for the file; data read
- *        and decrypted from the lower file will be written into this
- *        page
- *
- * Decrypts an eCryptfs page synchronously.
- *
- * Returns zero on success; negative on error
- */
-int ecryptfs_decrypt_page(struct page *page)
-{
-	struct ecryptfs_page_crypt_req *page_crypt_req;
-	int rc;
-
-	page_crypt_req = ecryptfs_alloc_page_crypt_req(page, NULL);
-	if (!page_crypt_req) {
-		rc = -ENOMEM;
-		ecryptfs_printk(KERN_ERR,
-				"Failed to allocate page crypt request "
-				"for decryption\n");
-		goto out;
-	}
-	ecryptfs_decrypt_page_async(page_crypt_req);
-	wait_for_completion(&page_crypt_req->completion);
-	rc = atomic_read(&page_crypt_req->rc);
-out:
-	if (page_crypt_req)
-		ecryptfs_free_page_crypt_req(page_crypt_req);
-#endif
 	return rc;
 }
 
 /**
  * decrypt_scatterlist
  * @crypt_stat: Cryptographic context
- *ifdef CONFIG_CRYPTO_DEV_KFIPS
- * @req: Async blkcipher request
- *endif
  * @dest_sg: The destination scatterlist to decrypt into
  * @src_sg: The source scatterlist to decrypt from
  * @size: The number of bytes to decrypt
  * @iv: The initialization vector to use for the decryption
  *
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * Returns the number of bytes decrypted; negative value on error
- *else
- * Returns zero if the decryption request was started successfully, else
- * non-zero.
- *endif
  */
 static int decrypt_scatterlist(struct ecryptfs_crypt_stat *crypt_stat,
-#ifdef CONFIG_CRYPTO_DEV_KFIPS
-			       struct ablkcipher_request *req,
-#endif
 			       struct scatterlist *dest_sg,
 			       struct scatterlist *src_sg, int size,
 			       unsigned char *iv)
 {
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	struct blkcipher_desc desc = {
 		.tfm = crypt_stat->tfm,
 		.info = iv,
 		.flags = CRYPTO_TFM_REQ_MAY_SLEEP
 	};
-#endif
 	int rc = 0;
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 
-#else
-	BUG_ON(!crypt_stat || !crypt_stat->tfm
-	       || !(crypt_stat->flags & ECRYPTFS_STRUCT_INITIALIZED));
-#endif
 	/* Consider doing this once, when the file is opened */
 	mutex_lock(&crypt_stat->cs_tfm_mutex);
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	rc = crypto_blkcipher_setkey(crypt_stat->tfm, crypt_stat->key,
-#else
-	if (!(crypt_stat->flags & ECRYPTFS_KEY_SET)) {
-		rc = crypto_ablkcipher_setkey(crypt_stat->tfm, crypt_stat->key,
-#endif
 				     crypt_stat->key_size);
 	if (rc) {
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 		ecryptfs_printk(KERN_ERR, "Error setting key; rc = [%d]\n",
-#else
-			ecryptfs_printk(KERN_ERR,
-					"Error setting key; rc = [%d]\n",
-#endif
 				rc);
 		mutex_unlock(&crypt_stat->cs_tfm_mutex);
 		rc = -EINVAL;
 		goto out;
 	}
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	ecryptfs_printk(KERN_DEBUG, "Decrypting [%d] bytes.\n", size);
 	rc = crypto_blkcipher_decrypt_iv(&desc, dest_sg, src_sg, size);
 	mutex_unlock(&crypt_stat->cs_tfm_mutex);
@@ -1470,151 +660,67 @@ static int decrypt_scatterlist(struct ecryptfs_crypt_stat *crypt_stat,
 		ecryptfs_printk(KERN_ERR, "Error decrypting; rc = [%d]\n",
 				rc);
 		goto out;
-#else
-		crypt_stat->flags |= ECRYPTFS_KEY_SET;
-#endif
 	}
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	rc = size;
-#else
-	mutex_unlock(&crypt_stat->cs_tfm_mutex);
-	ecryptfs_printk(KERN_DEBUG, "Decrypting [%d] bytes.\n", size);
-	ablkcipher_request_set_crypt(req, src_sg, dest_sg, size, iv);
-	rc = crypto_ablkcipher_decrypt(req);
-#endif
 out:
 	return rc;
 }
 
 /**
  * ecryptfs_encrypt_page_offset
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * @crypt_stat: The cryptographic context
- *else
- * @extent_crypt_req: Crypt request that describes the extent that needs to be
- *                    encrypted
- *endif
  * @dst_page: The page to encrypt into
  * @dst_offset: The offset in the page to encrypt into
  * @src_page: The page to encrypt from
  * @src_offset: The offset in the page to encrypt from
  * @size: The number of bytes to encrypt
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * @iv: The initialization vector to use for the encryption
- *endif
  *
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * Returns the number of bytes encrypted
- *else
- * Returns zero if the encryption started successfully, else non-zero.
- * Encryption status is returned in the completion routine.
- *endif
  */
 static int
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 ecryptfs_encrypt_page_offset(struct ecryptfs_crypt_stat *crypt_stat,
-#else
-ecryptfs_encrypt_page_offset(struct ecryptfs_extent_crypt_req *extent_crypt_req,
-#endif
 			     struct page *dst_page, int dst_offset,
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 			     struct page *src_page, int src_offset, int size,
 			     unsigned char *iv)
-#else
-			     struct page *src_page, int src_offset, int size)
-#endif
 {
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	struct scatterlist src_sg, dst_sg;
 
 	sg_init_table(&src_sg, 1);
 	sg_init_table(&dst_sg, 1);
-#else
-	sg_init_table(&extent_crypt_req->src_sg, 1);
-	sg_init_table(&extent_crypt_req->dst_sg, 1);
-#endif
 
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	sg_set_page(&src_sg, src_page, size, src_offset);
 	sg_set_page(&dst_sg, dst_page, size, dst_offset);
 	return encrypt_scatterlist(crypt_stat, &dst_sg, &src_sg, size, iv);
-#else
-	sg_set_page(&extent_crypt_req->src_sg, src_page, size, src_offset);
-	sg_set_page(&extent_crypt_req->dst_sg, dst_page, size, dst_offset);
-	return encrypt_scatterlist(extent_crypt_req->crypt_stat,
-				   extent_crypt_req->req,
-				   &extent_crypt_req->dst_sg,
-				   &extent_crypt_req->src_sg,
-				   size,
-				   extent_crypt_req->extent_iv);
-#endif
 }
 
 /**
  * ecryptfs_decrypt_page_offset
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * @crypt_stat: The cryptographic context
- *else
- * @extent_crypt_req: Crypt request that describes the extent that needs to be
- *                    decrypted
- *endif
  * @dst_page: The page to decrypt into
  * @dst_offset: The offset in the page to decrypt into
  * @src_page: The page to decrypt from
  * @src_offset: The offset in the page to decrypt from
  * @size: The number of bytes to decrypt
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * @iv: The initialization vector to use for the decryption
- *endif
  *
- *ifndef CONFIG_CRYPTO_DEV_KFIPS
  * Returns the number of bytes decrypted
- *else
- * Decryption status is returned in the completion routine.
- *endif
  */
 static int
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 ecryptfs_decrypt_page_offset(struct ecryptfs_crypt_stat *crypt_stat,
-#else
-ecryptfs_decrypt_page_offset(struct ecryptfs_extent_crypt_req *extent_crypt_req,
-#endif
 			     struct page *dst_page, int dst_offset,
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 			     struct page *src_page, int src_offset, int size,
 			     unsigned char *iv)
-#else
-			     struct page *src_page, int src_offset, int size)
-#endif
 {
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	struct scatterlist src_sg, dst_sg;
 
 	sg_init_table(&src_sg, 1);
 	sg_set_page(&src_sg, src_page, size, src_offset);
-#else
-	sg_init_table(&extent_crypt_req->src_sg, 1);
-	sg_set_page(&extent_crypt_req->src_sg, src_page, size, src_offset);
-#endif
 
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	sg_init_table(&dst_sg, 1);
 	sg_set_page(&dst_sg, dst_page, size, dst_offset);
-#else
-	sg_init_table(&extent_crypt_req->dst_sg, 1);
-	sg_set_page(&extent_crypt_req->dst_sg, dst_page, size, dst_offset);
-#endif
 
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	return decrypt_scatterlist(crypt_stat, &dst_sg, &src_sg, size, iv);
-#else
-	return decrypt_scatterlist(extent_crypt_req->crypt_stat,
-				   extent_crypt_req->req,
-				   &extent_crypt_req->dst_sg,
-				   &extent_crypt_req->src_sg,
-				   size,
-				   extent_crypt_req->extent_iv);
-#endif
 }
 
 #define ECRYPTFS_MAX_SCATTERLIST_LEN 4
@@ -1651,12 +757,8 @@ int ecryptfs_init_crypt_ctx(struct ecryptfs_crypt_stat *crypt_stat)
 						    crypt_stat->cipher, "cbc");
 	if (rc)
 		goto out_unlock;
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	crypt_stat->tfm = crypto_alloc_blkcipher(full_alg_name, 0,
 						 CRYPTO_ALG_ASYNC);
-#else
-	crypt_stat->tfm = crypto_alloc_ablkcipher(full_alg_name, 0, 0);
-#endif
 	kfree(full_alg_name);
 	if (IS_ERR(crypt_stat->tfm)) {
 		rc = PTR_ERR(crypt_stat->tfm);
@@ -1666,11 +768,7 @@ int ecryptfs_init_crypt_ctx(struct ecryptfs_crypt_stat *crypt_stat)
 				crypt_stat->cipher);
 		goto out_unlock;
 	}
-#ifndef CONFIG_CRYPTO_DEV_KFIPS
 	crypto_blkcipher_set_flags(crypt_stat->tfm, CRYPTO_TFM_REQ_WEAK_KEY);
-#else
-	crypto_ablkcipher_set_flags(crypt_stat->tfm, CRYPTO_TFM_REQ_WEAK_KEY);
-#endif
 	rc = 0;
 out_unlock:
 	mutex_unlock(&crypt_stat->cs_tfm_mutex);
@@ -1721,11 +819,7 @@ void ecryptfs_set_default_sizes(struct ecryptfs_crypt_stat *crypt_stat)
 int ecryptfs_compute_root_iv(struct ecryptfs_crypt_stat *crypt_stat)
 {
 	int rc = 0;
-#ifdef CONFIG_CRYPTO_FIPS
-	char dst[SHA256_HASH_SIZE];
-#else
 	char dst[MD5_DIGEST_SIZE];
-#endif
 
 	BUG_ON(crypt_stat->iv_bytes > MD5_DIGEST_SIZE);
 	BUG_ON(crypt_stat->iv_bytes <= 0);
@@ -1735,11 +829,6 @@ int ecryptfs_compute_root_iv(struct ecryptfs_crypt_stat *crypt_stat)
 				"cannot generate root IV\n");
 		goto out;
 	}
-#ifdef CONFIG_CRYPTO_FIPS
-	if (get_cc_mode_state())
-		rc = ecryptfs_calculate_sha256(dst, crypt_stat, crypt_stat->key, crypt_stat->key_size);
-	else
-#endif
 	rc = ecryptfs_calculate_md5(dst, crypt_stat, crypt_stat->key,
 				    crypt_stat->key_size);
 	if (rc) {
@@ -1758,11 +847,7 @@ out:
 
 static void ecryptfs_generate_new_key(struct ecryptfs_crypt_stat *crypt_stat)
 {
-#ifdef CONFIG_CRYPTO_FIPS
-	crypto_sec_rng_get_bytes(crypt_stat->key, crypt_stat->key_size);
-#else
 	get_random_bytes(crypt_stat->key, crypt_stat->key_size);
-#endif
 	crypt_stat->flags |= ECRYPTFS_KEY_VALID;
 	ecryptfs_compute_root_iv(crypt_stat);
 	if (unlikely(ecryptfs_verbosity > 0)) {
@@ -1987,11 +1072,7 @@ static void write_ecryptfs_marker(char *page_virt, size_t *written)
 {
 	u32 m_1, m_2;
 
-#ifdef CONFIG_CRYPTO_FIPS
-	crypto_sec_rng_get_bytes((unsigned char*)&m_1, (MAGIC_ECRYPTFS_MARKER_SIZE_BYTES / 2));
-#else
 	get_random_bytes(&m_1, (MAGIC_ECRYPTFS_MARKER_SIZE_BYTES / 2));
-#endif
 	m_2 = (m_1 ^ MAGIC_ECRYPTFS_MARKER);
 	put_unaligned_be32(m_1, page_virt);
 	page_virt += (MAGIC_ECRYPTFS_MARKER_SIZE_BYTES / 2);
@@ -2678,18 +1759,8 @@ ecryptfs_process_key_cipher(struct crypto_blkcipher **key_tfm,
 		      "allowable is [%d]\n", *key_size, ECRYPTFS_MAX_KEY_BYTES);
 		goto out;
 	}
-#ifdef CONFIG_CRYPTO_FIPS
-	if (get_cc_mode_state()) {
-		kfree(full_alg_name);
-		full_alg_name = kmalloc(strlen("cbc(aes)") + 1, GFP_KERNEL);
-		strlcpy(full_alg_name, "cbc(aes)", strlen("cbc(aes)") + 1);
-	} else {
-#endif
 	rc = ecryptfs_crypto_api_algify_cipher_name(&full_alg_name, cipher_name,
 						    "ecb");
-#ifdef CONFIG_CRYPTO_FIPS
-    }
-#endif
 	if (rc)
 		goto out;
 	*key_tfm = crypto_alloc_blkcipher(full_alg_name, 0, CRYPTO_ALG_ASYNC);
@@ -2705,11 +1776,7 @@ ecryptfs_process_key_cipher(struct crypto_blkcipher **key_tfm,
 
 		*key_size = alg->max_keysize;
 	}
-#ifdef CONFIG_CRYPTO_FIPS
-	crypto_sec_rng_get_bytes(dummy_key, *key_size);
-#else
 	get_random_bytes(dummy_key, *key_size);
-#endif
 	rc = crypto_blkcipher_setkey(*key_tfm, dummy_key, *key_size);
 	if (rc) {
 		printk(KERN_ERR "Error attempting to set key of size [%zd] for "
