@@ -221,22 +221,14 @@ static void exfat_write_super(struct super_block *sb);
 
 static void __lock_super(struct super_block *sb)
 {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,7,0)
-	lock_super(sb);
-#else
 	struct exfat_sb_info *sbi = EXFAT_SB(sb);
 	mutex_lock(&sbi->s_lock);
-#endif
 }
 
 static void __unlock_super(struct super_block *sb)
 {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,7,0)
-	unlock_super(sb);
-#else
 	struct exfat_sb_info *sbi = EXFAT_SB(sb);
 	mutex_unlock(&sbi->s_lock);
-#endif
 }
 
 static int __is_sb_dirty(struct super_block *sb)
