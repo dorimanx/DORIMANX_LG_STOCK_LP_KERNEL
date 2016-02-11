@@ -35,7 +35,6 @@
 #include <linux/kthread.h>
 #include <linux/poison.h>
 #include <linux/proc_fs.h>
-#include <linux/debugfs.h>
 #include <linux/seq_file.h>
 #include <linux/math64.h>
 #include <linux/hash.h>
@@ -51,6 +50,14 @@
 #include <asm/uaccess.h>
 #include <asm/page.h>
 
+#ifdef CONFIG_JBD2_DEBUG
+ushort jbd2_journal_enable_debug __read_mostly;
+EXPORT_SYMBOL(jbd2_journal_enable_debug);
+
+module_param_named(jbd2_debug, jbd2_journal_enable_debug, ushort, 0644);
+MODULE_PARM_DESC(jbd2_debug, "Debugging level for jbd2");
+#endif
+
 EXPORT_SYMBOL(jbd2_journal_extend);
 EXPORT_SYMBOL(jbd2_journal_stop);
 EXPORT_SYMBOL(jbd2_journal_lock_updates);
@@ -60,7 +67,6 @@ EXPORT_SYMBOL(jbd2_journal_get_create_access);
 EXPORT_SYMBOL(jbd2_journal_get_undo_access);
 EXPORT_SYMBOL(jbd2_journal_set_triggers);
 EXPORT_SYMBOL(jbd2_journal_dirty_metadata);
-EXPORT_SYMBOL(jbd2_journal_release_buffer);
 EXPORT_SYMBOL(jbd2_journal_forget);
 #if 0
 EXPORT_SYMBOL(journal_sync_buffer);
@@ -512,6 +518,10 @@ int __jbd2_log_space_left(journal_t *journal)
  */
 int __jbd2_log_start_commit(journal_t *journal, tid_t target)
 {
+	/* Return if the txn has already requested to be committed */
+	if (journal->j_commit_request == target)
+		return 0;
+
 	/*
 	 * The only transaction we can possibly wait upon is the
 	 * currently running transaction (if it exists).  Otherwise,
@@ -528,6 +538,7 @@ int __jbd2_log_start_commit(journal_t *journal, tid_t target)
 		jbd_debug(1, "JBD2: requesting commit %d/%d\n",
 			  journal->j_commit_request,
 			  journal->j_commit_sequence);
+		journal->j_running_transaction->t_requested = jiffies;
 		wake_up(&journal->j_wait_commit);
 		return 1;
 	} else if (!tid_geq(journal->j_commit_request, target))
@@ -553,17 +564,20 @@ int jbd2_log_start_commit(journal_t *journal, tid_t tid)
 }
 
 /*
- * Force and wait any uncommitted transactions.  We can only force the running
- * transaction if we don't have an active handle, otherwise, we will deadlock.
- * Returns: <0 in case of error,
- *           0 if nothing to commit,
- *           1 if transaction was successfully committed.
+ * Force and wait upon a commit if the calling process is not within
+ * transaction.  This is used for forcing out undo-protected data which contains
+ * bitmaps, when the fs is running out of space.
+ *
+ * We can only force the running transaction if we don't have an active handle;
+ * otherwise, we will deadlock.
+ *
+ * Returns true if a transaction was started.
  */
-static int __jbd2_journal_force_commit(journal_t *journal)
+int jbd2_journal_force_commit_nested(journal_t *journal)
 {
 	transaction_t *transaction = NULL;
 	tid_t tid;
-	int need_to_start = 0, ret = 0;
+	int need_to_start = 0;
 
 	read_lock(&journal->j_state_lock);
 	if (journal->j_running_transaction && !current->journal_info) {
@@ -574,53 +588,16 @@ static int __jbd2_journal_force_commit(journal_t *journal)
 		transaction = journal->j_committing_transaction;
 
 	if (!transaction) {
-		/* Nothing to commit */
 		read_unlock(&journal->j_state_lock);
-		return 0;
+		return 0;	/* Nothing to retry */
 	}
+
 	tid = transaction->t_tid;
 	read_unlock(&journal->j_state_lock);
 	if (need_to_start)
 		jbd2_log_start_commit(journal, tid);
-	ret = jbd2_log_wait_commit(journal, tid);
-	if (!ret)
-		ret = 1;
-
-	return ret;
-}
-
-/**
- * Force and wait upon a commit if the calling process is not within
- * transaction.  This is used for forcing out undo-protected data which contains
- * bitmaps, when the fs is running out of space.
- *
- * @journal: journal to force
- * Returns true if progress was made.
- */
-int jbd2_journal_force_commit_nested(journal_t *journal)
-{
-	int ret;
-
-	ret = __jbd2_journal_force_commit(journal);
-	return ret > 0;
-}
-
-/**
- * int journal_force_commit() - force any uncommitted transactions
- * @journal: journal to force
- *
- * Caller want unconditional commit. We can only force the running transaction
- * if we don't have an active handle, otherwise, we will deadlock.
- */
-int jbd2_journal_force_commit(journal_t *journal)
-{
-	int ret;
-
-	J_ASSERT(!current->journal_info);
-	ret = __jbd2_journal_force_commit(journal);
-	if (ret > 0)
-		ret = 0;
-	return ret;
+	jbd2_log_wait_commit(journal, tid);
+	return 1;
 }
 
 /*
@@ -644,8 +621,8 @@ int jbd2_journal_start_commit(journal_t *journal, tid_t *ptid)
 		ret = 1;
 	} else if (journal->j_committing_transaction) {
 		/*
-		 * If ext3_write_super() recently started a commit, then we
-		 * have to wait for completion of that transaction
+		 * If commit has been started, then we have to wait for
+		 * completion of that transaction.
 		 */
 		if (ptid)
 			*ptid = journal->j_committing_transaction->t_tid;
@@ -767,7 +744,7 @@ EXPORT_SYMBOL(jbd2_complete_transaction);
 
 int jbd2_journal_next_log_block(journal_t *journal, unsigned long long *retp)
 {
-	unsigned long blocknr = 0;
+	unsigned long blocknr;
 
 	write_lock(&journal->j_state_lock);
 	J_ASSERT(journal->j_free > 1);
@@ -824,7 +801,7 @@ int jbd2_journal_bmap(journal_t *journal, unsigned long blocknr,
 struct journal_head *jbd2_journal_get_descriptor_buffer(journal_t *journal)
 {
 	struct buffer_head *bh;
-	unsigned long long blocknr = 0;
+	unsigned long long blocknr;
 	int err;
 
 	err = jbd2_journal_next_log_block(journal, &blocknr);
@@ -965,13 +942,18 @@ static int jbd2_seq_info_show(struct seq_file *seq, void *v)
 
 	if (v != SEQ_START_TOKEN)
 		return 0;
-	seq_printf(seq, "%lu transaction, each up to %u blocks\n",
-			s->stats->ts_tid,
-			s->journal->j_max_transaction_buffers);
+	seq_printf(seq, "%lu transactions (%lu requested), "
+		   "each up to %u blocks\n",
+		   s->stats->ts_tid, s->stats->ts_requested,
+		   s->journal->j_max_transaction_buffers);
 	if (s->stats->ts_tid == 0)
 		return 0;
 	seq_printf(seq, "average: \n  %ums waiting for transaction\n",
 	    jiffies_to_msecs(s->stats->run.rs_wait / s->stats->ts_tid));
+	seq_printf(seq, "  %ums request delay\n",
+	    (s->stats->ts_requested == 0) ? 0 :
+	    jiffies_to_msecs(s->stats->run.rs_request_delay /
+			     s->stats->ts_requested));
 	seq_printf(seq, "  %ums running transaction\n",
 	    jiffies_to_msecs(s->stats->run.rs_running / s->stats->ts_tid));
 	seq_printf(seq, "  %ums transaction was being locked\n",
@@ -1004,7 +986,7 @@ static const struct seq_operations jbd2_seq_info_ops = {
 
 static int jbd2_seq_info_open(struct inode *inode, struct file *file)
 {
-	journal_t *journal = PDE(inode)->data;
+	journal_t *journal = PDE_DATA(inode);
 	struct jbd2_stats_proc_session *s;
 	int rc, size;
 
@@ -1205,7 +1187,7 @@ journal_t * jbd2_journal_init_inode (struct inode *inode)
 	char *p;
 	int err;
 	int n;
-	unsigned long long blocknr = 0;
+	unsigned long long blocknr;
 
 	if (!journal)
 		return NULL;
@@ -1343,6 +1325,7 @@ static int journal_reset(journal_t *journal)
 static int jbd2_write_superblock(journal_t *journal, int write_op)
 {
 	struct buffer_head *bh = journal->j_sb_buffer;
+	journal_superblock_t *sb = journal->j_superblock;
 	int ret;
 
 	trace_jbd2_write_superblock(journal, write_op);
@@ -1364,6 +1347,7 @@ static int jbd2_write_superblock(journal_t *journal, int write_op)
 		clear_buffer_write_io_error(bh);
 		set_buffer_uptodate(bh);
 	}
+	jbd2_superblock_csum_set(journal, sb);
 	get_bh(bh);
 	bh->b_end_io = end_buffer_write_sync;
 	ret = submit_bh(write_op, bh);
@@ -1469,7 +1453,6 @@ void jbd2_journal_update_sb_errno(journal_t *journal)
 	jbd_debug(1, "JBD2: updating superblock error (errno %d)\n",
 		  journal->j_errno);
 	sb->s_errno    = cpu_to_be32(journal->j_errno);
-	jbd2_superblock_csum_set(journal, sb);
 	read_unlock(&journal->j_state_lock);
 
 	jbd2_write_superblock(journal, WRITE_SYNC);
@@ -1701,17 +1684,8 @@ int jbd2_journal_destroy(journal_t *journal)
 	while (journal->j_checkpoint_transactions != NULL) {
 		spin_unlock(&journal->j_list_lock);
 		mutex_lock(&journal->j_checkpoint_mutex);
-		err = jbd2_log_do_checkpoint(journal);
+		jbd2_log_do_checkpoint(journal);
 		mutex_unlock(&journal->j_checkpoint_mutex);
-		/*
-		 * If checkpointing failed, just free the buffers to avoid
-		 * looping forever
-		 */
-		if (err) {
-			jbd2_journal_destroy_checkpoint(journal);
-			spin_lock(&journal->j_list_lock);
-			break;
-		}
 		spin_lock(&journal->j_list_lock);
 	}
 
@@ -2586,45 +2560,6 @@ restart:
 	spin_unlock(&journal->j_list_lock);
 }
 
-/*
- * debugfs tunables
- */
-#ifdef CONFIG_JBD2_DEBUG
-u8 jbd2_journal_enable_debug __read_mostly;
-EXPORT_SYMBOL(jbd2_journal_enable_debug);
-
-#define JBD2_DEBUG_NAME "jbd2-debug"
-
-static struct dentry *jbd2_debugfs_dir;
-static struct dentry *jbd2_debug;
-
-static void __init jbd2_create_debugfs_entry(void)
-{
-	jbd2_debugfs_dir = debugfs_create_dir("jbd2", NULL);
-	if (jbd2_debugfs_dir)
-		jbd2_debug = debugfs_create_u8(JBD2_DEBUG_NAME,
-					       S_IRUGO | S_IWUSR,
-					       jbd2_debugfs_dir,
-					       &jbd2_journal_enable_debug);
-}
-
-static void __exit jbd2_remove_debugfs_entry(void)
-{
-	debugfs_remove(jbd2_debug);
-	debugfs_remove(jbd2_debugfs_dir);
-}
-
-#else
-
-static void __init jbd2_create_debugfs_entry(void)
-{
-}
-
-static void __exit jbd2_remove_debugfs_entry(void)
-{
-}
-
-#endif
 
 #ifdef CONFIG_PROC_FS
 
@@ -2710,7 +2645,6 @@ static int __init journal_init(void)
 
 	ret = journal_init_caches();
 	if (ret == 0) {
-		jbd2_create_debugfs_entry();
 		jbd2_create_jbd_stats_proc_entry();
 	} else {
 		jbd2_journal_destroy_caches();
@@ -2725,7 +2659,6 @@ static void __exit journal_exit(void)
 	if (n)
 		printk(KERN_EMERG "JBD2: leaked %d journal_heads!\n", n);
 #endif
-	jbd2_remove_debugfs_entry();
 	jbd2_remove_jbd_stats_proc_entry();
 	jbd2_journal_destroy_caches();
 }

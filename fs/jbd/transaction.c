@@ -245,7 +245,6 @@ static handle_t *new_handle(int nblocks)
 	handle_t *handle = jbd_alloc_handle(GFP_NOFS);
 	if (!handle)
 		return NULL;
-	memset(handle, 0, sizeof(*handle));
 	handle->h_buffer_credits = nblocks;
 	handle->h_ref = 1;
 
@@ -1259,7 +1258,7 @@ int journal_forget (handle_t *handle, struct buffer_head *bh)
 		goto not_jbd;
 	}
 
-	/* keep track of wether or not this transaction modified us */
+	/* keep track of whether or not this transaction modified us */
 	was_modified = jh->b_modified;
 
 	/*
@@ -1433,8 +1432,6 @@ int journal_stop(handle_t *handle)
 		}
 	}
 
-	if (handle->h_sync)
-		transaction->t_synchronous_commit = 1;
 	current->journal_info = NULL;
 	spin_lock(&journal->j_state_lock);
 	spin_lock(&transaction->t_handle_lock);

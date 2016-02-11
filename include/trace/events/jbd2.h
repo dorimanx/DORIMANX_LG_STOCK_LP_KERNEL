@@ -240,6 +240,7 @@ TRACE_EVENT(jbd2_run_stats,
 		__field(		dev_t,	dev		)
 		__field(	unsigned long,	tid		)
 		__field(	unsigned long,	wait		)
+		__field(	unsigned long,	request_delay	)
 		__field(	unsigned long,	running		)
 		__field(	unsigned long,	locked		)
 		__field(	unsigned long,	flushing	)
@@ -253,6 +254,7 @@ TRACE_EVENT(jbd2_run_stats,
 		__entry->dev		= dev;
 		__entry->tid		= tid;
 		__entry->wait		= stats->rs_wait;
+		__entry->request_delay	= stats->rs_request_delay;
 		__entry->running	= stats->rs_running;
 		__entry->locked		= stats->rs_locked;
 		__entry->flushing	= stats->rs_flushing;
@@ -262,10 +264,12 @@ TRACE_EVENT(jbd2_run_stats,
 		__entry->blocks_logged	= stats->rs_blocks_logged;
 	),
 
-	TP_printk("dev %d,%d tid %lu wait %u running %u locked %u flushing %u "
-		  "logging %u handle_count %u blocks %u blocks_logged %u",
+	TP_printk("dev %d,%d tid %lu wait %u request_delay %u running %u "
+		  "locked %u flushing %u logging %u handle_count %u "
+		  "blocks %u blocks_logged %u",
 		  MAJOR(__entry->dev), MINOR(__entry->dev), __entry->tid,
 		  jiffies_to_msecs(__entry->wait),
+		  jiffies_to_msecs(__entry->request_delay),
 		  jiffies_to_msecs(__entry->running),
 		  jiffies_to_msecs(__entry->locked),
 		  jiffies_to_msecs(__entry->flushing),
@@ -352,6 +356,27 @@ TRACE_EVENT(jbd2_write_superblock,
 
 	TP_printk("dev %d,%d write_op %x", MAJOR(__entry->dev),
 		  MINOR(__entry->dev), __entry->write_op)
+);
+
+TRACE_EVENT(jbd2_lock_buffer_stall,
+
+	TP_PROTO(dev_t dev, unsigned long stall_ms),
+
+	TP_ARGS(dev, stall_ms),
+
+	TP_STRUCT__entry(
+		__field(        dev_t, dev	)
+		__field(unsigned long, stall_ms	)
+	),
+
+	TP_fast_assign(
+		__entry->dev		= dev;
+		__entry->stall_ms	= stall_ms;
+	),
+
+	TP_printk("dev %d,%d stall_ms %lu",
+		MAJOR(__entry->dev), MINOR(__entry->dev),
+		__entry->stall_ms)
 );
 
 #endif /* _TRACE_JBD2_H */
