@@ -296,7 +296,6 @@ int virt_to_scatterlist(const void *addr, int size, struct scatterlist *sg,
 	int offset;
 	int remainder_of_page;
 
-	if (sg)
 	sg_init_table(sg, sg_size);
 
 	while (size > 0 && i < sg_size) {
@@ -529,13 +528,6 @@ int ecryptfs_encrypt_page(struct page *page)
 					"\n", rc);
 			goto out;
 		}
-		extent_crypt_req->inode = ecryptfs_inode;
-		extent_crypt_req->enc_extent_page = enc_extent_page;
-		extent_crypt_req->extent_offset = extent_offset;
-
-		/* Error handling is done in the completion routine. */
-		ecryptfs_encrypt_extent(extent_crypt_req,
-					ecryptfs_encrypt_extent_done);
 	}
 	rc = 0;
 out:
