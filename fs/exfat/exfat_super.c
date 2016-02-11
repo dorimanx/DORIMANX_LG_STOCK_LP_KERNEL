@@ -241,22 +241,14 @@ static void __unlock_super(struct super_block *sb)
 
 static int __is_sb_dirty(struct super_block *sb)
 {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,7,0)
-	return sb->s_dirt;
-#else
 	struct exfat_sb_info *sbi = EXFAT_SB(sb);
 	return sbi->s_dirt;
-#endif
 }
 
 static void __set_sb_clean(struct super_block *sb)
 {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,7,0)
-	sb->s_dirt = 0;
-#else
 	struct exfat_sb_info *sbi = EXFAT_SB(sb);
 	sbi->s_dirt = 0;
-#endif
 }
 
 static int __exfat_revalidate(struct dentry *dentry)
@@ -1973,9 +1965,6 @@ const struct super_operations exfat_sops = {
 	.evict_inode  = exfat_evict_inode,
 #endif
 	.put_super     = exfat_put_super,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,7,0)
-	.write_super   = exfat_write_super,
-#endif
 	.sync_fs       = exfat_sync_fs,
 	.statfs        = exfat_statfs,
 	.remount_fs    = exfat_remount,
