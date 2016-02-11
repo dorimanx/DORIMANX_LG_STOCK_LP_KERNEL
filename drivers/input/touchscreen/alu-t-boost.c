@@ -48,7 +48,7 @@ static struct workqueue_struct *touch_boost_wq;
 static struct delayed_work input_boost_rem;
 static struct work_struct input_boost_work;
 
-static unsigned int input_boost_freq;
+static unsigned int input_boost_freq = 960000;
 module_param(input_boost_freq, uint, 0644);
 
 static unsigned int input_boost_ms = 40;
@@ -107,6 +107,13 @@ static void do_input_boost(struct work_struct *work)
 		nr_cpus = 1;
 	else if (nr_cpus > NR_CPUS)
 		nr_cpus = NR_CPUS;
+
+	if (input_boost_freq != 0) {
+		if (input_boost_freq > 1958400)
+			input_boost_freq = 1958400;
+		if (input_boost_freq < 300000)
+			input_boost_freq = 960000;
+	}
 
 	for (cpu = 0; cpu < nr_cpus; cpu++) {
 		struct cpufreq_policy policy;
