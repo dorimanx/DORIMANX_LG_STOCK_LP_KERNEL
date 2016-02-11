@@ -20,7 +20,6 @@
 #include <linux/pipe_fs_i.h>
 #include <linux/swap.h>
 #include <linux/splice.h>
-#include <linux/freezer.h>
 #include <linux/aio.h>
 #include <linux/freezer.h>
 
