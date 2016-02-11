@@ -350,7 +350,7 @@ struct io_cq *ioc_create_icq(struct request_queue *q, gfp_t gfp_mask)
 	if (!icq)
 		return NULL;
 
-	if (radix_tree_preload(gfp_mask) < 0) {
+	if (radix_tree_maybe_preload(gfp_mask) < 0) {
 		kmem_cache_free(et->icq_cache, icq);
 		return NULL;
 	}
