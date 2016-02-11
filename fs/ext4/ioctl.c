@@ -154,8 +154,6 @@ static long swap_inode_boot_loader(struct super_block *sb,
 	if (inode_bl->i_nlink == 0) {
 		/* this inode has never been used as a BOOT_LOADER */
 		set_nlink(inode_bl, 1);
-		i_uid_write(inode_bl, 0);
-		i_gid_write(inode_bl, 0);
 		inode_bl->i_flags = 0;
 		ei_bl->i_flags = 0;
 		inode_bl->i_version = 1;

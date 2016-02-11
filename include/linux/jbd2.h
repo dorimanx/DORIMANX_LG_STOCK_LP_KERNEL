@@ -20,7 +20,6 @@
 #ifndef __KERNEL__
 #include "jfs_compat.h"
 #define JBD2_DEBUG
-#define jfs_debug jbd_debug
 #else
 
 #include <linux/types.h>
@@ -57,7 +56,7 @@
  * CONFIG_JBD2_DEBUG is on.
  */
 #define JBD2_EXPENSIVE_CHECKING
-extern u8 jbd2_journal_enable_debug;
+extern ushort jbd2_journal_enable_debug;
 
 #define jbd_debug(n, f, a...)						\
 	do {								\
@@ -565,6 +564,11 @@ struct transaction_s
 	unsigned long		t_start;
 
 	/*
+	 * When commit was requested
+	 */
+	unsigned long		t_requested;
+
+	/*
 	 * Checkpointing stats [j_checkpoint_sem]
 	 */
 	struct transaction_chp_stats_s t_chp_stats;
@@ -621,6 +625,7 @@ struct transaction_s
 
 struct transaction_run_stats_s {
 	unsigned long		rs_wait;
+	unsigned long		rs_request_delay;
 	unsigned long		rs_running;
 	unsigned long		rs_locked;
 	unsigned long		rs_flushing;
@@ -633,6 +638,7 @@ struct transaction_run_stats_s {
 
 struct transaction_stats_s {
 	unsigned long		ts_tid;
+	unsigned long		ts_requested;
 	struct transaction_run_stats_s run;
 };
 
@@ -999,9 +1005,8 @@ void jbd2_update_log_tail(journal_t *journal, tid_t tid, unsigned long block);
 extern void jbd2_journal_commit_transaction(journal_t *);
 
 /* Checkpoint list management */
-int __jbd2_journal_clean_checkpoint_list(journal_t *journal, bool destroy);
+int __jbd2_journal_clean_checkpoint_list(journal_t *journal);
 int __jbd2_journal_remove_checkpoint(struct journal_head *);
-void jbd2_journal_destroy_checkpoint(journal_t *journal);
 void __jbd2_journal_insert_checkpoint(struct journal_head *, transaction_t *);
 
 
@@ -1083,10 +1088,9 @@ extern int	 jbd2_journal_get_undo_access(handle_t *, struct buffer_head *);
 void		 jbd2_journal_set_triggers(struct buffer_head *,
 					   struct jbd2_buffer_trigger_type *type);
 extern int	 jbd2_journal_dirty_metadata (handle_t *, struct buffer_head *);
-extern void	 jbd2_journal_release_buffer (handle_t *, struct buffer_head *);
 extern int	 jbd2_journal_forget (handle_t *, struct buffer_head *);
 extern void	 journal_sync_buffer (struct buffer_head *);
-extern void	 jbd2_journal_invalidatepage(journal_t *,
+extern int	 jbd2_journal_invalidatepage(journal_t *,
 				struct page *, unsigned long);
 extern int	 jbd2_journal_try_to_free_buffers(journal_t *, struct page *, gfp_t);
 extern int	 jbd2_journal_stop(handle_t *);
@@ -1122,7 +1126,6 @@ extern void	   jbd2_journal_ack_err    (journal_t *);
 extern int	   jbd2_journal_clear_err  (journal_t *);
 extern int	   jbd2_journal_bmap(journal_t *, unsigned long, unsigned long long *);
 extern int	   jbd2_journal_force_commit(journal_t *);
-extern int	   jbd2_journal_force_commit_nested(journal_t *);
 extern int	   jbd2_journal_file_inode(handle_t *handle, struct jbd2_inode *inode);
 extern int	   jbd2_journal_begin_ordered_truncate(journal_t *journal,
 				struct jbd2_inode *inode, loff_t new_size);
@@ -1143,7 +1146,7 @@ extern struct kmem_cache *jbd2_handle_cache;
 
 static inline handle_t *jbd2_alloc_handle(gfp_t gfp_flags)
 {
-	return kmem_cache_alloc(jbd2_handle_cache, gfp_flags);
+	return kmem_cache_zalloc(jbd2_handle_cache, gfp_flags);
 }
 
 static inline void jbd2_free_handle(handle_t *handle)
@@ -1197,6 +1200,7 @@ int __jbd2_log_space_left(journal_t *); /* Called with journal locked */
 int jbd2_log_start_commit(journal_t *journal, tid_t tid);
 int __jbd2_log_start_commit(journal_t *journal, tid_t tid);
 int jbd2_journal_start_commit(journal_t *journal, tid_t *tid);
+int jbd2_journal_force_commit_nested(journal_t *journal);
 int jbd2_log_wait_commit(journal_t *journal, tid_t tid);
 int jbd2_complete_transaction(journal_t *journal, tid_t tid);
 int jbd2_log_do_checkpoint(journal_t *journal);
@@ -1291,14 +1295,20 @@ static inline int jbd_space_needed(journal_t *journal)
 
 extern int jbd_blocks_per_page(struct inode *inode);
 
+/* JBD uses a CRC32 checksum */
+#define JBD_MAX_CHECKSUM_SIZE 4
+
 static inline u32 jbd2_chksum(journal_t *journal, u32 crc,
 			      const void *address, unsigned int length)
 {
 	struct {
 		struct shash_desc shash;
-		char ctx[crypto_shash_descsize(journal->j_chksum_driver)];
+		char ctx[JBD_MAX_CHECKSUM_SIZE];
 	} desc;
 	int err;
+
+	BUG_ON(crypto_shash_descsize(journal->j_chksum_driver) >
+		JBD_MAX_CHECKSUM_SIZE);
 
 	desc.shash.tfm = journal->j_chksum_driver;
 	desc.shash.flags = 0;

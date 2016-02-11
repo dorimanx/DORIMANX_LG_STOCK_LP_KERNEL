@@ -4176,8 +4176,6 @@ struct inode *ext4_iget(struct super_block *sb, unsigned long ino)
 	journal_t *journal = EXT4_SB(sb)->s_journal;
 	long ret;
 	int block;
-	uid_t i_uid;
-	gid_t i_gid;
 
 	inode = iget_locked(sb, ino);
 	if (!inode)
@@ -4226,14 +4224,12 @@ struct inode *ext4_iget(struct super_block *sb, unsigned long ino)
 	}
 
 	inode->i_mode = le16_to_cpu(raw_inode->i_mode);
-	i_uid = (uid_t)le16_to_cpu(raw_inode->i_uid_low);
-	i_gid = (gid_t)le16_to_cpu(raw_inode->i_gid_low);
+	inode->i_uid = (uid_t)le16_to_cpu(raw_inode->i_uid_low);
+	inode->i_gid = (gid_t)le16_to_cpu(raw_inode->i_gid_low);
 	if (!(test_opt(inode->i_sb, NO_UID32))) {
-		i_uid |= le16_to_cpu(raw_inode->i_uid_high) << 16;
-		i_gid |= le16_to_cpu(raw_inode->i_gid_high) << 16;
+		inode->i_uid |= le16_to_cpu(raw_inode->i_uid_high) << 16;
+		inode->i_gid |= le16_to_cpu(raw_inode->i_gid_high) << 16;
 	}
-	i_uid_write(inode, i_uid);
-	i_gid_write(inode, i_gid);
 	set_nlink(inode, le16_to_cpu(raw_inode->i_links_count));
 
 	ext4_clear_state_flags(ei);	/* Only relevant on 32-bit archs */
@@ -4458,8 +4454,6 @@ static int ext4_do_update_inode(handle_t *handle,
 	struct buffer_head *bh = iloc->bh;
 	int err = 0, rc, block;
 	int need_datasync = 0;
-	uid_t i_uid;
-	gid_t i_gid;
 
 	/* For fields not not tracking in the in-memory inode,
 	 * initialise them to zero for new inodes. */
@@ -4468,27 +4462,27 @@ static int ext4_do_update_inode(handle_t *handle,
 
 	ext4_get_inode_flags(ei);
 	raw_inode->i_mode = cpu_to_le16(inode->i_mode);
-	i_uid = i_uid_read(inode);
-	i_gid = i_gid_read(inode);
 	if (!(test_opt(inode->i_sb, NO_UID32))) {
-		raw_inode->i_uid_low = cpu_to_le16(low_16_bits(i_uid));
-		raw_inode->i_gid_low = cpu_to_le16(low_16_bits(i_gid));
+		raw_inode->i_uid_low = cpu_to_le16(low_16_bits(inode->i_uid));
+		raw_inode->i_gid_low = cpu_to_le16(low_16_bits(inode->i_gid));
 /*
  * Fix up interoperability with old kernels. Otherwise, old inodes get
  * re-used with the upper 16 bits of the uid/gid intact
  */
 		if (!ei->i_dtime) {
 			raw_inode->i_uid_high =
-				cpu_to_le16(high_16_bits(i_uid));
+				cpu_to_le16(high_16_bits(inode->i_uid));
 			raw_inode->i_gid_high =
-				cpu_to_le16(high_16_bits(i_gid));
+				cpu_to_le16(high_16_bits(inode->i_gid));
 		} else {
 			raw_inode->i_uid_high = 0;
 			raw_inode->i_gid_high = 0;
 		}
 	} else {
-		raw_inode->i_uid_low = cpu_to_le16(fs_high2lowuid(i_uid));
-		raw_inode->i_gid_low = cpu_to_le16(fs_high2lowgid(i_gid));
+		raw_inode->i_uid_low =
+			cpu_to_le16(fs_high2lowuid(inode->i_uid));
+		raw_inode->i_gid_low =
+			cpu_to_le16(fs_high2lowgid(inode->i_gid));
 		raw_inode->i_uid_high = 0;
 		raw_inode->i_gid_high = 0;
 	}
@@ -4730,8 +4724,8 @@ int ext4_setattr(struct dentry *dentry, struct iattr *attr)
 
 	if (is_quota_modification(inode, attr))
 		dquot_initialize(inode);
-	if ((ia_valid & ATTR_UID && !uid_eq(attr->ia_uid, inode->i_uid)) ||
-	    (ia_valid & ATTR_GID && !gid_eq(attr->ia_gid, inode->i_gid))) {
+	if ((ia_valid & ATTR_UID && attr->ia_uid != inode->i_uid) ||
+		(ia_valid & ATTR_GID && attr->ia_gid != inode->i_gid)) {
 		handle_t *handle;
 
 		/* (user+group)*(old+new) structure, inode write (sb,

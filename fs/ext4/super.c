@@ -1420,8 +1420,6 @@ static int handle_mount_opt(struct super_block *sb, char *opt, int token,
 {
 	struct ext4_sb_info *sbi = EXT4_SB(sb);
 	const struct mount_opts *m;
-	kuid_t uid;
-	kgid_t gid;
 	int arg = 0;
 
 #ifdef CONFIG_QUOTA
@@ -1515,19 +1513,9 @@ static int handle_mount_opt(struct super_block *sb, char *opt, int token,
 	} else if (token == Opt_stripe) {
 		sbi->s_stripe = arg;
 	} else if (token == Opt_resuid) {
-		uid = make_kuid(current_user_ns(), arg);
-		if (!uid_valid(uid)) {
-			ext4_msg(sb, KERN_ERR, "Invalid uid value %d", arg);
-			return -1;
-		}
-		sbi->s_resuid = uid;
+		sbi->s_resuid = arg;
 	} else if (token == Opt_resgid) {
-		gid = make_kgid(current_user_ns(), arg);
-		if (!gid_valid(gid)) {
-			ext4_msg(sb, KERN_ERR, "Invalid gid value %d", arg);
-			return -1;
-		}
-		sbi->s_resgid = gid;
+		sbi->s_resgid = arg;
 	} else if (token == Opt_journal_dev) {
 		if (is_remount) {
 			ext4_msg(sb, KERN_ERR,
@@ -1733,14 +1721,12 @@ static int _ext4_show_options(struct seq_file *seq, struct super_block *sb,
 		SEQ_OPTS_PRINT("%s", token2str(m->token));
 	}
 
-	if (nodefs || !uid_eq(sbi->s_resuid, make_kuid(&init_user_ns, EXT4_DEF_RESUID)) ||
+	if (nodefs || sbi->s_resuid != EXT4_DEF_RESUID ||
 	    le16_to_cpu(es->s_def_resuid) != EXT4_DEF_RESUID)
-		SEQ_OPTS_PRINT("resuid=%u",
-				from_kuid_munged(&init_user_ns, sbi->s_resuid));
-	if (nodefs || !gid_eq(sbi->s_resgid, make_kgid(&init_user_ns, EXT4_DEF_RESGID)) ||
+		SEQ_OPTS_PRINT("resuid=%u", sbi->s_resuid);
+	if (nodefs || sbi->s_resgid != EXT4_DEF_RESGID ||
 	    le16_to_cpu(es->s_def_resgid) != EXT4_DEF_RESGID)
-		SEQ_OPTS_PRINT("resgid=%u",
-				from_kgid_munged(&init_user_ns, sbi->s_resgid));
+		SEQ_OPTS_PRINT("resgid=%u", sbi->s_resgid);
 	def_errors = nodefs ? -1 : le16_to_cpu(es->s_errors);
 	if (test_opt(sb, ERRORS_RO) && def_errors != EXT4_ERRORS_RO)
 		SEQ_OPTS_PUTS("errors=remount-ro");
@@ -3418,8 +3404,8 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
 	if (def_mount_opts & EXT4_DEFM_DISCARD)
 		set_opt(sb, DISCARD);
 
-	sbi->s_resuid = make_kuid(&init_user_ns, le16_to_cpu(es->s_def_resuid));
-	sbi->s_resgid = make_kgid(&init_user_ns, le16_to_cpu(es->s_def_resgid));
+	sbi->s_resuid = le16_to_cpu(es->s_def_resuid);
+	sbi->s_resgid = le16_to_cpu(es->s_def_resgid);
 	sbi->s_commit_interval = JBD2_DEFAULT_MAX_COMMIT_AGE * HZ;
 	sbi->s_min_batch_time = EXT4_DEF_MIN_BATCH_TIME;
 	sbi->s_max_batch_time = EXT4_DEF_MAX_BATCH_TIME;
@@ -4610,8 +4596,8 @@ static int ext4_unfreeze(struct super_block *sb)
 struct ext4_mount_options {
 	unsigned long s_mount_opt;
 	unsigned long s_mount_opt2;
-	kuid_t s_resuid;
-	kgid_t s_resgid;
+	uid_t s_resuid;
+	gid_t s_resgid;
 	unsigned long s_commit_interval;
 	u32 s_min_batch_time, s_max_batch_time;
 #ifdef CONFIG_QUOTA
