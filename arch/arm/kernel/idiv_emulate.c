@@ -177,12 +177,11 @@ static int __init idiv_emulation_init(void)
 #ifdef CONFIG_PROC_FS
 	struct proc_dir_entry *res;
 
-	res = create_proc_entry("cpu/idiv_emulation", S_IRUGO, NULL);
-
+	res = create_proc_read_entry("cpu/idiv_emulation", S_IRUGO, NULL,
+				proc_read_status, NULL);
 	if (!res)
 		return -ENOMEM;
 
-	res->read_proc = proc_read_status;
 #endif /* CONFIG_PROC_FS */
 
 	pr_notice("Registering SDIV/UDIV emulation handler\n");
