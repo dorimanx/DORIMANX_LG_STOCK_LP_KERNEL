@@ -167,15 +167,14 @@ static int __init ram_console_late_init(void)
 	if (persistent_ram_old_size(prz) == 0)
 		return 0;
 
-	entry = create_proc_read_entry("last_kmsg", S_IFREG | S_IRUGO, NULL,
- 					NULL, NULL);
+	entry = proc_create("last_kmsg", S_IFREG | S_IRUGO, NULL,
+ 					&ram_console_file_ops);
 	if (!entry) {
 		pr_err("failed to create proc entry\n");
 		persistent_ram_free_old(prz);
 		return 0;
 	}
 
-	entry->proc_fops = &ram_console_file_ops;
 	entry->size = persistent_ram_old_size(prz) +
 		persistent_ram_ecc_string(prz, NULL, 0) +
 		bootinfo_size;
