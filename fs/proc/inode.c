@@ -427,7 +427,8 @@ struct inode *proc_get_inode(struct super_block *sb, struct proc_dir_entry *de)
 				inode->i_fop = de->proc_fops;
 			}
 		}
-	}
+	} else
+	       pde_put(de);
 	return inode;
 }
 
