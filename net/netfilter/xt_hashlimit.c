@@ -887,7 +887,6 @@ static int __net_init hashlimit_proc_net_init(struct net *net)
 static void __net_exit hashlimit_proc_net_exit(struct net *net)
 {
 	struct xt_hashlimit_htable *hinfo;
-	struct hlist_node *pos;
 	struct hashlimit_net *hashlimit_net = hashlimit_pernet(net);
 
 	/* hashlimit_net_exit() is called before hashlimit_mt_destroy().
@@ -895,7 +894,7 @@ static void __net_exit hashlimit_proc_net_exit(struct net *net)
 	 * entries is empty before trying to remove it.
 	 */
 	mutex_lock(&hashlimit_mutex);
-	hlist_for_each_entry(hinfo, pos, &hashlimit_net->htables, node)
+	hlist_for_each_entry(hinfo, &hashlimit_net->htables, node)
 		htable_remove_proc_entry(hinfo);
 	hashlimit_net->ipt_hashlimit = NULL;
 	hashlimit_net->ip6t_hashlimit = NULL;
