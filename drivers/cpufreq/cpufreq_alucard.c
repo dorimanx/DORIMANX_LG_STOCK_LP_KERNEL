@@ -505,7 +505,7 @@ static void alucard_check_cpu(struct cpufreq_alucard_cpuinfo *this_alucard_cpuin
 	int pump_inc_step = this_alucard_cpuinfo->pump_inc_step;
 	int pump_dec_step = this_alucard_cpuinfo->pump_dec_step;
 	unsigned int cur_load = 0;
-	unsigned int max_load_freq = 0;
+	unsigned int max_load = 0;
 	unsigned int cpus_up_rate = alucard_tuners_ins.cpus_up_rate;
 	unsigned int cpus_down_rate = alucard_tuners_ins.cpus_down_rate;
 	unsigned int index = 0;
@@ -524,8 +524,6 @@ static void alucard_check_cpu(struct cpufreq_alucard_cpuinfo *this_alucard_cpuin
 		struct cpufreq_alucard_cpuinfo *j_alucard_cpuinfo = &per_cpu(od_alucard_cpuinfo, j);
 		u64 cur_wall_time, cur_idle_time;
 		unsigned int idle_time, wall_time;
-		unsigned int load_freq;
-		int freq_avg;
 		
 		cur_idle_time = get_cpu_idle_time(j, &cur_wall_time, 0);
 
@@ -542,13 +540,8 @@ static void alucard_check_cpu(struct cpufreq_alucard_cpuinfo *this_alucard_cpuin
 
 		cur_load = 100 * (wall_time - idle_time) / wall_time;
 
-		freq_avg = __cpufreq_driver_getavg(policy, j);
-		if (freq_avg <= 0)
-			freq_avg = policy->cur;
-
-		load_freq = cur_load * freq_avg;
-		if (load_freq > max_load_freq)
-			max_load_freq = load_freq;
+		if (cur_load > max_load)
+			max_load = cur_load;
 	}
 
 	cpufreq_notify_utilization(policy, cur_load);
@@ -564,7 +557,7 @@ static void alucard_check_cpu(struct cpufreq_alucard_cpuinfo *this_alucard_cpuin
 	if (!policy)
 		return;
 	/* Check for frequency increase or for frequency decrease */
-	if (max_load_freq >= (inc_cpu_load * policy->cur) 
+	if (max_load >= inc_cpu_load
 		 && index < this_alucard_cpuinfo->max_index) {
 		if (this_alucard_cpuinfo->up_rate % cpus_up_rate == 0) {
 			if ((index + pump_inc_step) <= this_alucard_cpuinfo->max_index)
@@ -585,7 +578,7 @@ static void alucard_check_cpu(struct cpufreq_alucard_cpuinfo *this_alucard_cpuin
 			else
 				this_alucard_cpuinfo->up_rate = 1;
 		}
-	} else if (max_load_freq < (dec_cpu_load * policy->cur)
+	} else if (max_load < dec_cpu_load
 				 && index > this_alucard_cpuinfo->min_index) {
 		if (this_alucard_cpuinfo->down_rate % cpus_down_rate == 0) {
 			if ((index - this_alucard_cpuinfo->min_index) >= pump_dec_step)
