@@ -110,10 +110,6 @@ kclist_add(struct kcore_list *new, void *addr, size_t size, int type)
 extern void kclist_add(struct kcore_list *, void *, size_t, int type);
 #endif
 
-#include <linux/signal.h>
-
-void render_sigset_t(struct seq_file *m, const char *header, sigset_t *set);
-
 static inline struct proc_dir_entry *proc_net_mkdir(
 	struct net *net, const char *name, struct proc_dir_entry *parent)
 {
