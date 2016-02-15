@@ -167,7 +167,8 @@ static int __init ram_console_late_init(void)
 	if (persistent_ram_old_size(prz) == 0)
 		return 0;
 
-	entry = create_proc_entry("last_kmsg", S_IFREG | S_IRUGO, NULL);
+	entry = create_proc_read_entry("last_kmsg", S_IFREG | S_IRUGO, NULL,
+ 					NULL, NULL);
 	if (!entry) {
 		pr_err("failed to create proc entry\n");
 		persistent_ram_free_old(prz);
