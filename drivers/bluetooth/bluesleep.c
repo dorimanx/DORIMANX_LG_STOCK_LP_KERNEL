@@ -1031,11 +1031,14 @@ static int bluesleep_proc_show(struct seq_file *m, void *v)
 		seq_printf(m, "btwake:%u\n", gpio_get_value(bsi->ext_wake));
 		break;
 	case PROC_HOSTWAKE:
-		seq_printf(m, "hostwake: %u \n", gpio_get_value(bsi->host_wake));
+		seq_printf(m, "hostwake: %u\n", gpio_get_value(bsi->host_wake));
 		break;
 	case PROC_PROTO:
 		seq_printf(m, "proto: %u\n",
 				test_bit(BT_PROTO, &flags) ? 1 : 0);
+		break;
+	case PROC_LPM:
+		seq_printf(m, "lpm: %u\n", lpm_mode);
 		break;
 	case PROC_ASLEEP:
 		seq_printf(m, "asleep: %u\n",
