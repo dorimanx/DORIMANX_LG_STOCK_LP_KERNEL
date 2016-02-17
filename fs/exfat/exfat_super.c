@@ -1818,10 +1818,8 @@ static void exfat_free_super(struct exfat_sb_info *sbi)
 		unload_nls(sbi->nls_io);
 	if (sbi->options.iocharset != exfat_default_iocharset)
 		kfree(sbi->options.iocharset);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0)
 	/* mutex_init is in exfat_fill_super function. only for 3.7+ */
 	mutex_destroy(&sbi->s_lock);
-#endif
 	kfree(sbi);
 }
 
@@ -2207,9 +2205,7 @@ static int exfat_fill_super(struct super_block *sb, void *data, int silent)
 	sbi = kzalloc(sizeof(struct exfat_sb_info), GFP_KERNEL);
 	if (!sbi)
 		return -ENOMEM;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0)
 	mutex_init(&sbi->s_lock);
-#endif
 	sb->s_fs_info = sbi;
 	sb->s_flags |= MS_NODIRATIME;
 	sb->s_magic = EXFAT_SUPER_MAGIC;
