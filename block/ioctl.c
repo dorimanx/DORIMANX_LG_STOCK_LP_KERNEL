@@ -303,10 +303,6 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
 		set_device_ro(bdev, n);
 		return 0;
 
-	case BLKSANITIZE:
-		ret = blk_ioctl_sanitize(bdev);
-		break;
-
 	case BLKDISCARD:
 	case BLKSECDISCARD: {
 		uint64_t range[2];
