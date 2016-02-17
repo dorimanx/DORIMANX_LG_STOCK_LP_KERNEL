@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -28,6 +28,7 @@
 #define TEST_PATTERN_FF		0xFFFFFFFF
 #define TEST_NO_PATTERN		0xDEADBEEF
 #define BIO_U32_SIZE 1024
+#define TEST_BIO_SIZE		PAGE_SIZE	/* use one page bios */
 
 struct test_data;
 
@@ -67,7 +68,6 @@ enum req_unique_type {
 	REQ_UNIQUE_NONE,
 	REQ_UNIQUE_DISCARD,
 	REQ_UNIQUE_FLUSH,
-	REQ_UNIQUE_SANITIZE,
 };
 
 /**
@@ -267,4 +267,7 @@ void test_iosched_add_urgent_req(struct test_request *test_rq);
 int test_is_req_urgent(struct request *rq);
 
 void check_test_completion(void);
+
+int compare_buffer_to_pattern(struct test_request *test_rq);
+
 #endif /* _LINUX_TEST_IOSCHED_H */

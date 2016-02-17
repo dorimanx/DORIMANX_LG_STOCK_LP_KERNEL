@@ -156,7 +156,7 @@ static int zen_dispatch_requests(struct request_queue *q, int force)
 	return 1;
 }
 
-static int *zen_init_queue(struct request_queue *q, struct elevator_type *e)
+static int zen_init_queue(struct request_queue *q, struct elevator_type *e)
 {
 	struct zen_data *zdata;
 	struct elevator_queue *eq;
