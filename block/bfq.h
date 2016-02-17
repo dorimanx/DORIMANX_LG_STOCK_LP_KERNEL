@@ -1,5 +1,5 @@
 /*
- * BFQ-v7r8 for 3.4.0: data structures and common functions prototypes.
+ * BFQ-v7r8 for 3.10.8+: data structures and common functions prototypes.
  *
  * Based on ideas and code from CFQ:
  * Copyright (C) 2003 Jens Axboe <axboe@kernel.dk>
@@ -791,13 +791,12 @@ static inline void bfq_put_bfqd_unlock(struct bfq_data *bfqd,
 	spin_unlock_irqrestore(bfqd->queue->queue_lock, *flags);
 }
 
-static void bfq_check_ioprio_change(struct io_context *ioc,
-				    struct bfq_io_cq *bic);
+static void bfq_check_ioprio_change(struct bfq_io_cq *bic);
 static void bfq_put_queue(struct bfq_queue *bfqq);
 static void bfq_dispatch_insert(struct request_queue *q, struct request *rq);
 static struct bfq_queue *bfq_get_queue(struct bfq_data *bfqd,
 				       struct bfq_group *bfqg, int is_sync,
-				       struct io_context *ioc, gfp_t gfp_mask);
+				       struct bfq_io_cq *bic, gfp_t gfp_mask);
 static void bfq_end_wr_async_queues(struct bfq_data *bfqd,
 				    struct bfq_group *bfqg);
 static void bfq_put_async_queues(struct bfq_data *bfqd, struct bfq_group *bfqg);

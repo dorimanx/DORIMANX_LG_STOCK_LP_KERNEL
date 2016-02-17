@@ -553,10 +553,10 @@ static void bfq_destroy_group(struct bfqio_cgroup *bgrp, struct bfq_group *bfqg)
 
 static void bfq_end_wr_async(struct bfq_data *bfqd)
 {
-	struct hlist_node *n;
+	struct hlist_node *tmp;
 	struct bfq_group *bfqg;
 
-	hlist_for_each_entry_safe(bfqg, n, &bfqd->group_list, bfqd_node)
+	hlist_for_each_entry_safe(bfqg, tmp, &bfqd->group_list, bfqd_node)
 		bfq_end_wr_async_queues(bfqd, bfqg);
 	bfq_end_wr_async_queues(bfqd, bfqd->root_group);
 }
@@ -571,11 +571,11 @@ static void bfq_end_wr_async(struct bfq_data *bfqd)
  */
 static void bfq_disconnect_groups(struct bfq_data *bfqd)
 {
-	struct hlist_node *n;
+	struct hlist_node *tmp;
 	struct bfq_group *bfqg;
 
 	bfq_log(bfqd, "disconnect_groups beginning");
-	hlist_for_each_entry_safe(bfqg, n, &bfqd->group_list, bfqd_node) {
+	hlist_for_each_entry_safe(bfqg, tmp, &bfqd->group_list, bfqd_node) {
 		hlist_del(&bfqg->bfqd_node);
 
 		__bfq_deactivate_entity(bfqg->my_entity, 0);
