@@ -15,7 +15,7 @@ config IOSCHED_NOOP
 config IOSCHED_TEST
 	tristate "Test I/O scheduler"
 	depends on DEBUG_FS
-	default n
+	default m
 	---help---
 	  The test I/O scheduler is a duplicate of the noop scheduler with
 	  addition of test utlity.
@@ -54,8 +54,6 @@ config IOSCHED_CFQ
 
 	  This is the default I/O scheduler.
 
-	  Note: If BLK_CGROUP=m, then CFQ can be built only as module.
-
 config IOSCHED_SIOPLUS
 	tristate "Simple I/O scheduler plus"
 	default y
@@ -82,7 +80,6 @@ config CFQ_GROUP_IOSCHED
 
 config IOSCHED_BFQ
 	tristate "BFQ I/O scheduler"
-	depends on EXPERIMENTAL
 	default n
 	---help---
 	  The BFQ I/O scheduler tries to distribute bandwidth among
@@ -90,7 +87,7 @@ config IOSCHED_BFQ
 	  It aims at distributing the bandwidth as desired, independently of
 	  the disk parameters and with any workload. It also tries to
 	  guarantee low latency to interactive and soft real-time
-	  applications.  If compiled built-in (saying Y here), BFQ can
+	  applications. If compiled built-in (saying Y here), BFQ can
 	  be configured to support hierarchical scheduling.
 
 config CGROUP_BFQIO

@@ -33,10 +33,16 @@ struct blk_trace;
 struct request;
 struct sg_io_hdr;
 struct bsg_job;
-struct blkio_group;
+struct blkcg_gq;
 
 #define BLKDEV_MIN_RQ	4
 #define BLKDEV_MAX_RQ	128	/* Default maximum */
+
+/*
+ * Maximum number of blkcg policies allowed to be registered concurrently.
+ * Defined here to simplify include dependency.
+ */
+#define BLKCG_MAX_POLS		2
 
 struct request;
 typedef void (rq_end_io_fn)(struct request *, int);
@@ -393,9 +399,9 @@ struct request_queue {
 
 	struct list_head	icq_list;
 #ifdef CONFIG_BLK_CGROUP
-	struct blkio_group	*root_blkg;
+	DECLARE_BITMAP		(blkcg_pols, BLKCG_MAX_POLS);
+	struct blkcg_gq		*root_blkg;
 	struct list_head	blkg_list;
-	int			nr_blkgs;
 #endif
 
 	struct queue_limits	limits;
@@ -434,6 +440,9 @@ struct request_queue {
 	struct bsg_class_device bsg_dev;
 #endif
 
+#ifdef CONFIG_BLK_CGROUP
+	struct list_head	all_q_node;
+#endif
 #ifdef CONFIG_BLK_DEV_THROTTLING
 	/* Throttle data */
 	struct throtl_data *td;
@@ -461,6 +470,7 @@ struct request_queue {
 #define QUEUE_FLAG_SECDISCARD  17	/* supports SECDISCARD */
 #define QUEUE_FLAG_SAME_FORCE  18	/* force complete on same CPU */
 #define QUEUE_FLAG_DEAD        19	/* queue tear-down finished */
+#define QUEUE_FLAG_FAST        20	/* fast block device (e.g. ram based) */
 
 #define QUEUE_FLAG_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
 				 (1 << QUEUE_FLAG_STACKABLE)	|	\
@@ -542,7 +552,6 @@ static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
 #define blk_queue_stackable(q)	\
 	test_bit(QUEUE_FLAG_STACKABLE, &(q)->queue_flags)
 #define blk_queue_discard(q)	test_bit(QUEUE_FLAG_DISCARD, &(q)->queue_flags)
-#define blk_queue_sanitize(q)	test_bit(QUEUE_FLAG_SANITIZE, &(q)->queue_flags)
 #define blk_queue_secdiscard(q)	(blk_queue_discard(q) && \
 	test_bit(QUEUE_FLAG_SECDISCARD, &(q)->queue_flags))
 #define blk_queue_fast(q)	test_bit(QUEUE_FLAG_FAST, &(q)->queue_flags)
@@ -758,7 +767,7 @@ extern int sg_scsi_ioctl(struct request_queue *, struct gendisk *, fmode_t,
 			 struct scsi_ioctl_command __user *);
 
 extern void blk_queue_bio(struct request_queue *q, struct bio *bio);
-
+extern void blk_recalc_rq_segments(struct request *rq);
 /*
  * A queue has just exitted congestion.  Note this in the global counter of
  * congested queues, and wake up anyone who was waiting for requests to be
