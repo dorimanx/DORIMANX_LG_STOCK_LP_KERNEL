@@ -185,6 +185,11 @@ static int blk_ioctl_discard(struct block_device *bdev, uint64_t start,
 	return blkdev_issue_discard(bdev, start, len, GFP_KERNEL, flags);
 }
 
+static int blk_ioctl_sanitize(struct block_device *bdev)
+{
+	return blkdev_issue_sanitize(bdev, GFP_KERNEL);
+}
+
 static int blk_ioctl_zeroout(struct block_device *bdev, uint64_t start,
 			     uint64_t len)
 {
@@ -302,6 +307,10 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
 			return -EFAULT;
 		set_device_ro(bdev, n);
 		return 0;
+
+	case BLKSANITIZE:
+		ret = blk_ioctl_sanitize(bdev);
+		break;
 
 	case BLKDISCARD:
 	case BLKSECDISCARD: {

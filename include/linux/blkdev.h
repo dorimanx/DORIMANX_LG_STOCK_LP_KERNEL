@@ -470,7 +470,8 @@ struct request_queue {
 #define QUEUE_FLAG_SECDISCARD  17	/* supports SECDISCARD */
 #define QUEUE_FLAG_SAME_FORCE  18	/* force complete on same CPU */
 #define QUEUE_FLAG_DEAD        19	/* queue tear-down finished */
-#define QUEUE_FLAG_FAST        20	/* fast block device (e.g. ram based) */
+#define QUEUE_FLAG_SANITIZE    20	/* supports SANITIZE */
+#define QUEUE_FLAG_FAST        21	/* fast block device (e.g. ram based) */
 
 #define QUEUE_FLAG_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
 				 (1 << QUEUE_FLAG_STACKABLE)	|	\
@@ -552,6 +553,7 @@ static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
 #define blk_queue_stackable(q)	\
 	test_bit(QUEUE_FLAG_STACKABLE, &(q)->queue_flags)
 #define blk_queue_discard(q)	test_bit(QUEUE_FLAG_DISCARD, &(q)->queue_flags)
+#define blk_queue_sanitize(q)	test_bit(QUEUE_FLAG_SANITIZE, &(q)->queue_flags)
 #define blk_queue_secdiscard(q)	(blk_queue_discard(q) && \
 	test_bit(QUEUE_FLAG_SECDISCARD, &(q)->queue_flags))
 #define blk_queue_fast(q)	test_bit(QUEUE_FLAG_FAST, &(q)->queue_flags)
@@ -634,6 +636,9 @@ static inline bool blk_check_merge_flags(unsigned int flags1,
 		return false;
 
 	if ((flags1 & REQ_SECURE) != (flags2 & REQ_SECURE))
+		return false;
+
+	if ((flags1 & REQ_SANITIZE) != (flags2 & REQ_SANITIZE))
 		return false;
 
 	if ((flags1 & REQ_WRITE_SAME) != (flags2 & REQ_WRITE_SAME))
@@ -1077,6 +1082,7 @@ static inline struct request *blk_map_queue_find_tag(struct blk_queue_tag *bqt,
 extern int blkdev_issue_flush(struct block_device *, gfp_t, sector_t *);
 extern int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
 		sector_t nr_sects, gfp_t gfp_mask, unsigned long flags);
+extern int blkdev_issue_sanitize(struct block_device *bdev, gfp_t gfp_mask);
 extern int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
 		sector_t nr_sects, gfp_t gfp_mask, struct page *page);
 extern int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,

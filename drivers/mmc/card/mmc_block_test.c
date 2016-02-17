@@ -1691,6 +1691,9 @@ static int prepare_write_discard_sanitize_read(struct test_data *td)
 
 	pr_info("%s: total discard bios = %d", __func__, total_bios);
 
+	pr_info("%s: add sanitize req", __func__);
+	test_iosched_add_unique_test_req(0, REQ_UNIQUE_SANITIZE, 0, 0, NULL);
+
 	return 0;
 }
 

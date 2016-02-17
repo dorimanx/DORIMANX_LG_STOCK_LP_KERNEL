@@ -1825,6 +1825,14 @@ generic_make_request_checks(struct bio *bio)
 		goto end_io;
 	}
 
+	if ((bio->bi_rw & REQ_SANITIZE) &&
+	    (!blk_queue_sanitize(q))) {
+		pr_info("%s - got a SANITIZE request but the queue "
+		       "doesn't support sanitize requests", __func__);
+		err = -EOPNOTSUPP;
+		goto end_io;
+	}
+
 	if (bio->bi_rw & REQ_WRITE_SAME && !bdev_write_same(bio->bi_bdev)) {
 		err = -EOPNOTSUPP;
 		goto end_io;
