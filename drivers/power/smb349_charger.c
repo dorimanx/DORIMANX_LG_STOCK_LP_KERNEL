@@ -3790,7 +3790,7 @@ static void smb349_batt_external_power_changed(struct power_supply *psy)
 	smb349_chg->usb_psy->get_property(smb349_chg->usb_psy,
 			  POWER_SUPPLY_PROP_SCOPE, &ret);
 	if (ret.intval) {
-		pr_err("%s : ret.intval=%d.\n", __func__, ret.intval);
+		/* pr_err("%s : ret.intval=%d.\n", __func__, ret.intval); */
 		if ((ret.intval == POWER_SUPPLY_SCOPE_SYSTEM)
 				&& !smb349_chg_is_otg_active(smb349_chg)) {
 			smb349_switch_usb_to_host_mode(smb349_chg);
