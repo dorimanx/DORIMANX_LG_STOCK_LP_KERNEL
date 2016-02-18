@@ -22,6 +22,7 @@
 #include <linux/fsnotify.h>	/* fsnotify_vfsmount_delete */
 #include <linux/uaccess.h>
 #include <linux/proc_ns.h>
+#include <linux/magic.h>
 #include "pnode.h"
 #include "internal.h"
 
