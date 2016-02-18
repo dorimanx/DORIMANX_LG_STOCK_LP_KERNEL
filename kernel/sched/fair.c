@@ -6043,14 +6043,11 @@ static struct task_struct *pick_next_task_fair(struct rq *rq)
 	struct task_struct *p;
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
-	if (!cfs_rq->nr_running)
+	if (!cfs_rq->h_nr_running)
 		return NULL;
 
 	cfs_rq = &rq->cfs;
 #endif
-
-	if (!cfs_rq->h_nr_running)
-		return NULL;
 
 	do {
 		se = pick_next_entity(cfs_rq, NULL);
