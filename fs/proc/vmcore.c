@@ -8,7 +8,7 @@
  */
 
 #include <linux/mm.h>
-#include <linux/proc_fs.h>
+#include <linux/kcore.h>
 #include <linux/user.h>
 #include <linux/elf.h>
 #include <linux/elfcore.h>
@@ -22,6 +22,7 @@
 #include <linux/list.h>
 #include <asm/uaccess.h>
 #include <asm/io.h>
+#include "internal.h"
 
 /* List representing chunks of contiguous memory areas and their offsets in
  * vmcore file.
@@ -176,15 +177,15 @@ static ssize_t read_vmcore(struct file *file, char __user *buffer,
 	start = map_offset_to_paddr(*fpos, &vmcore_list, &curr_m);
 	if (!curr_m)
         	return -EINVAL;
-	if ((tsz = (PAGE_SIZE - (start & ~PAGE_MASK))) > buflen)
-		tsz = buflen;
-
-	/* Calculate left bytes in current memory segment. */
-	nr_bytes = (curr_m->size - (start - curr_m->paddr));
-	if (tsz > nr_bytes)
-		tsz = nr_bytes;
 
 	while (buflen) {
+		tsz = min_t(size_t, buflen, PAGE_SIZE - (start & ~PAGE_MASK));
+
+		/* Calculate left bytes in current memory segment. */
+		nr_bytes = (curr_m->size - (start - curr_m->paddr));
+		if (tsz > nr_bytes)
+			tsz = nr_bytes;
+
 		tmp = read_from_oldmem(buffer, tsz, &start, 1);
 		if (tmp < 0)
 			return tmp;
@@ -199,12 +200,6 @@ static ssize_t read_vmcore(struct file *file, char __user *buffer,
 						struct vmcore, list);
 			start = curr_m->paddr;
 		}
-		if ((tsz = (PAGE_SIZE - (start & ~PAGE_MASK))) > buflen)
-			tsz = buflen;
-		/* Calculate left bytes in current memory segment. */
-		nr_bytes = (curr_m->size - (start - curr_m->paddr));
-		if (tsz > nr_bytes)
-			tsz = nr_bytes;
 	}
 	return acc;
 }
