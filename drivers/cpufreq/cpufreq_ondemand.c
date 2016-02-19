@@ -570,7 +570,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 		 * - during long idle intervals
 		 * - explicitly set to zero
 		 */
-		if (unlikely(wall_time > 2 * sampling_rate &&
+		if (unlikely(wall_time > (2 * sampling_rate) &&
 					j_dbs_info->prev_load)) {
 			cur_load = j_dbs_info->prev_load;
 			/*
@@ -632,9 +632,9 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	}
 
 	/* calculate the scaled load across CPU */
-	load_at_max_freq = (cur_load * policy->cur)/policy->max;
+	load_at_max_freq = (cur_load * policy->cur)/policy->cpuinfo.max_freq;
 
-	cpufreq_notify_utilization(policy, cur_load);
+	cpufreq_notify_utilization(policy, load_at_max_freq);
 	/* Check for frequency increase */
 	if (max_load_freq > dbs_tuners_ins.up_threshold * policy->cur) {
 		int freq_target, freq_div;
