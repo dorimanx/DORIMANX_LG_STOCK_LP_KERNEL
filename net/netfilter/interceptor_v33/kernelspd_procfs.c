@@ -12,6 +12,7 @@
 #include <linux/version.h>
 
 #include "kernelspd_internal.h"
+#include "../../../fs/proc/internal.h"
 
 #define KERNELSPD_PROCFS_COMMAND_BYTECOUNT_MAX 0x7fffffff
 #define KERNELSPD_IPSEC_BOUNDARY_LENGTH_MAX (10*1024)
