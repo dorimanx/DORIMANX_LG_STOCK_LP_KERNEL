@@ -268,8 +268,7 @@ nfs_async_unlink(struct inode *dir, struct dentry *dentry)
 	 * point dentry is definitely not a root, so we won't need
 	 * that anymore.
 	 */
-	if (devname_garbage)
-		kfree(devname_garbage);
+	kfree(devname_garbage);
 	return 0;
 out_unlock:
 	spin_unlock(&dentry->d_lock);
@@ -495,7 +494,7 @@ nfs_sillyrename(struct inode *dir, struct dentry *dentry)
 		(unsigned long long)NFS_FILEID(dentry->d_inode));
 
 	/* Return delegation in anticipation of the rename */
-	nfs_inode_return_delegation(dentry->d_inode);
+	NFS_PROTO(dentry->d_inode)->return_delegation(dentry->d_inode);
 
 	sdentry = NULL;
 	do {

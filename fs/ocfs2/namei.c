@@ -512,8 +512,8 @@ static int __ocfs2_mknod_locked(struct inode *dir,
 	fe->i_suballoc_loc = cpu_to_le64(suballoc_loc);
 	fe->i_suballoc_bit = cpu_to_le16(suballoc_bit);
 	fe->i_suballoc_slot = cpu_to_le16(inode_ac->ac_alloc_slot);
-	fe->i_uid = cpu_to_le32(inode->i_uid);
-	fe->i_gid = cpu_to_le32(inode->i_gid);
+	fe->i_uid = cpu_to_le32(i_uid_read(inode));
+	fe->i_gid = cpu_to_le32(i_gid_read(inode));
 	fe->i_mode = cpu_to_le16(inode->i_mode);
 	if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
 		fe->id1.dev1.i_rdev = cpu_to_le64(huge_encode_dev(dev));
@@ -947,7 +947,7 @@ leave:
 	ocfs2_free_dir_lookup_result(&orphan_insert);
 	ocfs2_free_dir_lookup_result(&lookup);
 
-	if (status)
+	if (status && (status != -ENOTEMPTY))
 		mlog_errno(status);
 
 	return status;
@@ -1724,15 +1724,16 @@ static int ocfs2_symlink(struct inode *dir,
 	fe = (struct ocfs2_dinode *) new_fe_bh->b_data;
 	inode->i_rdev = 0;
 	newsize = l - 1;
+	inode->i_op = &ocfs2_symlink_inode_operations;
 	if (l > ocfs2_fast_symlink_chars(sb)) {
 		u32 offset = 0;
 
-		inode->i_op = &ocfs2_symlink_inode_operations;
 		status = dquot_alloc_space_nodirty(inode,
 		    ocfs2_clusters_to_bytes(osb->sb, 1));
 		if (status)
 			goto bail;
 		did_quota = 1;
+		inode->i_mapping->a_ops = &ocfs2_aops;
 		status = ocfs2_add_inode_data(osb, inode, &offset, 1, 0,
 					      new_fe_bh,
 					      handle, data_ac, NULL,
@@ -1750,7 +1751,7 @@ static int ocfs2_symlink(struct inode *dir,
 		i_size_write(inode, newsize);
 		inode->i_blocks = ocfs2_inode_sector_count(inode);
 	} else {
-		inode->i_op = &ocfs2_fast_symlink_inode_operations;
+		inode->i_mapping->a_ops = &ocfs2_fast_symlink_aops;
 		memcpy((char *) fe->id2.i_symlink, symname, l);
 		i_size_write(inode, newsize);
 		inode->i_blocks = 0;
@@ -2215,7 +2216,7 @@ out:
 
 	brelse(orphan_dir_bh);
 
-	return 0;
+	return ret;
 }
 
 int ocfs2_create_inode_in_orphan(struct inode *dir,

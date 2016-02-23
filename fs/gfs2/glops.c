@@ -74,7 +74,7 @@ static void __gfs2_ail_flush(struct gfs2_glock *gl, bool fsync)
 
 		gfs2_trans_add_revoke(sdp, bd);
 	}
-	BUG_ON(!fsync && atomic_read(&gl->gl_ail_count));
+	GLOCK_BUG_ON(gl, !fsync && atomic_read(&gl->gl_ail_count));
 	spin_unlock(&sdp->sd_ail_lock);
 	gfs2_log_unlock(sdp);
 }
@@ -94,9 +94,9 @@ static void gfs2_ail_empty_gl(struct gfs2_glock *gl)
 	/* A shortened, inline version of gfs2_trans_begin() */
 	tr.tr_reserved = 1 + gfs2_struct2blk(sdp, tr.tr_revokes, sizeof(u64));
 	tr.tr_ip = (unsigned long)__builtin_return_address(0);
-	INIT_LIST_HEAD(&tr.tr_list_buf);
+	sb_start_intwrite(sdp->sd_vfs);
 	gfs2_log_reserve(sdp, tr.tr_reserved);
-	BUG_ON(current->journal_info);
+	WARN_ON_ONCE(current->journal_info);
 	current->journal_info = &tr;
 
 	__gfs2_ail_flush(gl, 0);
@@ -139,7 +139,7 @@ static void rgrp_go_sync(struct gfs2_glock *gl)
 
 	if (!test_and_clear_bit(GLF_DIRTY, &gl->gl_flags))
 		return;
-	BUG_ON(gl->gl_state != LM_ST_EXCLUSIVE);
+	GLOCK_BUG_ON(gl, gl->gl_state != LM_ST_EXCLUSIVE);
 
 	gfs2_log_flush(gl->gl_sbd, gl);
 	filemap_fdatawrite(metamapping);
@@ -168,7 +168,7 @@ static void rgrp_go_inval(struct gfs2_glock *gl, int flags)
 {
 	struct address_space *mapping = gfs2_glock2aspace(gl);
 
-	BUG_ON(!(flags & DIO_METADATA));
+	WARN_ON_ONCE(!(flags & DIO_METADATA));
 	gfs2_assert_withdraw(gl->gl_sbd, !atomic_read(&gl->gl_ail_count));
 	truncate_inode_pages(mapping, 0);
 
@@ -197,7 +197,7 @@ static void inode_go_sync(struct gfs2_glock *gl)
 	if (!test_and_clear_bit(GLF_DIRTY, &gl->gl_flags))
 		return;
 
-	BUG_ON(gl->gl_state != LM_ST_EXCLUSIVE);
+	GLOCK_BUG_ON(gl, gl->gl_state != LM_ST_EXCLUSIVE);
 
 	gfs2_log_flush(gl->gl_sbd, gl);
 	filemap_fdatawrite(metamapping);
@@ -322,8 +322,8 @@ static int gfs2_dinode_in(struct gfs2_inode *ip, const void *buf)
 		break;
 	};
 
-	ip->i_inode.i_uid = be32_to_cpu(str->di_uid);
-	ip->i_inode.i_gid = be32_to_cpu(str->di_gid);
+	i_uid_write(&ip->i_inode, be32_to_cpu(str->di_uid));
+	i_gid_write(&ip->i_inode, be32_to_cpu(str->di_gid));
 	gfs2_set_nlink(&ip->i_inode, be32_to_cpu(str->di_nlink));
 	i_size_write(&ip->i_inode, be64_to_cpu(str->di_size));
 	gfs2_set_inode_blocks(&ip->i_inode, be64_to_cpu(str->di_blocks));
@@ -378,11 +378,6 @@ int gfs2_inode_refresh(struct gfs2_inode *ip)
 	error = gfs2_meta_inode_buffer(ip, &dibh);
 	if (error)
 		return error;
-
-	if (gfs2_metatype_check(GFS2_SB(&ip->i_inode), dibh, GFS2_METATYPE_DI)) {
-		brelse(dibh);
-		return -EIO;
-	}
 
 	error = gfs2_dinode_in(ip, dibh->b_data);
 	brelse(dibh);
@@ -520,12 +515,12 @@ static int trans_go_demote_ok(const struct gfs2_glock *gl)
  *
  * gl_spin lock is held while calling this
  */
-static void iopen_go_callback(struct gfs2_glock *gl)
+static void iopen_go_callback(struct gfs2_glock *gl, bool remote)
 {
 	struct gfs2_inode *ip = (struct gfs2_inode *)gl->gl_object;
 	struct gfs2_sbd *sdp = gl->gl_sbd;
 
-	if (sdp->sd_vfs->s_flags & MS_RDONLY)
+	if (!remote || (sdp->sd_vfs->s_flags & MS_RDONLY))
 		return;
 
 	if (gl->gl_demote_state == LM_ST_UNLOCKED &&
@@ -541,7 +536,7 @@ const struct gfs2_glock_operations gfs2_meta_glops = {
 };
 
 const struct gfs2_glock_operations gfs2_inode_glops = {
-	.go_xmote_th = inode_go_sync,
+	.go_sync = inode_go_sync,
 	.go_inval = inode_go_inval,
 	.go_demote_ok = inode_go_demote_ok,
 	.go_lock = inode_go_lock,
@@ -551,17 +546,17 @@ const struct gfs2_glock_operations gfs2_inode_glops = {
 };
 
 const struct gfs2_glock_operations gfs2_rgrp_glops = {
-	.go_xmote_th = rgrp_go_sync,
+	.go_sync = rgrp_go_sync,
 	.go_inval = rgrp_go_inval,
 	.go_lock = gfs2_rgrp_go_lock,
 	.go_unlock = gfs2_rgrp_go_unlock,
 	.go_dump = gfs2_rgrp_dump,
 	.go_type = LM_TYPE_RGRP,
-	.go_flags = GLOF_ASPACE,
+	.go_flags = GLOF_ASPACE | GLOF_LVB,
 };
 
 const struct gfs2_glock_operations gfs2_trans_glops = {
-	.go_xmote_th = trans_go_sync,
+	.go_sync = trans_go_sync,
 	.go_xmote_bh = trans_go_xmote_bh,
 	.go_demote_ok = trans_go_demote_ok,
 	.go_type = LM_TYPE_NONDISK,
@@ -582,6 +577,7 @@ const struct gfs2_glock_operations gfs2_nondisk_glops = {
 
 const struct gfs2_glock_operations gfs2_quota_glops = {
 	.go_type = LM_TYPE_QUOTA,
+	.go_flags = GLOF_LVB,
 };
 
 const struct gfs2_glock_operations gfs2_journal_glops = {

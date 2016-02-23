@@ -33,6 +33,7 @@
 #include <linux/slab.h>
 #include <asm/uaccess.h>
 #include <linux/seq_file.h>
+#include <linux/blkdev.h>
 
 #include "jfs_incore.h"
 #include "jfs_filsys.h"
@@ -100,7 +101,7 @@ void jfs_error(struct super_block *sb, const char * function, ...)
 	vsnprintf(error_buf, sizeof(error_buf), function, args);
 	va_end(args);
 
-	printk(KERN_ERR "ERROR: (device %s): %s\n", sb->s_id, error_buf);
+	pr_err("ERROR: (device %s): %s\n", sb->s_id, error_buf);
 
 	jfs_handle_error(sb);
 }
@@ -153,7 +154,7 @@ static int jfs_statfs(struct dentry *dentry, struct kstatfs *buf)
 	/*
 	 * If we really return the number of allocated & free inodes, some
 	 * applications will fail because they won't see enough free inodes.
-	 * We'll try to calculate some guess as to how may inodes we can
+	 * We'll try to calculate some guess as to how many inodes we can
 	 * really allocate
 	 *
 	 * buf->f_files = atomic_read(&imap->im_numinos);
@@ -197,7 +198,8 @@ static void jfs_put_super(struct super_block *sb)
 enum {
 	Opt_integrity, Opt_nointegrity, Opt_iocharset, Opt_resize,
 	Opt_resize_nosize, Opt_errors, Opt_ignore, Opt_err, Opt_quota,
-	Opt_usrquota, Opt_grpquota, Opt_uid, Opt_gid, Opt_umask
+	Opt_usrquota, Opt_grpquota, Opt_uid, Opt_gid, Opt_umask,
+	Opt_discard, Opt_nodiscard, Opt_discard_minblk
 };
 
 static const match_table_t tokens = {
@@ -214,6 +216,9 @@ static const match_table_t tokens = {
 	{Opt_uid, "uid=%u"},
 	{Opt_gid, "gid=%u"},
 	{Opt_umask, "umask=%u"},
+	{Opt_discard, "discard"},
+	{Opt_nodiscard, "nodiscard"},
+	{Opt_discard_minblk, "discard=%u"},
 	{Opt_err, NULL}
 };
 
@@ -255,8 +260,7 @@ static int parse_options(char *options, struct super_block *sb, s64 *newLVSize,
 			else {
 				nls_map = load_nls(args[0].from);
 				if (!nls_map) {
-					printk(KERN_ERR
-					       "JFS: charset not found\n");
+					pr_err("JFS: charset not found\n");
 					goto cleanup;
 				}
 			}
@@ -272,8 +276,7 @@ static int parse_options(char *options, struct super_block *sb, s64 *newLVSize,
 			*newLVSize = sb->s_bdev->bd_inode->i_size >>
 				sb->s_blocksize_bits;
 			if (*newLVSize == 0)
-				printk(KERN_ERR
-				       "JFS: Cannot determine volume size\n");
+				pr_err("JFS: Cannot determine volume size\n");
 			break;
 		}
 		case Opt_errors:
@@ -294,8 +297,7 @@ static int parse_options(char *options, struct super_block *sb, s64 *newLVSize,
 				*flag &= ~JFS_ERR_REMOUNT_RO;
 				*flag |= JFS_ERR_PANIC;
 			} else {
-				printk(KERN_ERR
-				       "JFS: %s is an invalid error handler\n",
+				pr_err("JFS: %s is an invalid error handler\n",
 				       errors);
 				goto cleanup;
 			}
@@ -314,33 +316,76 @@ static int parse_options(char *options, struct super_block *sb, s64 *newLVSize,
 		case Opt_usrquota:
 		case Opt_grpquota:
 		case Opt_quota:
-			printk(KERN_ERR
-			       "JFS: quota operations not supported\n");
+			pr_err("JFS: quota operations not supported\n");
 			break;
 #endif
 		case Opt_uid:
 		{
 			char *uid = args[0].from;
-			sbi->uid = simple_strtoul(uid, &uid, 0);
+			uid_t val = simple_strtoul(uid, &uid, 0);
+			sbi->uid = make_kuid(current_user_ns(), val);
+			if (!uid_valid(sbi->uid))
+				goto cleanup;
 			break;
 		}
+
 		case Opt_gid:
 		{
 			char *gid = args[0].from;
-			sbi->gid = simple_strtoul(gid, &gid, 0);
+			gid_t val = simple_strtoul(gid, &gid, 0);
+			sbi->gid = make_kgid(current_user_ns(), val);
+			if (!gid_valid(sbi->gid))
+				goto cleanup;
 			break;
 		}
+
 		case Opt_umask:
 		{
 			char *umask = args[0].from;
 			sbi->umask = simple_strtoul(umask, &umask, 8);
 			if (sbi->umask & ~0777) {
-				printk(KERN_ERR
-				       "JFS: Invalid value of umask\n");
+				pr_err("JFS: Invalid value of umask\n");
 				goto cleanup;
 			}
 			break;
 		}
+
+		case Opt_discard:
+		{
+			struct request_queue *q = bdev_get_queue(sb->s_bdev);
+			/* if set to 1, even copying files will cause
+			 * trimming :O
+			 * -> user has more control over the online trimming
+			 */
+			sbi->minblks_trim = 64;
+			if (blk_queue_discard(q)) {
+				*flag |= JFS_DISCARD;
+			} else {
+				pr_err("JFS: discard option " \
+					"not supported on device\n");
+			}
+			break;
+		}
+
+		case Opt_nodiscard:
+			*flag &= ~JFS_DISCARD;
+			break;
+
+		case Opt_discard_minblk:
+		{
+			struct request_queue *q = bdev_get_queue(sb->s_bdev);
+			char *minblks_trim = args[0].from;
+			if (blk_queue_discard(q)) {
+				*flag |= JFS_DISCARD;
+				sbi->minblks_trim = simple_strtoull(
+					minblks_trim, &minblks_trim, 0);
+			} else {
+				pr_err("JFS: discard option " \
+					"not supported on device\n");
+			}
+			break;
+		}
+
 		default:
 			printk("jfs: Unrecognized mount option \"%s\" "
 					" or missing value\n", p);
@@ -375,8 +420,8 @@ static int jfs_remount(struct super_block *sb, int *flags, char *data)
 
 	if (newLVSize) {
 		if (sb->s_flags & MS_RDONLY) {
-			printk(KERN_ERR
-		  "JFS: resize requires volume to be mounted read-write\n");
+			pr_err("JFS: resize requires volume" \
+				" to be mounted read-write\n");
 			return -EROFS;
 		}
 		rc = jfs_extendfs(sb, newLVSize, 0);
@@ -444,7 +489,9 @@ static int jfs_fill_super(struct super_block *sb, void *data, int silent)
 	sb->s_fs_info = sbi;
 	sb->s_max_links = JFS_LINK_MAX;
 	sbi->sb = sb;
-	sbi->uid = sbi->gid = sbi->umask = -1;
+	sbi->uid = INVALID_UID;
+	sbi->gid = INVALID_GID;
+	sbi->umask = -1;
 
 	/* initialize the mount flag and determine the default error handler */
 	flag = JFS_ERR_REMOUNT_RO;
@@ -458,7 +505,7 @@ static int jfs_fill_super(struct super_block *sb, void *data, int silent)
 #endif
 
 	if (newLVSize) {
-		printk(KERN_ERR "resize option for remount only\n");
+		pr_err("resize option for remount only\n");
 		goto out_kfree;
 	}
 
@@ -565,11 +612,28 @@ static int jfs_freeze(struct super_block *sb)
 {
 	struct jfs_sb_info *sbi = JFS_SBI(sb);
 	struct jfs_log *log = sbi->log;
+	int rc = 0;
 
 	if (!(sb->s_flags & MS_RDONLY)) {
 		txQuiesce(sb);
-		lmLogShutdown(log);
-		updateSuper(sb, FM_CLEAN);
+		rc = lmLogShutdown(log);
+		if (rc) {
+			jfs_error(sb, "jfs_freeze: lmLogShutdown failed");
+
+			/* let operations fail rather than hang */
+			txResume(sb);
+
+			return rc;
+		}
+		rc = updateSuper(sb, FM_CLEAN);
+		if (rc) {
+			jfs_err("jfs_freeze: updateSuper failed\n");
+			/*
+			 * Don't fail here. Everything succeeded except
+			 * marking the superblock clean, so there's really
+			 * no harm in leaving it frozen for now.
+			 */
+		}
 	}
 	return 0;
 }
@@ -581,13 +645,18 @@ static int jfs_unfreeze(struct super_block *sb)
 	int rc = 0;
 
 	if (!(sb->s_flags & MS_RDONLY)) {
-		updateSuper(sb, FM_MOUNT);
-		if ((rc = lmLogInit(log)))
-			jfs_err("jfs_unlock failed with return code %d", rc);
-		else
-			txResume(sb);
+		rc = updateSuper(sb, FM_MOUNT);
+		if (rc) {
+			jfs_error(sb, "jfs_unfreeze: updateSuper failed");
+			goto out;
+		}
+		rc = lmLogInit(log);
+		if (rc)
+			jfs_error(sb, "jfs_unfreeze: lmLogInit failed");
+out:
+		txResume(sb);
 	}
-	return 0;
+	return rc;
 }
 
 static struct dentry *jfs_do_mount(struct file_system_type *fs_type,
@@ -618,14 +687,16 @@ static int jfs_show_options(struct seq_file *seq, struct dentry *root)
 {
 	struct jfs_sb_info *sbi = JFS_SBI(root->d_sb);
 
-	if (sbi->uid != -1)
-		seq_printf(seq, ",uid=%d", sbi->uid);
-	if (sbi->gid != -1)
-		seq_printf(seq, ",gid=%d", sbi->gid);
+	if (uid_valid(sbi->uid))
+		seq_printf(seq, ",uid=%d", from_kuid(&init_user_ns, sbi->uid));
+	if (gid_valid(sbi->gid))
+		seq_printf(seq, ",gid=%d", from_kgid(&init_user_ns, sbi->gid));
 	if (sbi->umask != -1)
 		seq_printf(seq, ",umask=%03o", sbi->umask);
 	if (sbi->flag & JFS_NOINTEGRITY)
 		seq_puts(seq, ",nointegrity");
+	if (sbi->flag & JFS_DISCARD)
+		seq_printf(seq, ",discard=%u", sbi->minblks_trim);
 	if (sbi->nls_tab)
 		seq_printf(seq, ",iocharset=%s", sbi->nls_tab->charset);
 	if (sbi->flag & JFS_ERR_CONTINUE)

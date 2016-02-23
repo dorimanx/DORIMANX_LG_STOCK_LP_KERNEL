@@ -17,9 +17,7 @@
  */
 #include "xfs.h"
 #include "xfs_fs.h"
-#include "xfs_bit.h"
 #include "xfs_log.h"
-#include "xfs_inum.h"
 #include "xfs_trans.h"
 #include "xfs_sb.h"
 #include "xfs_ag.h"
@@ -148,7 +146,7 @@ xfs_qm_newmount(
 			 * inode goes inactive and wants to free blocks,
 			 * or via xfs_log_mount_finish.
 			 */
-			*needquotamount = B_TRUE;
+			*needquotamount = true;
 			*quotaflags = mp->m_qflags;
 			mp->m_qflags = 0;
 		}
