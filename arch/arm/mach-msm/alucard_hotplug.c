@@ -183,7 +183,8 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 				}
 			}
 		} else if (!offcpu) {
-			offcpu = cpu;
+			if (!cpu_online(cpu))
+				offcpu = cpu;
 		}
 	}
 	if (unlikely(!sum_freq))
