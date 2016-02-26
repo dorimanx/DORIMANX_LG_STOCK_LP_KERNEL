@@ -35,7 +35,11 @@ static DEFINE_MUTEX(alucard_hotplug_mutex);
 struct hotplug_cpuinfo {
 	u64 prev_cpu_wall;
 	u64 prev_cpu_idle;
+	ktime_t time_stamp;
+	struct mutex cpu_load_mutex;
 };
+
+static unsigned int last_online_cpus;
 
 struct hotplug_cpuparm {
 	unsigned int up_load;
@@ -50,9 +54,8 @@ struct hotplug_cpuparm {
 	unsigned int cur_down_rate;
 };
 
-
-static DEFINE_PER_CPU_SHARED_ALIGNED(struct hotplug_cpuinfo, od_hotplug_cpuinfo);
-static DEFINE_PER_CPU(struct hotplug_cpuparm, od_hotplug_cpuparm);
+static DEFINE_PER_CPU_SHARED_ALIGNED(struct hotplug_cpuinfo, ac_hp_cpuinfo);
+static DEFINE_PER_CPU(struct hotplug_cpuparm, ac_hp_cpuparm);
 
 static struct notifier_block notif;
 static struct delayed_work alucard_hotplug_work;
@@ -110,12 +113,25 @@ static unsigned int adjust_avg_freq(unsigned int cpu, unsigned int tmp_freq)
 	return target_freq;
 }
 
+static void reset_cur_cpu_rate(void)
+{
+	struct hotplug_cpuparm *pcpu_parm = NULL;
+
+	if (unlikely(!last_online_cpus))
+		return;
+	pcpu_parm = &per_cpu(ac_hp_cpuparm, last_online_cpus - 1);
+	pcpu_parm->cur_up_rate = 1;
+	pcpu_parm->cur_down_rate = 1;
+}
+
 static void __ref hotplug_work_fn(struct work_struct *work)
 {
 	struct hotplug_cpuinfo *pcpu_info = NULL;
 	struct hotplug_cpuparm *pcpu_parm = NULL;
-	unsigned int upmaxcoreslimit = 0;
-	unsigned int min_cpus_online = hotplug_tuners_ins.min_cpus_online;
+	unsigned int upmaxcoreslimit =
+		hotplug_tuners_ins.maxcoreslimit;
+	unsigned int min_cpus_online =
+		hotplug_tuners_ins.min_cpus_online;
 	unsigned int downcpu = 0;
 	unsigned int offcpu = 0;
 	unsigned int cpu = 0;
@@ -128,25 +144,31 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 	unsigned int sum_load = 0, sum_freq = 0;
 	bool rq_avg_calc = true;
 	int online_cpus = 0, delay;
-	cpumask_var_t cpus;
+	unsigned int sampling_rate =
+		hotplug_tuners_ins.hotplug_sampling_rate;
 
 	if (hotplug_tuners_ins.suspended) {
 		upmaxcoreslimit = hotplug_tuners_ins.maxcoreslimit_sleep;
 		rq_avg_calc = false;
-	} else
-		upmaxcoreslimit = hotplug_tuners_ins.maxcoreslimit;
+	}
 
-	/* copy nr online cpus */
-	cpumask_copy(cpus, cpu_online_mask);
 	for_each_possible_cpu(cpu) {
 		u64 cur_wall_time, cur_idle_time;
 		unsigned int wall_time, idle_time;
 		unsigned int cur_load = 0;
 		unsigned int cur_freq = 0;
+		ktime_t time_now = ktime_get();
+		s64 delta_us;
 
-		if (cpumask_test_cpu(cpu, cpus)
-			 && cpu_online(cpu)) {
-			pcpu_info =	&per_cpu(od_hotplug_cpuinfo, cpu);
+		if (cpu_online(cpu)) {
+			pcpu_info =	&per_cpu(ac_hp_cpuinfo, cpu);
+			mutex_lock(&pcpu_info->cpu_load_mutex);
+			delta_us = ktime_us_delta(time_now, pcpu_info->time_stamp);
+			/* Do nothing if cpu recently has become online */
+			if (delta_us < (s64)(sampling_rate / 2)) {
+				mutex_unlock(&pcpu_info->cpu_load_mutex);
+				continue;
+			}
 
 			cur_idle_time = get_cpu_idle_time(
 					cpu, &cur_wall_time,
@@ -162,6 +184,9 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 						pcpu_info->prev_cpu_idle);
 			pcpu_info->prev_cpu_idle = cur_idle_time;
 
+			pcpu_info->time_stamp = time_now;
+			mutex_unlock(&pcpu_info->cpu_load_mutex);
+
 			/* if wall_time < idle_time or wall_time == 0, evaluate cpu load next time */
 			if (unlikely(!wall_time || wall_time < idle_time))
 				continue;
@@ -175,7 +200,8 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 				n++;
 				sum_load += cur_load;
 				sum_freq += cur_freq;
-				if (cur_load < min_freq && cur_freq < min_freq
+				if (cur_load < min_load 
+					 && cur_freq < min_freq
 					 && cpu > 0) {
 					min_load = cur_load;
 					min_freq = cur_freq;
@@ -183,8 +209,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 				}
 			}
 		} else if (!offcpu) {
-			if (!cpu_online(cpu))
-				offcpu = cpu;
+			offcpu = cpu;
 		}
 	}
 	if (unlikely(!sum_freq))
@@ -196,22 +221,22 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 		avg_load = (sum_load / n);
 		/* get nr online cpus */
 		online_cpus = num_online_cpus();
+		if (online_cpus != last_online_cpus) {
+			reset_cur_cpu_rate();
+			last_online_cpus = online_cpus;
+		}
 		if (rq_avg_calc) {
 			rq_avg = (avg_nr_running() * 100) >> FSHIFT;
 			/*pr_info("online_cpus[%u], rq_avg[%u]\n", online_cpus, rq_avg);*/
 		}
 		cpu = (online_cpus - 1);
-		pcpu_parm = &per_cpu(od_hotplug_cpuparm, cpu);
+		pcpu_parm = &per_cpu(ac_hp_cpuparm, cpu);
 		if (downcpu > 0	&& 
 			 online_cpus > upmaxcoreslimit) {
 				cpu_down(downcpu);
-				pcpu_parm->cur_up_rate = 1;
-				pcpu_parm->cur_down_rate = 1;
 		} else if (online_cpus < min_cpus_online
 					&& offcpu < upmaxcoreslimit) {
 					cpu_up(offcpu);
-					pcpu_parm->cur_up_rate = 1;
-					pcpu_parm->cur_down_rate = 1;
 		} else if (offcpu > 0
 			&& offcpu < upmaxcoreslimit
 			&& online_cpus < upmaxcoreslimit
@@ -230,8 +255,6 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 						pcpu_parm->cur_up_rate);
 	#endif
 					cpu_up(offcpu);
-					pcpu_parm->cur_up_rate = 1;
-					pcpu_parm->cur_down_rate = 1;
 				} else {
 					if (pcpu_parm->cur_up_rate < pcpu_parm->up_rate)
 						++pcpu_parm->cur_up_rate;
@@ -257,8 +280,6 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 							cur_down_rate);
 	#endif
 						cpu_down(downcpu);
-						pcpu_parm->cur_up_rate = 1;
-						pcpu_parm->cur_down_rate = 1;
 					} else {
 						if (pcpu_parm->cur_down_rate < pcpu_parm->down_rate)
 							++pcpu_parm->cur_down_rate;
@@ -272,7 +293,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 	}
 
 next_loop:
-	delay = msecs_to_jiffies(hotplug_tuners_ins.hotplug_sampling_rate);
+	delay = msecs_to_jiffies(sampling_rate);
 	/*
 	 * We want hotplug governor to do sampling
 	 * just one jiffy later on cpu governor sampling
@@ -331,10 +352,13 @@ static int alucard_hotplug_callback(struct notifier_block *nb,
 
 	switch (action) {
 	case CPU_ONLINE:
-		pcpu_info = &per_cpu(od_hotplug_cpuinfo, cpu);
+		pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
+		mutex_lock(&pcpu_info->cpu_load_mutex);
 		pcpu_info->prev_cpu_idle = get_cpu_idle_time(cpu,
 				&pcpu_info->prev_cpu_wall,
 				0);
+		pcpu_info->time_stamp = ktime_get();
+		mutex_unlock(&pcpu_info->cpu_load_mutex);
 		break;
 	default:
 		break;
@@ -351,7 +375,6 @@ static struct notifier_block alucard_hotplug_nb =
 static void hotplug_start(void)
 {
 	struct hotplug_cpuinfo *pcpu_info = NULL;
-	struct hotplug_cpuparm *pcpu_parm = NULL;
 	unsigned int cpu;
 	int delay;
 
@@ -359,24 +382,25 @@ static void hotplug_start(void)
 	hotplug_tuners_ins.suspended = false;
 
 	get_online_cpus();
-	register_hotcpu_notifier(&alucard_hotplug_nb);
 	for_each_online_cpu(cpu) {
-		pcpu_info = &per_cpu(od_hotplug_cpuinfo, cpu);
+		pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
+		mutex_init(&pcpu_info->cpu_load_mutex);
 		pcpu_info->prev_cpu_idle = get_cpu_idle_time(cpu,
 				&pcpu_info->prev_cpu_wall,
 				0);
-		pcpu_parm = &per_cpu(od_hotplug_cpuparm, cpu);
-		pcpu_parm->cur_up_rate = 1;
-		pcpu_parm->cur_down_rate = 1;
+		pcpu_info->time_stamp = ktime_get();
 	}
+	last_online_cpus = num_online_cpus();
+	reset_cur_cpu_rate();
+	register_hotcpu_notifier(&alucard_hotplug_nb);
 	put_online_cpus();
 
 	delay = msecs_to_jiffies(hotplug_tuners_ins.hotplug_sampling_rate);
-	if (num_online_cpus() > 1) {
-		delay -= jiffies % delay;
-		/* We want hotplug governor to do sampling just one jiffy later on cpu governor sampling */
-		delay++;
-	}
+	/*
+	 * We want hotplug governor to do sampling
+	 * just one jiffy later on cpu governor sampling
+	*/
+	delay = delay - (jiffies % delay) + 1;
 
 	INIT_DEFERRABLE_WORK(&alucard_hotplug_work, hotplug_work_fn);
 	queue_delayed_work_on(BOOT_CPU, alucard_hp_wq,
@@ -393,6 +417,9 @@ static void hotplug_start(void)
 
 static void hotplug_stop(void)
 {
+	struct hotplug_cpuinfo *pcpu_info = NULL;
+	unsigned int cpu;
+
 	mutex_lock(&alucard_hotplug_mutex);
 #ifdef CONFIG_STATE_NOTIFIER
 	state_unregister_client(&notif);
@@ -402,6 +429,10 @@ static void hotplug_stop(void)
 	get_online_cpus();
 	unregister_hotcpu_notifier(&alucard_hotplug_nb);
 	put_online_cpus();
+	for_each_possible_cpu(cpu) {
+		pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
+		mutex_destroy(&pcpu_info->cpu_load_mutex);
+	}
 	mutex_unlock(&alucard_hotplug_mutex);
 }
 
@@ -425,7 +456,7 @@ static ssize_t show_##file_name						\
 (struct kobject *kobj, struct attribute *attr, char *buf)		\
 {									\
 	struct hotplug_cpuparm *pcpu_parm =				\
-			&per_cpu(od_hotplug_cpuparm, num_core - 1);	\
+			&per_cpu(ac_hp_cpuparm, num_core - 1);	\
 	return sprintf(buf, "%u\n",					\
 			pcpu_parm->var_name);				\
 }
@@ -471,7 +502,7 @@ static ssize_t store_##file_name					\
 	if (ret != 1)							\
 		return -EINVAL;						\
 									\
-	pcpu_parm = &per_cpu(od_hotplug_cpuparm, num_core - 1);		\
+	pcpu_parm = &per_cpu(ac_hp_cpuparm, num_core - 1);		\
 									\
 	if (input == pcpu_parm->var_name) {				\
 		return count;						\
@@ -784,7 +815,7 @@ static int __init alucard_hotplug_init(void)
 
 	/* INITIALIZE PCPU VARS */
 	for_each_possible_cpu(cpu) {
-		pcpu_parm = &per_cpu(od_hotplug_cpuparm, cpu);
+		pcpu_parm = &per_cpu(ac_hp_cpuparm, cpu);
 		pcpu_parm->up_freq = hotplug_freq[cpu][UP_INDEX];
 		pcpu_parm->down_freq = hotplug_freq[cpu][DOWN_INDEX];
 		pcpu_parm->up_load = hotplug_load[cpu][UP_INDEX];
