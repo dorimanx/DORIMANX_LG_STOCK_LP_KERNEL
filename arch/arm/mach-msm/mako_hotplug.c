@@ -34,7 +34,7 @@
 #define DEFAULT_LOAD_THRESHOLD 80
 #define DEFAULT_HIGH_LOAD_COUNTER 10
 #define DEFAULT_MAX_LOAD_COUNTER 20
-#define DEFAULT_CPUFREQ_UNPLUG_LIMIT 1800000
+#define DEFAULT_CPUFREQ_UNPLUG_LIMIT 1728000
 #define DEFAULT_MIN_TIME_CPU_ONLINE 1
 #define DEFAULT_TIMER 1
 
@@ -45,9 +45,11 @@
 struct cpu_stats {
 	unsigned int counter;
 	u64 timestamp;
-} hotplug_stats = {
+	bool booted;
+} stats = {
 	.counter = 0,
 	.timestamp = 0,
+	.booted = false,
 };
 
 struct hotplug_tunables {
@@ -94,6 +96,16 @@ struct hotplug_tunables {
 	 * per second it runs
 	 */
 	unsigned int timer;
+
+	/**
+	* the maximum frequency when screen is turned off.
+	*/
+	unsigned int screen_off_max;
+
+ 	/**
+	* the minimum cores which should be online.
+	*/
+ 	unsigned int min_cores_online;
 } tunables;
 
 static struct workqueue_struct *wq;
@@ -113,6 +125,7 @@ static inline void cpus_online_work(void)
 
 static inline void cpus_offline_work(void)
 {
+	struct hotplug_tunables;
 	unsigned int cpu;
 
 	for (cpu = 3; cpu > 1; cpu--) {
@@ -156,14 +169,14 @@ static void cpu_revive(unsigned int load)
 	 * cpus in question. If the device is under stress for at least 300ms
 	 * online all cores, no questions asked. 300ms here equals three samples
 	 */
-	if (load >= HIGH_LOAD && hotplug_stats.counter >= counter_hysteria)
+	if (load >= HIGH_LOAD && stats.counter >= counter_hysteria)
 		goto online_all;
-	else if (hotplug_stats.counter < t->high_load_counter)
+	else if (stats.counter < t->high_load_counter)
 		return;
 
 online_all:
 	cpus_online_work();
-	hotplug_stats.timestamp = ktime_to_us(ktime_get());
+	stats.timestamp = ktime_to_us(ktime_get());
 }
 
 static void cpu_smash(unsigned int load)
@@ -171,7 +184,7 @@ static void cpu_smash(unsigned int load)
 	struct hotplug_tunables *t = &tunables;
 	u64 extra_time = MIN_CPU_UP_US;
 
-	if (hotplug_stats.counter >= t->high_load_counter)
+	if (stats.counter >= t->high_load_counter)
 		return;
 
 	/*
@@ -180,7 +193,7 @@ static void cpu_smash(unsigned int load)
 	 * postpone the cpu offline process to at least another second
 	 */
 	if (cpus_cpufreq_work())
-		hotplug_stats.timestamp = ktime_to_us(ktime_get());
+		stats.timestamp = ktime_to_us(ktime_get());
 
 	/*
 	 * Let's not unplug this cpu unless its been online for longer than
@@ -190,7 +203,7 @@ static void cpu_smash(unsigned int load)
 	if (t->min_time_cpu_online > 1)
 		extra_time = t->min_time_cpu_online * MIN_CPU_UP_US;
 
-	if (ktime_to_us(ktime_get()) < hotplug_stats.timestamp + extra_time)
+	if (ktime_to_us(ktime_get()) < stats.timestamp + extra_time)
 		return;
 
 	/*
@@ -205,7 +218,7 @@ static void cpu_smash(unsigned int load)
 	/*
 	 * reset the counter yo
 	 */
-	hotplug_stats.counter = 0;
+	stats.counter = 0;
 }
 
 static void __ref decide_hotplug_func(struct work_struct *work)
@@ -238,14 +251,14 @@ static void __ref decide_hotplug_func(struct work_struct *work)
 	cur_load >>= 1;
 
 	if (cur_load >= t->load_threshold) {
-		if (hotplug_stats.counter < t->max_load_counter)
-			++hotplug_stats.counter;
+		if (stats.counter < t->max_load_counter)
+			++stats.counter;
 
 		if (online_cpus <= 2)
 			cpu_revive(cur_load);
 	} else {
-		if (hotplug_stats.counter)
-			--hotplug_stats.counter;
+		if (stats.counter)
+			--stats.counter;
 
 		if (online_cpus > 2)
 			cpu_smash(cur_load);
@@ -275,7 +288,7 @@ static ssize_t make_hotplug_enabled_show(struct device *dev,
 {
 	struct hotplug_tunables *t = &tunables;
 
-	return snprintf(buf, PAGE_SIZE, "%u\n", t->enabled);
+	return snprintf(buf, 10, "%u\n", t->enabled);
 }
 
 static ssize_t make_hotplug_enabled_store(struct device *dev,
@@ -564,3 +577,7 @@ static void __exit mako_hotplug_exit(void)
 
 late_initcall(mako_hotplug_init);
 module_exit(mako_hotplug_exit);
+
+MODULE_AUTHOR("franciscofranco <franciscofranco.1990@gmail.com>");
+MODULE_DESCRIPTION("Mako Hotplug Driver");
+MODULE_LICENSE("GPLv2");
