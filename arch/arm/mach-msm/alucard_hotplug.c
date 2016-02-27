@@ -113,7 +113,7 @@ static unsigned int adjust_avg_freq(unsigned int cpu, unsigned int tmp_freq)
 	return target_freq;
 }
 
-static void reset_cur_cpu_rate(void)
+static void reset_last_cur_cpu_rate(void)
 {
 	struct hotplug_cpuparm *pcpu_parm = NULL;
 
@@ -219,7 +219,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 		/* get nr online cpus */
 		online_cpus = num_online_cpus();
 		if (online_cpus != last_online_cpus) {
-			reset_cur_cpu_rate();
+			reset_last_cur_cpu_rate();
 			last_online_cpus = online_cpus;
 		}
 		if (rq_avg_calc) {
@@ -381,16 +381,21 @@ static void hotplug_start(void)
 	hotplug_tuners_ins.suspended = false;
 
 	get_online_cpus();
-	for_each_online_cpu(cpu) {
-		pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
-		mutex_init(&pcpu_info->cpu_load_mutex);
-		pcpu_info->prev_cpu_idle = get_cpu_idle_time(cpu,
-				&pcpu_info->prev_cpu_wall,
-				0);
-		pcpu_info->time_stamp = ktime_get();
+	for_each_possible_cpu(cpu) {
+		struct hotplug_cpuparm *pcpu_parm =
+			&per_cpu(ac_hp_cpuparm, cpu);
+		if (cpu_online(cpu)) {
+			pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
+			mutex_init(&pcpu_info->cpu_load_mutex);
+			pcpu_info->prev_cpu_idle = get_cpu_idle_time(cpu,
+					&pcpu_info->prev_cpu_wall,
+					0);
+			pcpu_info->time_stamp = ktime_get();
+		}
+		pcpu_parm->cur_up_rate = 1;
+		pcpu_parm->cur_down_rate = 1;
 	}
 	last_online_cpus = num_online_cpus();
-	reset_cur_cpu_rate();
 	register_hotcpu_notifier(&alucard_hotplug_nb);
 	put_online_cpus();
 
