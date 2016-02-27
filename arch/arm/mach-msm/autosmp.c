@@ -34,7 +34,7 @@
 #define DEBUG 0
 
 #define ASMP_TAG "AutoSMP:"
-#define ASMP_STARTDELAY 10000
+#define ASMP_STARTDELAY 1000
 
 struct asmp_cpudata_t {
 	long long unsigned int times_hotplugged;
@@ -57,7 +57,7 @@ static struct asmp_param_struct {
 	struct notifier_block notif;
 	struct mutex autosmp_hotplug_mutex;
 } asmp_param = {
-	.delay = 100,
+	.delay = 30,
 	.suspended = 0,
 	.max_cpus = CONFIG_NR_CPUS,
 	.min_cpus = 1,
@@ -79,10 +79,8 @@ module_param_named(hotplug_suspend, hotplug_suspend, uint, 0644);
 
 static void reschedule_hotplug_work(void)
 {
-	unsigned long delay;
-
-	delay = msecs_to_jiffies(asmp_param.delay);
-	queue_delayed_work(asmp_workq, &asmp_work, delay);
+	queue_delayed_work(asmp_workq, &asmp_work,
+			msecs_to_jiffies(asmp_param.delay));
 }
 
 static void __cpuinit asmp_work_fn(struct work_struct *work)
