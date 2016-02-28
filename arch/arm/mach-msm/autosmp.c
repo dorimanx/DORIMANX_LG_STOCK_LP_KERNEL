@@ -240,6 +240,37 @@ static int state_notifier_callback(struct notifier_block *this,
 }
 #endif
 
+static int hotplug_start(void)
+{
+	int ret = 0;
+
+	asmp_workq =
+		alloc_workqueue("autosmp_wq",
+			WQ_HIGHPRI | WQ_FREEZABLE, 0);
+	if (!asmp_workq) {
+		pr_err("%s: Failed to allocate hotplug workqueue\n",
+					ASMP_TAG);
+		autosmp_enabled = 0;
+		ret = -ENOMEM;
+		goto quit;
+	}
+
+	INIT_DELAYED_WORK(&asmp_work, asmp_work_fn);
+	queue_delayed_work_on(0, asmp_workq, &asmp_work,
+				msecs_to_jiffies(asmp_param.delay));
+	return ret;
+quit:
+	destroy_workqueue(asmp_workq);
+	return ret;
+}
+
+static void hotplug_stop(void)
+{
+	flush_workqueue(asmp_workq);
+	cancel_delayed_work_sync(&asmp_work);
+	destroy_workqueue(asmp_workq);
+}
+
 static int __cpuinit set_enabled(const char *val, const struct kernel_param *kp)
 {
 	int ret = 0;
@@ -249,23 +280,23 @@ static int __cpuinit set_enabled(const char *val, const struct kernel_param *kp)
 	if (autosmp_enabled) {
 		if (!enable_switch) {
 			enable_switch = 1;
-			INIT_DELAYED_WORK(&asmp_work, asmp_work_fn);
-			queue_delayed_work_on(0, asmp_workq, &asmp_work,
-					msecs_to_jiffies(asmp_param.delay));
+			hotplug_start();
 			pr_info(ASMP_TAG "Enabled.\n");
 		} else
 			pr_info(ASMP_TAG "Already Enabled.\n");
 	} else {
-		enable_switch = 0;
-		flush_workqueue(asmp_workq);
-		cancel_delayed_work_sync(&asmp_work);
-		/* Put all sibling cores to sleep */
-		for_each_online_cpu(cpu) {
-			if (cpu == 0)
-				continue;
-			cpu_down(cpu);
-		}
-		pr_info(ASMP_TAG "Disabled.\n");
+		if (enable_switch) {
+			enable_switch = 0;
+			hotplug_stop();
+			/* Put all sibling cores to sleep */
+			for_each_online_cpu(cpu) {
+				if (cpu == 0)
+					continue;
+				cpu_down(cpu);
+			}
+			pr_info(ASMP_TAG "Disabled.\n");
+		} else
+			pr_info(ASMP_TAG "Already Disabled.\n");
 	}
 	return ret;
 }
@@ -376,13 +407,19 @@ static int __init asmp_init(void)
 	for_each_possible_cpu(cpu)
 		per_cpu(asmp_cpudata, cpu).times_hotplugged = 0;
 
-	asmp_workq =
-		alloc_workqueue("autosmp_wq", WQ_HIGHPRI | WQ_FREEZABLE, 0);
-	if (!asmp_workq) {
-		pr_err("%s: Failed to allocate hotplug workqueue\n",
-			ASMP_TAG);
-		ret = -ENOMEM;
-		goto err_out;
+	if (autosmp_enabled) {
+		asmp_workq =
+			alloc_workqueue("autosmp_wq", WQ_HIGHPRI | WQ_FREEZABLE, 0);
+		if (!asmp_workq) {
+			pr_err("%s: Failed to allocate hotplug workqueue\n",
+				ASMP_TAG);
+			ret = -ENOMEM;
+			goto err_out;
+		}
+		enable_switch = 1;
+		INIT_DELAYED_WORK(&asmp_work, asmp_work_fn);
+		queue_delayed_work(asmp_workq, &asmp_work,
+					msecs_to_jiffies(ASMP_STARTDELAY));
 	}
 
 #ifdef CONFIG_STATE_NOTIFIER
@@ -395,12 +432,6 @@ static int __init asmp_init(void)
 #endif
 
 	mutex_init(&asmp_param.autosmp_hotplug_mutex);
-
-	if (autosmp_enabled) {
-		INIT_DELAYED_WORK(&asmp_work, asmp_work_fn);
-		queue_delayed_work(asmp_workq, &asmp_work,
-				   msecs_to_jiffies(ASMP_STARTDELAY));
-	}
 
 	asmp_kobject = kobject_create_and_add("autosmp", kernel_kobj);
 	if (asmp_kobject) {
