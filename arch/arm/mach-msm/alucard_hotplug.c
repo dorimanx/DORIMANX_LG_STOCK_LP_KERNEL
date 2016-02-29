@@ -133,7 +133,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 	unsigned int min_cpus_online =
 		hotplug_tuners_ins.min_cpus_online;
 	unsigned int downcpu = 0;
-	unsigned int offcpu = 0;
+	unsigned int offcpu = NR_CPUS;
 	unsigned int cpu = 0;
 	unsigned int rq_avg = 0;
 	unsigned int min_freq = MAX_FREQ_LIMIT;
@@ -152,7 +152,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 		rq_avg_calc = false;
 	}
 
-	for_each_possible_cpu(cpu) {
+	for_each_online_cpu(cpu) {
 		u64 cur_wall_time, cur_idle_time;
 		unsigned int wall_time, idle_time;
 		unsigned int cur_load = 0;
@@ -160,56 +160,53 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 		ktime_t time_now = ktime_get();
 		s64 delta_us;
 
-		if (cpu_online(cpu)) {
-			pcpu_info =	&per_cpu(ac_hp_cpuinfo, cpu);
-			mutex_lock(&pcpu_info->cpu_load_mutex);
-			delta_us = ktime_us_delta(time_now, pcpu_info->time_stamp);
-			/* Do nothing if cpu recently has become online */
-			if (delta_us < (s64)(sampling_rate / 2)) {
-				mutex_unlock(&pcpu_info->cpu_load_mutex);
-				continue;
-			}
-
-			cur_idle_time = get_cpu_idle_time(
-					cpu, &cur_wall_time,
-					0);
-
-			wall_time = (unsigned int)
-					(cur_wall_time -
-						pcpu_info->prev_cpu_wall);
-			pcpu_info->prev_cpu_wall = cur_wall_time;
-
-			idle_time = (unsigned int)
-					(cur_idle_time -
-						pcpu_info->prev_cpu_idle);
-			pcpu_info->prev_cpu_idle = cur_idle_time;
-
-			pcpu_info->time_stamp = time_now;
+		pcpu_info =	&per_cpu(ac_hp_cpuinfo, cpu);
+		mutex_lock(&pcpu_info->cpu_load_mutex);
+		delta_us = ktime_us_delta(time_now, pcpu_info->time_stamp);
+		/* Do nothing if cpu recently has become online */
+		if (delta_us < (s64)(sampling_rate / 2)) {
 			mutex_unlock(&pcpu_info->cpu_load_mutex);
+			continue;
+		}
 
-			/* if wall_time < idle_time or wall_time == 0, evaluate cpu load next time */
-			if (unlikely(!wall_time || wall_time < idle_time))
-				continue;
+		cur_idle_time = get_cpu_idle_time(
+				cpu, &cur_wall_time,
+				0);
 
-			cur_load = 100 * (wall_time - idle_time) / wall_time;
+		wall_time = (unsigned int)
+				(cur_wall_time -
+					pcpu_info->prev_cpu_wall);
+		pcpu_info->prev_cpu_wall = cur_wall_time;
 
-			/* get the cpu current frequency */
-			cur_freq = cpufreq_quick_get(cpu);
+		idle_time = (unsigned int)
+				(cur_idle_time -
+					pcpu_info->prev_cpu_idle);
+		pcpu_info->prev_cpu_idle = cur_idle_time;
 
-			if (cur_freq > 0) {
-				n++;
-				sum_load += cur_load;
-				sum_freq += cur_freq;
-				if (cur_load < min_load 
-					 && cur_freq < min_freq
-					 && cpu > 0) {
-					min_load = cur_load;
-					min_freq = cur_freq;
-					downcpu = cpu;
-				}
+		pcpu_info->time_stamp = time_now;
+		mutex_unlock(&pcpu_info->cpu_load_mutex);
+
+		/* if wall_time < idle_time or wall_time == 0, evaluate cpu load next time */
+		if (unlikely(!wall_time || wall_time < idle_time))
+			continue;
+
+		cur_load = 100 * (wall_time - idle_time) / wall_time;
+
+		/* get the cpu current frequency */
+		cur_freq = cpufreq_quick_get(cpu);
+
+		if (cur_freq >= MIN_FREQ_LIMIT
+			 && cur_freq <= MAX_FREQ_LIMIT) {
+			n++;
+			sum_load += cur_load;
+			sum_freq += cur_freq;
+			if (cur_load < min_load 
+				 && cur_freq < min_freq
+				 && cpu > 0) {
+				min_load = cur_load;
+				min_freq = cur_freq;
+				downcpu = cpu;
 			}
-		} else if (!offcpu) {
-			offcpu = cpu;
 		}
 	}
 	if (unlikely(!sum_freq))
@@ -231,6 +228,8 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 		}
 		cpu = (online_cpus - 1);
 		pcpu_parm = &per_cpu(ac_hp_cpuparm, cpu);
+		/* get the first offline cpu */
+		offcpu = cpumask_next_zero(0, cpu_online_mask);
 		if (downcpu > 0	&& 
 			 online_cpus > upmaxcoreslimit) {
 				cpu_down(downcpu);
