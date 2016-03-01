@@ -40,7 +40,6 @@ struct hotplug_cpuinfo {
 };
 
 static unsigned int last_online_cpus;
-static int workqueue_online = 0;
 
 struct hotplug_cpuparm {
 	unsigned int up_load;
@@ -381,16 +380,6 @@ static void hotplug_start(void)
 	mutex_lock(&alucard_hotplug_mutex);
 	hotplug_tuners_ins.suspended = false;
 
-	if (!workqueue_online) {
-		alucard_hp_wq = alloc_workqueue("alu_hp_wq", WQ_HIGHPRI, 0);
-		if (!alucard_hp_wq) {
-			printk(KERN_ERR "Failed to create alu_hp_wq workqueue\n");
-			mutex_unlock(&alucard_hotplug_mutex);
-			return;
-		} else
-			workqueue_online = 1;
-	}
-
 	get_online_cpus();
 	for_each_online_cpu(cpu) {
 		pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
@@ -442,10 +431,6 @@ static void hotplug_stop(void)
 	for_each_possible_cpu(cpu) {
 		pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
 		mutex_destroy(&pcpu_info->cpu_load_mutex);
-	}
-	if (workqueue_online) {
-		destroy_workqueue(alucard_hp_wq);
-		workqueue_online = 0;
 	}
 	mutex_unlock(&alucard_hotplug_mutex);
 }
@@ -819,6 +804,12 @@ static int __init alucard_hotplug_init(void)
 	if (ret) {
 		printk(KERN_ERR "failed at(%d)\n", __LINE__);
 		return ret;
+	}
+
+	alucard_hp_wq = alloc_workqueue("alu_hp_wq", WQ_HIGHPRI, 0);
+	if (!alucard_hp_wq) {
+		printk(KERN_ERR "Failed to create alu_hp_wq workqueue\n");
+		return -EFAULT;
 	}
 
 	/* INITIALIZE PCPU VARS */
