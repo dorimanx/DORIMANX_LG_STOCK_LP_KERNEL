@@ -36,7 +36,6 @@ struct hotplug_cpuinfo {
 	u64 prev_cpu_wall;
 	u64 prev_cpu_idle;
 	ktime_t time_stamp;
-	struct mutex cpu_load_mutex;
 };
 
 static unsigned int last_online_cpus;
@@ -124,6 +123,8 @@ static void reset_last_cur_cpu_rate(void)
 	pcpu_parm->cur_down_rate = 1;
 }
 
+#define MIN_FREQ_LIMIT 300000
+
 static void __ref hotplug_work_fn(struct work_struct *work)
 {
 	struct hotplug_cpuinfo *pcpu_info = NULL;
@@ -161,11 +162,9 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 		s64 delta_us;
 
 		pcpu_info =	&per_cpu(ac_hp_cpuinfo, cpu);
-		mutex_lock(&pcpu_info->cpu_load_mutex);
 		delta_us = ktime_us_delta(time_now, pcpu_info->time_stamp);
 		/* Do nothing if cpu recently has become online */
 		if (delta_us < (s64)(sampling_rate / 2)) {
-			mutex_unlock(&pcpu_info->cpu_load_mutex);
 			continue;
 		}
 
@@ -184,7 +183,6 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 		pcpu_info->prev_cpu_idle = cur_idle_time;
 
 		pcpu_info->time_stamp = time_now;
-		mutex_unlock(&pcpu_info->cpu_load_mutex);
 
 		/* if wall_time < idle_time or wall_time == 0, evaluate cpu load next time */
 		if (unlikely(!wall_time || wall_time < idle_time))
@@ -352,12 +350,10 @@ static int alucard_hotplug_callback(struct notifier_block *nb,
 	switch (action) {
 	case CPU_ONLINE:
 		pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
-		mutex_lock(&pcpu_info->cpu_load_mutex);
 		pcpu_info->prev_cpu_idle = get_cpu_idle_time(cpu,
 				&pcpu_info->prev_cpu_wall,
 				0);
 		pcpu_info->time_stamp = ktime_get();
-		mutex_unlock(&pcpu_info->cpu_load_mutex);
 		break;
 	default:
 		break;
@@ -386,7 +382,6 @@ static void hotplug_start(void)
 			&per_cpu(ac_hp_cpuparm, cpu);
 		if (cpu_online(cpu)) {
 			pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
-			mutex_init(&pcpu_info->cpu_load_mutex);
 			pcpu_info->prev_cpu_idle = get_cpu_idle_time(cpu,
 					&pcpu_info->prev_cpu_wall,
 					0);
@@ -435,7 +430,6 @@ static void hotplug_stop(void)
 	put_online_cpus();
 	for_each_possible_cpu(cpu) {
 		pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
-		mutex_destroy(&pcpu_info->cpu_load_mutex);
 	}
 	mutex_unlock(&alucard_hotplug_mutex);
 }
