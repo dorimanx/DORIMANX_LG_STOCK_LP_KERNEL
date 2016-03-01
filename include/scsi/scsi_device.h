@@ -158,13 +158,14 @@ struct scsi_device {
 	unsigned try_rc_10_first:1;	/* Try READ_CAPACACITY_10 first */
 	unsigned is_visible:1;	/* is the device visible in sysfs */
 	unsigned wce_default_on:1;	/* Cache is ON by default */
+	unsigned no_dif:1;	/* T10 PI (DIF) should be disabled */
 	unsigned broken_fua:1;	/* Don't set FUA bit */
 	unsigned use_rpm_auto:1; /* Enable runtime PM auto suspend */
 
 #define SCSI_DEFAULT_AUTOSUSPEND_DELAY  -1
 	int autosuspend_delay;
+
 	atomic_t disk_events_disable_depth; /* disable depth for disk events */
-	unsigned no_dif:1;	/* T10 PI (DIF) should be disabled */
 
 	DECLARE_BITMAP(supported_events, SDEV_EVT_MAXBITS); /* supported events */
 	struct list_head event_list;	/* asserted events */
