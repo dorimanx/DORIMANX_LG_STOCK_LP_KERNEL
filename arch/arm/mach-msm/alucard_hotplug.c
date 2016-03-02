@@ -125,7 +125,6 @@ static void reset_last_cur_cpu_rate(void)
 
 static void __ref hotplug_work_fn(struct work_struct *work)
 {
-	struct hotplug_cpuinfo *pcpu_info = NULL;
 	struct hotplug_cpuparm *pcpu_parm = NULL;
 	unsigned int upmaxcoreslimit =
 		hotplug_tuners_ins.maxcoreslimit;
@@ -145,7 +144,6 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 	int online_cpus = 0, delay;
 	unsigned int sampling_rate =
 		hotplug_tuners_ins.hotplug_sampling_rate;
-	struct cpufreq_policy policy;
 
 	if (hotplug_tuners_ins.suspended) {
 		upmaxcoreslimit = hotplug_tuners_ins.maxcoreslimit_sleep;
@@ -153,6 +151,9 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 	}
 
 	for_each_online_cpu(cpu) {
+		struct hotplug_cpuinfo *pcpu_info =
+			&per_cpu(ac_hp_cpuinfo, cpu);
+		struct cpufreq_policy policy;
 		u64 cur_wall_time, cur_idle_time;
 		unsigned int wall_time, idle_time;
 		unsigned int cur_load = 0;
@@ -160,7 +161,6 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 		ktime_t time_now = ktime_get();
 		s64 delta_us;
 
-		pcpu_info =	&per_cpu(ac_hp_cpuinfo, cpu);
 		delta_us = ktime_us_delta(time_now, pcpu_info->time_stamp);
 		/* Do nothing if cpu recently has become online */
 		if (delta_us < (s64)(sampling_rate / 2)) {
@@ -369,7 +369,6 @@ static struct notifier_block alucard_hotplug_nb =
 
 static int hotplug_start(void)
 {
-	struct hotplug_cpuinfo *pcpu_info = NULL;
 	unsigned int cpu;
 	int delay;
 
@@ -385,6 +384,7 @@ static int hotplug_start(void)
 
 	get_online_cpus();
 	for_each_possible_cpu(cpu) {
+		struct hotplug_cpuinfo *pcpu_info = NULL;
 		struct hotplug_cpuparm *pcpu_parm =
 			&per_cpu(ac_hp_cpuparm, cpu);
 		if (cpu_online(cpu)) {
@@ -425,9 +425,6 @@ static int hotplug_start(void)
 
 static void hotplug_stop(void)
 {
-	struct hotplug_cpuinfo *pcpu_info = NULL;
-	unsigned int cpu;
-
 	mutex_lock(&alucard_hotplug_mutex);
 #ifdef CONFIG_STATE_NOTIFIER
 	state_unregister_client(&notif);
@@ -437,9 +434,6 @@ static void hotplug_stop(void)
 	get_online_cpus();
 	unregister_hotcpu_notifier(&alucard_hotplug_nb);
 	put_online_cpus();
-	for_each_possible_cpu(cpu) {
-		pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
-	}
 	destroy_workqueue(alucard_hp_wq);
 	mutex_unlock(&alucard_hotplug_mutex);
 }
