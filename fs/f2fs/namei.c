@@ -9,6 +9,7 @@
  * published by the Free Software Foundation.
  */
 #include <linux/fs.h>
+#include <linux/namei.h>
 #include <linux/f2fs_fs.h>
 #include <linux/pagemap.h>
 #include <linux/sched.h>
@@ -208,8 +209,8 @@ struct dentry *f2fs_get_parent(struct dentry *child)
 static int __recover_dot_dentries(struct inode *dir, nid_t pino)
 {
 	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
-	struct qstr dot = QSTR_INIT(".", 1);
-	struct qstr dotdot = QSTR_INIT("..", 2);
+	struct qstr dot = {.len = 1, .name = "."};
+	struct qstr dotdot = {.len = 2, .name = ".."};
 	struct f2fs_dir_entry *de;
 	struct page *page;
 	int err = 0;
@@ -505,6 +506,9 @@ static int f2fs_mknod(struct inode *dir, struct dentry *dentry,
 	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
 	struct inode *inode;
 	int err = 0;
+
+	if (!new_valid_dev(rdev))
+		return -EINVAL;
 
 	inode = f2fs_new_inode(dir, mode);
 	if (IS_ERR(inode))
