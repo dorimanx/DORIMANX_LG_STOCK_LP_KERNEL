@@ -375,7 +375,10 @@ static int hotplug_start(void)
 	mutex_lock(&alucard_hotplug_mutex);
 	hotplug_tuners_ins.suspended = false;
 
-	alucard_hp_wq = alloc_workqueue("alu_hp_wq", WQ_HIGHPRI, 0);
+	alucard_hp_wq = alloc_workqueue("alu_hp_wq", WQ_HIGHPRI | 
+			WQ_MEM_RECLAIM | 
+			WQ_UNBOUND | 
+			__WQ_ORDERED, 0);
 	if (!alucard_hp_wq) {
 		printk(KERN_ERR "Failed to create alu_hp_wq workqueue\n");
 		mutex_unlock(&alucard_hotplug_mutex);
