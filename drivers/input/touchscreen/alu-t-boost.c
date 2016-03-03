@@ -159,7 +159,7 @@ static void touchboost_input_event(struct input_handle *handle,
 
 	dprintk("Input boost for input event.\n");
 
-	queue_work(touch_boost_wq, &input_boost_work);
+	queue_work_on(BOOT_CPU, touch_boost_wq, &input_boost_work);
 	last_input_time = ktime_to_us(ktime_get());
 }
 
@@ -233,7 +233,10 @@ static int touch_boost_init(void)
 {
 	int ret;
 
-	touch_boost_wq = alloc_workqueue("touch_boost_wq", WQ_HIGHPRI, 0);
+	touch_boost_wq = alloc_workqueue("touch_boost_wq", WQ_HIGHPRI | 
+			WQ_FREEZABLE | 
+			WQ_UNBOUND | 
+			__WQ_ORDERED, 0);
 	if (!touch_boost_wq)
 		return -EFAULT;
 
