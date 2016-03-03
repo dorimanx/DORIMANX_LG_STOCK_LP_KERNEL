@@ -39,7 +39,6 @@ struct hotplug_cpuinfo {
 };
 
 static unsigned int last_online_cpus;
-static int workqueue_online = 0;
 
 struct hotplug_cpuparm {
 	unsigned int up_load;
@@ -368,7 +367,7 @@ static struct notifier_block alucard_hotplug_nb =
    .notifier_call = alucard_hotplug_callback,
 };
 
-static void hotplug_start(void)
+static int hotplug_start(void)
 {
 	struct hotplug_cpuinfo *pcpu_info = NULL;
 	unsigned int cpu;
@@ -377,14 +376,11 @@ static void hotplug_start(void)
 	mutex_lock(&alucard_hotplug_mutex);
 	hotplug_tuners_ins.suspended = false;
 
-	if (!workqueue_online) {
-		alucard_hp_wq = alloc_workqueue("alu_hp_wq", WQ_HIGHPRI, 0);
-		if (!alucard_hp_wq) {
-			printk(KERN_ERR "Failed to create alu_hp_wq workqueue\n");
-			mutex_unlock(&alucard_hotplug_mutex);
-			return;
-		} else
-			workqueue_online = 1;
+	alucard_hp_wq = alloc_workqueue("alu_hp_wq", WQ_HIGHPRI, 0);
+	if (!alucard_hp_wq) {
+		printk(KERN_ERR "Failed to create alu_hp_wq workqueue\n");
+		mutex_unlock(&alucard_hotplug_mutex);
+		return -EINVAL;
 	}
 
 	get_online_cpus();
@@ -423,6 +419,8 @@ static void hotplug_start(void)
 		pr_err("Failed to register State notifier callback for Alucard Hotplug\n");
 #endif
 	mutex_unlock(&alucard_hotplug_mutex);
+
+	return 0;
 }
 
 static void hotplug_stop(void)
@@ -442,10 +440,7 @@ static void hotplug_stop(void)
 	for_each_possible_cpu(cpu) {
 		pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
 	}
-	if (workqueue_online) {
-		destroy_workqueue(alucard_hp_wq);
-		workqueue_online = 0;
-	}
+	destroy_workqueue(alucard_hp_wq);
 	mutex_unlock(&alucard_hotplug_mutex);
 }
 
@@ -583,13 +578,16 @@ define_one_global_rw(hotplug_rate_4_0);
 
 static void cpus_hotplugging(int status)
 {
+	int ret = 0;
+
 	if (status) {
-		hotplug_start();
+		ret = hotplug_start();
 	} else {
 		hotplug_stop();
 	}
 
-	hotplug_tuners_ins.hotplug_enable = status;
+	if (!ret)
+		hotplug_tuners_ins.hotplug_enable = status;
 }
 
 /* hotplug_sampling_rate */
