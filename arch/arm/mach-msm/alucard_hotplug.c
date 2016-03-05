@@ -235,6 +235,10 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 			n++;
 			sum_load += cur_load;
 			sum_freq += cur_freq;
+			if (rq_avg_calc) {
+				rq_avg += (avg_cpu_nr_running(cpu) * 100) >> FSHIFT;
+				/*pr_info("cpu[%u], rq_avg[%u]\n", cpu, rq_avg);*/
+			}
 			if (cur_load < min_load 
 				 && cur_freq < min_freq
 				 && cpu > 0) {
@@ -256,10 +260,6 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 		if (online_cpus != last_online_cpus) {
 			reset_last_cur_cpu_rate();
 			last_online_cpus = online_cpus;
-		}
-		if (rq_avg_calc) {
-			rq_avg = (avg_nr_running() * 100) >> FSHIFT;
-			/*pr_info("online_cpus[%u], rq_avg[%u]\n", online_cpus, rq_avg);*/
 		}
 		cpu = (online_cpus - 1);
 		pcpu_parm = &per_cpu(ac_hp_cpuparm, cpu);
