@@ -154,7 +154,6 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 	for_each_online_cpu(cpu) {
 		struct hotplug_cpuinfo *pcpu_info =
 			&per_cpu(ac_hp_cpuinfo, cpu);
-		struct cpufreq_policy policy;
 		u64 cur_wall_time, cur_idle_time;
 		unsigned int wall_time, idle_time;
 		unsigned int cur_load = 0;
@@ -229,12 +228,10 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 			pcpu_info->prev_load = cur_load;
 		}
 
-		/* get the cpu current/min/max frequency */
+		/* get the cpu current frequency */
 		cur_freq = cpufreq_quick_get(cpu);
-		cpufreq_get_policy(&policy, cpu);
 
-		if (cur_freq >= policy.min
-			 && cur_freq <= policy.max) {
+		if (cur_freq > 0) {
 			n++;
 			sum_load += cur_load;
 			sum_freq += cur_freq;
