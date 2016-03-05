@@ -35,6 +35,7 @@ static DEFINE_MUTEX(alucard_hotplug_mutex);
 struct hotplug_cpuinfo {
 	u64 prev_cpu_wall;
 	u64 prev_cpu_idle;
+	unsigned int prev_load;
 	ktime_t time_stamp;
 };
 
@@ -187,7 +188,46 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 		if (unlikely(!wall_time || wall_time < idle_time))
 			continue;
 
-		cur_load = 100 * (wall_time - idle_time) / wall_time;
+		/*
+		 * If the CPU had gone completely idle, and a task just woke up
+		 * on this CPU now, it would be unfair to calculate 'load' the
+		 * usual way for this elapsed time-window, because it will show
+		 * near-zero load, irrespective of how CPU intensive that task
+		 * actually is. This is undesirable for latency-sensitive bursty
+		 * workloads.
+		 *
+		 * To avoid this, we reuse the 'load' from the previous
+		 * time-window and give this task a chance to start with a
+		 * reasonably high CPU frequency. (However, we shouldn't over-do
+		 * this copy, lest we get stuck at a high load (high frequency)
+		 * for too long, even when the current system load has actually
+		 * dropped down. So we perform the copy only once, upon the
+		 * first wake-up from idle.)
+		 *
+		 * Detecting this situation is easy: the governor's deferrable
+		 * timer would not have fired during CPU-idle periods. Hence
+		 * an unusually large 'wall_time' (as compared to the sampling
+		 * rate) indicates this scenario.
+		 *
+		 * prev_load can be zero in two cases and we must recalculate it
+		 * for both cases:
+		 * - during long idle intervals
+		 * - explicitly set to zero
+		 */
+		if (unlikely(wall_time > (2 * sampling_rate) &&
+			     pcpu_info->prev_load)) {
+			cur_load = pcpu_info->prev_load;
+
+			/*
+			 * Perform a destructive copy, to ensure that we copy
+			 * the previous load only once, upon the first wake-up
+			 * from idle.
+			 */
+			pcpu_info->prev_load = 0;
+		} else {
+			cur_load = 100 * (wall_time - idle_time) / wall_time;
+			pcpu_info->prev_load = cur_load;
+		}
 
 		/* get the cpu current/min/max frequency */
 		cur_freq = cpufreq_quick_get(cpu);
@@ -346,6 +386,7 @@ static int alucard_hotplug_callback(struct notifier_block *nb,
 {
 	unsigned int cpu = (unsigned long)data;
 	struct hotplug_cpuinfo *pcpu_info = NULL;
+	unsigned int prev_load;
 
 	switch (action) {
 	case CPU_ONLINE:
@@ -354,6 +395,10 @@ static int alucard_hotplug_callback(struct notifier_block *nb,
 				&pcpu_info->prev_cpu_wall,
 				0);
 		pcpu_info->time_stamp = ktime_get();
+		prev_load = (unsigned int)
+				(pcpu_info->prev_cpu_wall - pcpu_info->prev_cpu_idle);
+		pcpu_info->prev_load = 100 * prev_load /
+				(unsigned int) pcpu_info->prev_cpu_wall;
 		break;
 	default:
 		break;
@@ -390,12 +435,18 @@ static int hotplug_start(void)
 		struct hotplug_cpuinfo *pcpu_info = NULL;
 		struct hotplug_cpuparm *pcpu_parm =
 			&per_cpu(ac_hp_cpuparm, cpu);
+		unsigned int prev_load;
+
 		if (cpu_online(cpu)) {
 			pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
 			pcpu_info->prev_cpu_idle = get_cpu_idle_time(cpu,
 					&pcpu_info->prev_cpu_wall,
 					0);
 			pcpu_info->time_stamp = ktime_get();
+			prev_load = (unsigned int)
+				(pcpu_info->prev_cpu_wall - pcpu_info->prev_cpu_idle);
+			pcpu_info->prev_load = 100 * prev_load /
+					(unsigned int) pcpu_info->prev_cpu_wall;
 		}
 		pcpu_parm->cur_up_rate = 1;
 		pcpu_parm->cur_down_rate = 1;
