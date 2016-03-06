@@ -47,6 +47,7 @@ struct cpufreq_darkness_cpuinfo {
 	struct cpufreq_policy *cur_policy;
 	bool governor_enabled;
 	unsigned int cpu;
+	unsigned int prev_load;
 	/*
 	 * percpu mutex that serializes governor limit change with
 	 * do_dbs_timer invocation. We do not want do_dbs_timer to run
@@ -171,6 +172,7 @@ static void darkness_check_cpu(struct cpufreq_darkness_cpuinfo *this_darkness_cp
 	unsigned int max_load = 0;
 	unsigned int next_freq = 0;
 	unsigned int j;
+	unsigned int sampling_rate = darkness_tuners_ins.sampling_rate;
 
 	policy = this_darkness_cpuinfo->cur_policy;
 	if (!policy)
@@ -180,7 +182,7 @@ static void darkness_check_cpu(struct cpufreq_darkness_cpuinfo *this_darkness_cp
 		struct cpufreq_darkness_cpuinfo *j_darkness_cpuinfo = &per_cpu(od_darkness_cpuinfo, j);
 		u64 cur_wall_time, cur_idle_time;
 		unsigned int idle_time, wall_time;
-		unsigned int load;
+		unsigned int cur_load;
 		
 		cur_idle_time = get_cpu_idle_time(j, &cur_wall_time, 0);
 
@@ -195,10 +197,49 @@ static void darkness_check_cpu(struct cpufreq_darkness_cpuinfo *this_darkness_cp
 		if (unlikely(!wall_time || wall_time < idle_time))
 			continue;
 
-		load = 100 * (wall_time - idle_time) / wall_time;
+		/*
+		 * If the CPU had gone completely idle, and a task just woke up
+		 * on this CPU now, it would be unfair to calculate 'load' the
+		 * usual way for this elapsed time-window, because it will show
+		 * near-zero load, irrespective of how CPU intensive that task
+		 * actually is. This is undesirable for latency-sensitive bursty
+		 * workloads.
+		 *
+		 * To avoid this, we reuse the 'load' from the previous
+		 * time-window and give this task a chance to start with a
+		 * reasonably high CPU frequency. (However, we shouldn't over-do
+		 * this copy, lest we get stuck at a high load (high frequency)
+		 * for too long, even when the current system load has actually
+		 * dropped down. So we perform the copy only once, upon the
+		 * first wake-up from idle.)
+		 *
+		 * Detecting this situation is easy: the governor's deferrable
+		 * timer would not have fired during CPU-idle periods. Hence
+		 * an unusually large 'wall_time' (as compared to the sampling
+		 * rate) indicates this scenario.
+		 *
+		 * prev_load can be zero in two cases and we must recalculate it
+		 * for both cases:
+		 * - during long idle intervals
+		 * - explicitly set to zero
+		 */
+		if (unlikely(wall_time > (2 * sampling_rate) &&
+			     j_darkness_cpuinfo->prev_load)) {
+			cur_load = j_darkness_cpuinfo->prev_load;
 
-		if (load > max_load)
-			max_load = load;
+			/*
+			 * Perform a destructive copy, to ensure that we copy
+			 * the previous load only once, upon the first wake-up
+			 * from idle.
+			 */
+			j_darkness_cpuinfo->prev_load = 0;
+		} else {
+			cur_load = 100 * (wall_time - idle_time) / wall_time;
+			j_darkness_cpuinfo->prev_load = cur_load;
+		}
+
+		if (cur_load > max_load)
+			max_load = cur_load;
 	}
 
 	cpufreq_notify_utilization(policy, max_load);
@@ -260,9 +301,16 @@ static int cpufreq_governor_darkness(struct cpufreq_policy *policy,
 
 		for_each_cpu(j, policy->cpus) {
 			struct cpufreq_darkness_cpuinfo *j_darkness_cpuinfo = &per_cpu(od_darkness_cpuinfo, j);
+			unsigned int prev_load;
 
 			j_darkness_cpuinfo->prev_cpu_idle = get_cpu_idle_time(j,
 				&j_darkness_cpuinfo->prev_cpu_wall, 0);
+
+			prev_load = (unsigned int)
+				(j_darkness_cpuinfo->prev_cpu_wall -
+				j_darkness_cpuinfo->prev_cpu_idle);
+			j_darkness_cpuinfo->prev_load = 100 * prev_load /
+				(unsigned int) j_darkness_cpuinfo->prev_cpu_wall;
 		}
 
 		darkness_enable++;
