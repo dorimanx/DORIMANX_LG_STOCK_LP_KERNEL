@@ -312,7 +312,15 @@ static inline void setup_new_dl_entity(struct sched_dl_entity *dl_se,
 	struct dl_rq *dl_rq = dl_rq_of_se(dl_se);
 	struct rq *rq = rq_of_dl_rq(dl_rq);
 
-	WARN_ON(!dl_se->dl_new || dl_se->dl_throttled);
+	WARN_ON(dl_time_before(rq_clock(rq), dl_se->deadline));
+
+	/*
+	 * We are racing with the deadline timer. So, do nothing because
+	 * the deadline timer handler will take care of properly recharging
+	 * the runtime and postponing the deadline
+	 */
+	if (dl_se->dl_throttled)
+		return;
 
 	/*
 	 * We use the regular wall clock time to set deadlines in the
@@ -321,7 +329,6 @@ static inline void setup_new_dl_entity(struct sched_dl_entity *dl_se,
 	 */
 	dl_se->deadline = rq_clock(rq) + pi_se->dl_deadline;
 	dl_se->runtime = pi_se->dl_runtime;
-	dl_se->dl_new = 0;
 }
 
 /*
@@ -460,15 +467,6 @@ static void update_dl_entity(struct sched_dl_entity *dl_se,
 	struct dl_rq *dl_rq = dl_rq_of_se(dl_se);
 	struct rq *rq = rq_of_dl_rq(dl_rq);
 
-	/*
-	 * The arrival of a new instance needs special treatment, i.e.,
-	 * the actual scheduling parameters have to be "renewed".
-	 */
-	if (dl_se->dl_new) {
-		setup_new_dl_entity(dl_se, pi_se);
-		return;
-	}
-
 	if (dl_time_before(dl_se->deadline, rq_clock(rq)) ||
 	    dl_entity_overflow(dl_se, pi_se, rq_clock(rq))) {
 		dl_se->deadline = rq_clock(rq) + pi_se->dl_deadline;
@@ -563,16 +561,6 @@ static enum hrtimer_restart dl_task_timer(struct hrtimer *timer)
 		__dl_clear_params(p);
 		goto unlock;
 	}
-
-	/*
-	 * This is possible if switched_from_dl() raced against a running
-	 * callback that took the above !dl_task() path and we've since then
-	 * switched back into SCHED_DEADLINE.
-	 *
-	 * There's nothing to do except drop our task reference.
-	 */
-	if (dl_se->dl_new)
-		goto unlock;
 
 	/*
 	 * The task might have been boosted by someone else and might be in the
@@ -896,7 +884,7 @@ enqueue_dl_entity(struct sched_dl_entity *dl_se,
 	 * parameters of the task might need updating. Otherwise,
 	 * we want a replenishment of its runtime.
 	 */
-	if (dl_se->dl_new || flags & ENQUEUE_WAKEUP)
+	if (flags & ENQUEUE_WAKEUP)
 		update_dl_entity(dl_se, pi_se);
 	else if (flags & ENQUEUE_REPLENISH)
 		replenish_dl_entity(dl_se, pi_se);
@@ -1720,6 +1708,9 @@ static void switched_from_dl(struct rq *rq, struct task_struct *p)
 static void switched_to_dl(struct rq *rq, struct task_struct *p)
 {
 	int check_resched = 1;
+
+	if (dl_time_before(p->dl.deadline, rq_clock(rq)))
+		setup_new_dl_entity(&p->dl, &p->dl);
 
 	if (task_on_rq_queued(p) && rq->curr != p) {
 #ifdef CONFIG_SMP
