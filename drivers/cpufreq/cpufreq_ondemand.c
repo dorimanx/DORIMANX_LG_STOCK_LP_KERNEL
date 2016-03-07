@@ -101,7 +101,6 @@ struct cpu_dbs_info_s {
 	unsigned int freq_lo_jiffies;
 	unsigned int freq_hi_jiffies;
 	unsigned int rate_mult;
-	unsigned int max_load;
 	unsigned int cpu;
 	unsigned int sample_type:1;
 	/*
@@ -489,13 +488,13 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	unsigned int max_load_freq;
 	/* Current load across this CPU */
 	unsigned int cur_load = 0;
-	unsigned int max_load_other_cpu = 0;
 	unsigned int sampling_rate;
 	struct cpufreq_policy *policy;
 	unsigned int j;
 
 	sampling_rate = dbs_tuners_ins.sampling_rate * this_dbs_info->rate_mult;
 	this_dbs_info->freq_lo = 0;
+
 	policy = this_dbs_info->cur_policy;
 	if (policy == NULL)
 		return;
@@ -584,11 +583,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 			j_dbs_info->prev_load = cur_load;
 		}
 
-		j_dbs_info->max_load  = max(cur_load, j_dbs_info->prev_load);
-		j_dbs_info->prev_load = cur_load;
 		freq_avg = __cpufreq_driver_getavg(policy, j);
-		if (policy == NULL)
-			return;
 		if (freq_avg <= 0)
 			freq_avg = policy->cur;
 
@@ -597,44 +592,11 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 			max_load_freq = load_freq;
 	}
 
-	for_each_online_cpu(j) {
-		struct cpu_dbs_info_s *j_dbs_info;
-		j_dbs_info = &per_cpu(od_cpu_dbs_info, j);
-
-		if (j == policy->cpu)
-			continue;
-
-		if (max_load_other_cpu < j_dbs_info->max_load)
-			max_load_other_cpu = j_dbs_info->max_load;
-
-/*
- * This stock change brake the hotplug min core set.
- * if set to 2 cores min, freq stuck on max for online cores.
- * added this warning to know why it's OFF, Dorimanx
- */
-#if 0
-		/*
-		 * The other cpu could be running at higher frequency
-		 * but may not have completed it's sampling_down_factor.
-		 * For that case consider other cpu is loaded so that
-		 * frequency imbalance does not occur.
-		 */
-
-		if ((j_dbs_info->cur_policy != NULL)
-			&& (j_dbs_info->cur_policy->cur ==
-					j_dbs_info->cur_policy->max)) {
-
-			if (policy->cur >= dbs_tuners_ins.optimal_freq)
-				max_load_other_cpu =
-				dbs_tuners_ins.micro_freq_up_threshold;
-		}
-#endif
-	}
-
 	/* calculate the scaled load across CPU */
 	load_at_max_freq = (cur_load * policy->cur)/policy->max;
 
 	cpufreq_notify_utilization(policy, load_at_max_freq);
+
 	/* Check for frequency increase */
 	if (max_load_freq > dbs_tuners_ins.up_threshold * policy->cur) {
 		int freq_target, freq_div;
@@ -663,7 +625,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	}
 
 	if (num_online_cpus() > 1) {
-		if (max_load_other_cpu >
+		if (load_at_max_freq >
 				dbs_tuners_ins.up_threshold_any_cpu_load) {
 			if (policy->cur < dbs_tuners_ins.sync_freq)
 				dbs_freq_increase(policy,
@@ -705,7 +667,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 			freq_next = policy->min;
 
 		if (num_online_cpus() > 1) {
-			if (max_load_other_cpu >
+			if (load_at_max_freq >
 			(dbs_tuners_ins.up_threshold_multi_core -
 			dbs_tuners_ins.down_differential) &&
 			freq_next < dbs_tuners_ins.sync_freq)
