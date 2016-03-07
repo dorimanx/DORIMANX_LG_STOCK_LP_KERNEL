@@ -686,7 +686,6 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 
 		j_dbs_info->cur_load = cur_load;
 		j_dbs_info->max_load  = max(cur_load, j_dbs_info->prev_load);
-		j_dbs_info->prev_load = cur_load;
 	}
 
 	num_of_cpus = num_online_cpus();

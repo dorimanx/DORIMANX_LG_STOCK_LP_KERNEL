@@ -48,7 +48,6 @@
 #define DEFAULT_FREQ_BOOST_TIME			(500000)
 #define MAX_FREQ_BOOST_TIME			(5000000)
 #define UP_THRESHOLD_AT_MIN_FREQ		(40)
-#define FREQ_FOR_RESPONSIVENESS			(2265600)
 
 static u64 hyper_freq_boosted_time;
 
@@ -65,8 +64,6 @@ static u64 hyper_freq_boosted_time;
 #define MIN_SAMPLING_RATE_RATIO			(2)
 
 static unsigned int min_sampling_rate;
-#define DEFAULT_SAMPLING_RATE			(80000)
-#define BOOSTED_SAMPLING_RATE			(40000)
 #define LATENCY_MULTIPLIER			(1000)
 #define MIN_LATENCY_MULTIPLIER			(100)
 #define TRANSITION_LATENCY_LIMIT		(10 * 1000 * 1000)
@@ -130,8 +127,6 @@ static struct dbs_tuners {
 	/*struct notifier_block dvfs_lat_qos_db;
 	unsigned int dvfs_lat_qos_wants;*/
 	unsigned int freq_step;
-	unsigned int freq_responsiveness;
-
 } dbs_tuners_ins = {
 	.up_threshold = DEF_FREQUENCY_UP_THRESHOLD,
 	.up_threshold_min_freq = UP_THRESHOLD_AT_MIN_FREQ,
@@ -139,10 +134,9 @@ static struct dbs_tuners {
 	.down_differential = DEF_FREQUENCY_DOWN_DIFFERENTIAL,
 	.micro_freq_up_threshold = MICRO_FREQUENCY_UP_THRESHOLD,
 	.freq_boost_time = DEFAULT_FREQ_BOOST_TIME,
-	.boostfreq = 2265600,
+	.boostfreq = 1728000,
 	.freq_step = FREQ_STEP,
-	.freq_responsiveness = FREQ_FOR_RESPONSIVENESS,
-	.sampling_rate = 60000,
+	.sampling_rate = 20000,
 };
 
 static unsigned int dbs_enable = 0;	/* number of CPUs using this policy */
@@ -183,7 +177,6 @@ show_one(down_differential, down_differential);
 show_one(boostpulse, boosted);
 show_one(boostfreq, boostfreq);
 show_one(freq_step, freq_step);
-show_one(freq_responsiveness, freq_responsiveness);
 
 static ssize_t store_boostpulse(struct kobject *kobj, struct attribute *attr,
 				const char *buf, size_t count)
@@ -339,27 +332,6 @@ static ssize_t store_freq_step(struct kobject *a, struct attribute *b,
 	return count;
 }
 
-static ssize_t store_freq_responsiveness(struct kobject *a, struct attribute *b,
-				const char *buf, size_t count)
-{
-	unsigned int input;
-	int ret;
-
-	ret = sscanf(buf, "%u", &input);
-	if (ret != 1)
-		return -EINVAL;
-
-	if (input > 2496000)
-		input = 2496000;
-
-	if (input < 300000)
-		input = 300000;
-
-	dbs_tuners_ins.freq_responsiveness = input;
-
-	return count;
-}
-
 define_one_global_rw(sampling_rate);
 define_one_global_rw(up_threshold);
 define_one_global_rw(up_threshold_min_freq);
@@ -369,7 +341,6 @@ define_one_global_rw(micro_freq_up_threshold);
 define_one_global_rw(boostpulse);
 define_one_global_rw(boostfreq);
 define_one_global_rw(freq_step);
-define_one_global_rw(freq_responsiveness);
 
 static struct attribute *dbs_attributes[] = {
 	&sampling_rate_min.attr,
@@ -382,7 +353,6 @@ static struct attribute *dbs_attributes[] = {
 	&boostpulse.attr,
 	&boostfreq.attr,
 	&freq_step.attr,
-	&freq_responsiveness.attr,
 	NULL
 };
 
@@ -419,8 +389,10 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 
 	sampling_rate = dbs_tuners_ins.sampling_rate * this_dbs_info->rate_mult;
 	this_dbs_info->freq_lo = 0;
+
 	policy = this_dbs_info->cur_policy;
-	j_dbs_info = &per_cpu(od_cpu_dbs_info, j);
+	if (policy == NULL)
+		return;
 
 	/* Only core0 controls the boost */
 	if (dbs_tuners_ins.boosted && policy->cpu == 0) {
@@ -579,9 +551,6 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	cpufreq_notify_utilization(policy, load_at_max_freq);
 
 	/* Check for frequency increase */
-	if (policy->cur < dbs_tuners_ins.freq_responsiveness)
-			up_threshold = dbs_tuners_ins.up_threshold_min_freq;
-
 	if (max_load_freq > up_threshold * policy->cur) {
 		int inc = (policy->max * dbs_tuners_ins.freq_step) / 100;
 		int target = min(policy->max, policy->cur + inc);
@@ -641,10 +610,6 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 
 		down_thres = dbs_tuners_ins.up_threshold_min_freq
 			- dbs_tuners_ins.down_differential;
-
-		if (freq_next < dbs_tuners_ins.freq_responsiveness
-			&& (max_load_freq / freq_next) > down_thres)
-			freq_next = dbs_tuners_ins.freq_responsiveness;
 
 		__cpufreq_driver_target(policy, freq_next,
 			CPUFREQ_RELATION_L);
