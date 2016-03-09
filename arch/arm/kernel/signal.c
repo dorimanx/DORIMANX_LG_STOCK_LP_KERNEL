@@ -21,7 +21,6 @@
 #include <asm/ucontext.h>
 #include <asm/unistd.h>
 #include <asm/vfp.h>
-#include "signal.h"
 
 /*
  * For ARM syscalls, we encode the syscall number into the instruction.
@@ -451,7 +450,6 @@ setup_return(struct pt_regs *regs, struct ksignal *ksig,
 #ifdef CONFIG_MMU
 		if (cpsr & MODE32_BIT) {
 			struct mm_struct *mm = current->mm;
-
 			/*
 			 * 32-bit code can use the signal return page
 			 * except when the MPU has protected the vectors
