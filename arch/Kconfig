@@ -370,9 +370,6 @@ config HAVE_CONTEXT_TRACKING
 	  rcu_irq_enter/rcu_irq_exit() but preemption or signal handling on
 	  irq exit still need to be protected.
 
-config GENERIC_SIGALTSTACK
-	bool
-
 config HAVE_ARCH_MMAP_RND_BITS
 	bool
 	help
@@ -440,6 +437,9 @@ config ARCH_MMAP_RND_COMPAT_BITS
 
 	  This value can be changed after boot using the
 	  /proc/sys/vm/mmap_rnd_compat_bits tunable
+
+config GENERIC_SIGALTSTACK
+        bool
 
 config ODD_RT_SIGACTION
 	bool
