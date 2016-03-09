@@ -8,7 +8,7 @@ menuconfig WL12XX_MENU
 
 config WL12XX
 	tristate "TI wl12xx support"
-	depends on WL12XX_MENU && GENERIC_HARDIRQS
+	depends on WL12XX_MENU
 	depends on INET
 	select FW_LOADER
 	---help---
