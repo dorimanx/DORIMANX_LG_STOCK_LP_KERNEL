@@ -16,6 +16,7 @@
 #include <linux/mutex.h>
 #include <linux/slab.h>
 #include <linux/freezer.h>
+#include <linux/ptrace.h>
 #include <linux/uaccess.h>
 #include <trace/events/sched.h>
 
