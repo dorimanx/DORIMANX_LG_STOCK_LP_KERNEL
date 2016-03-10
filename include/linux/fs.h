@@ -369,6 +369,7 @@ struct inodes_stat_t {
 #include <linux/shrinker.h>
 #include <linux/migrate_mode.h>
 #include <linux/lockdep.h>
+#include <linux/percpu-rwsem.h>
 #include <linux/blk_types.h>
 
 #include <asm/byteorder.h>
