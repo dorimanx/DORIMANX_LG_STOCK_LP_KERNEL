@@ -139,6 +139,7 @@ static inline bool timespec_valid_strict(const struct timespec *ts)
 }
 
 extern bool persistent_clock_exist;
+
 static inline bool has_persistent_clock(void)
 {
 	return persistent_clock_exist;
