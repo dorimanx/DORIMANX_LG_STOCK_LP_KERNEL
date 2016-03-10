@@ -95,7 +95,6 @@ ENTRY(ret_from_fork)
 	beq	ret_slow_syscall
 	mov	r1, sp
 	mov	r0, #1				@ trace exit [IP = 1]
-	bl	syscall_trace
 	b	ret_slow_syscall
 ENDPROC(ret_from_fork)
 
@@ -107,9 +106,6 @@ ENDPROC(ret_from_fork)
  * Ensure that the system call table is equal to __NR_syscalls,
  * which is the value the rest of the system sees
  */
-.ifne NR_syscalls - __NR_syscalls
-.error "__NR_syscalls is not equal to the size of the syscall table"
-.endif
 
 #undef CALL
 #define CALL(x) .long x

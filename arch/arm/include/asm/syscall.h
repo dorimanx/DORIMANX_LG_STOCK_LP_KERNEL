@@ -9,20 +9,24 @@
  *
  * See asm-generic/syscall.h for descriptions of what we must do here.
  */
+
 #ifndef _ASM_ARM_SYSCALL_H
 #define _ASM_ARM_SYSCALL_H
 
 #include <linux/audit.h> /* for AUDIT_ARCH_* */
 #include <linux/elf.h> /* for ELF_EM */
+#include <linux/err.h>
 #include <linux/sched.h>
 #include <linux/thread_info.h> /* for task_thread_info */
-#include <linux/err.h>
 
 #include <asm/unistd.h>
 
 #define NR_syscalls (__NR_syscalls)
 
-static inline int syscall_get_nr(struct task_struct *task, struct pt_regs *regs)
+extern const unsigned long sys_call_table[];
+
+static inline int syscall_get_nr(struct task_struct *task,
+				 struct pt_regs *regs)
 {
 	return task_thread_info(task)->syscall;
 }
@@ -72,7 +76,7 @@ static inline void syscall_set_arguments(struct task_struct *task,
 }
 
 static inline int syscall_get_arch(struct task_struct *task,
-				    struct pt_regs *regs)
+				   struct pt_regs *regs)
 {
 	/* ARM tasks don't change audit architectures on the fly. */
 #ifdef __ARMEB__
@@ -81,4 +85,4 @@ static inline int syscall_get_arch(struct task_struct *task,
 	return AUDIT_ARCH_ARM;
 #endif
 }
-#endif	/* _ASM_ARM_SYSCALL_H */
+#endif /* _ASM_ARM_SYSCALL_H */
