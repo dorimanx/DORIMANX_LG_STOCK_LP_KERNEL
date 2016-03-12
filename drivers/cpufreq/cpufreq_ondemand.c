@@ -32,9 +32,6 @@
  */
 
 /* User tunabble controls */
-#define DEF_FREQUENCY_DOWN_DIFFERENTIAL		(10)
-#define MICRO_FREQUENCY_DOWN_DIFFERENTIAL	(3)
-
 #define DEF_FREQUENCY_UP_THRESHOLD		(70)
 #define ANY_CPU_DEF_FREQUENCY_UP_THRESHOLD	(70)
 #define MULTI_CORE_DEF_FREQUENCY_UP_THRESHOLD	(70)
@@ -101,6 +98,7 @@ struct cpu_dbs_info_s {
 	unsigned int freq_lo_jiffies;
 	unsigned int freq_hi_jiffies;
 	unsigned int rate_mult;
+	unsigned int max_load;
 	unsigned int cpu;
 	unsigned int sample_type:1;
 	/*
@@ -130,8 +128,6 @@ static struct dbs_tuners {
 	unsigned int sampling_rate;
 	unsigned int up_threshold;
 	unsigned int up_threshold_multi_core;
-	unsigned int down_differential;
-	unsigned int down_differential_multi_core;
 	unsigned int optimal_freq;
 	unsigned int up_threshold_any_cpu_load;
 	unsigned int micro_freq_up_threshold;
@@ -146,8 +142,6 @@ static struct dbs_tuners {
 	.up_threshold_multi_core = MULTI_CORE_DEF_FREQUENCY_UP_THRESHOLD,
 	.up_threshold = DEF_FREQUENCY_UP_THRESHOLD,
 	.sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR,
-	.down_differential = DEF_FREQUENCY_DOWN_DIFFERENTIAL,
-	.down_differential_multi_core = MICRO_FREQUENCY_DOWN_DIFFERENTIAL,
 	.up_threshold_any_cpu_load = ANY_CPU_DEF_FREQUENCY_UP_THRESHOLD,
 	.micro_freq_up_threshold = MICRO_FREQUENCY_UP_THRESHOLD,
 	.middle_grid_step = DEF_MIDDLE_GRID_STEP,
@@ -181,9 +175,7 @@ static ssize_t show_##file_name						\
 show_one(sampling_rate, sampling_rate);
 show_one(up_threshold, up_threshold);
 show_one(up_threshold_multi_core, up_threshold_multi_core);
-show_one(down_differential, down_differential);
 show_one(sampling_down_factor, sampling_down_factor);
-show_one(down_differential_multi_core, down_differential_multi_core);
 show_one(optimal_freq, optimal_freq);
 show_one(up_threshold_any_cpu_load, up_threshold_any_cpu_load);
 show_one(micro_freq_up_threshold, micro_freq_up_threshold);
@@ -227,19 +219,6 @@ static ssize_t store_sync_freq(struct kobject *a, struct attribute *b,
 		return -EINVAL;
 
 	dbs_tuners_ins.sync_freq = input;
-	return count;
-}
-
-static ssize_t store_down_differential_multi_core(struct kobject *a,
-			struct attribute *b, const char *buf, size_t count)
-{
-	unsigned int input;
-	int ret;
-
-	ret = sscanf(buf, "%u", &input);
-	if (ret != 1)
-		return -EINVAL;
-	dbs_tuners_ins.down_differential_multi_core = input;
 	return count;
 }
 
@@ -394,22 +373,6 @@ static ssize_t store_micro_freq_up_threshold(struct kobject *a,
 	return count;
 }
 
-static ssize_t store_down_differential(struct kobject *a, struct attribute *b,
-		const char *buf, size_t count)
-{
-	unsigned int input;
-	int ret;
-
-	ret = sscanf(buf, "%u", &input);
-	if (ret != 1 || input >= dbs_tuners_ins.up_threshold ||
-			input < MIN_FREQUENCY_DOWN_DIFFERENTIAL) {
-		return -EINVAL;
-	}
-	dbs_tuners_ins.down_differential = input;
-
-	return count;
-}
-
 static ssize_t store_sampling_down_factor(struct kobject *a,
 			struct attribute *b, const char *buf, size_t count)
 {
@@ -432,10 +395,8 @@ static ssize_t store_sampling_down_factor(struct kobject *a,
 
 define_one_global_rw(sampling_rate);
 define_one_global_rw(up_threshold);
-define_one_global_rw(down_differential);
 define_one_global_rw(sampling_down_factor);
 define_one_global_rw(up_threshold_multi_core);
-define_one_global_rw(down_differential_multi_core);
 define_one_global_rw(optimal_freq);
 define_one_global_rw(up_threshold_any_cpu_load);
 define_one_global_rw(micro_freq_up_threshold);
@@ -450,10 +411,8 @@ static struct attribute *dbs_attributes[] = {
 	&sampling_rate_min.attr,
 	&sampling_rate.attr,
 	&up_threshold.attr,
-	&down_differential.attr,
 	&sampling_down_factor.attr,
 	&up_threshold_multi_core.attr,
-	&down_differential_multi_core.attr,
 	&optimal_freq.attr,
 	&optimal_max_freq.attr,
 	&up_threshold_any_cpu_load.attr,
@@ -488,6 +447,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	unsigned int max_load_freq;
 	/* Current load across this CPU */
 	unsigned int cur_load = 0;
+	unsigned int max_load_other_cpu = 0;
 	unsigned int sampling_rate;
 	struct cpufreq_policy *policy;
 	unsigned int j;
@@ -572,6 +532,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 		if (unlikely(wall_time > (2 * sampling_rate) &&
 					j_dbs_info->prev_load)) {
 			cur_load = j_dbs_info->prev_load;
+			j_dbs_info->max_load = cur_load;
 			/*
 			 * Perform a destructive copy, to ensure that we copy
 			 * the previous load only once, upon the first wake-up
@@ -580,10 +541,13 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 			j_dbs_info->prev_load = 0;
 		} else {
 			cur_load = 100 * (wall_time - idle_time) / wall_time;
+			j_dbs_info->max_load = max(cur_load, j_dbs_info->prev_load);
 			j_dbs_info->prev_load = cur_load;
 		}
 
 		freq_avg = __cpufreq_driver_getavg(policy, j);
+		if (policy == NULL)
+			return;
 		if (freq_avg <= 0)
 			freq_avg = policy->cur;
 
@@ -592,13 +556,24 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 			max_load_freq = load_freq;
 	}
 
+	for_each_online_cpu(j) {
+		struct cpu_dbs_info_s *j_dbs_info;
+		j_dbs_info = &per_cpu(od_cpu_dbs_info, j);
+
+		if (j == policy->cpu)
+			continue;
+
+		if (max_load_other_cpu < j_dbs_info->max_load)
+			max_load_other_cpu = j_dbs_info->max_load;
+	}
+
 	/* calculate the scaled load across CPU */
 	load_at_max_freq = (cur_load * policy->cur)/policy->max;
 
 	cpufreq_notify_utilization(policy, load_at_max_freq);
 
 	/* Check for frequency increase */
-	if (max_load_freq > dbs_tuners_ins.up_threshold * policy->cur) {
+	if (max_load_freq > (dbs_tuners_ins.up_threshold * policy->cur)) {
 		int freq_target, freq_div;
 		freq_target = 0; freq_div = 0;
 
@@ -625,7 +600,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	}
 
 	if (num_online_cpus() > 1) {
-		if (load_at_max_freq >
+		if (max_load_other_cpu >
 				dbs_tuners_ins.up_threshold_any_cpu_load) {
 			if (policy->cur < dbs_tuners_ins.sync_freq)
 				dbs_freq_increase(policy,
@@ -633,8 +608,8 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 			return;
 		}
 
-		if (max_load_freq > dbs_tuners_ins.up_threshold_multi_core *
-								policy->cur) {
+		if (max_load_freq > (dbs_tuners_ins.up_threshold_multi_core *
+								policy->cur)) {
 			if (policy->cur < dbs_tuners_ins.optimal_freq)
 				dbs_freq_increase(policy,
 						dbs_tuners_ins.optimal_freq);
@@ -650,15 +625,12 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	/*
 	 * The optimal frequency is the frequency that is the lowest that
 	 * can support the current CPU usage without triggering the up
-	 * policy. To be safe, we focus DOWN_DIFFERENTIALDOWN_DIFFERENTIAL points under the threshold.
+	 * policy.
 	 */
 	if (max_load_freq <
-	    (dbs_tuners_ins.up_threshold - dbs_tuners_ins.down_differential) *
-			policy->cur) {
+	    (dbs_tuners_ins.up_threshold * policy->cur)) {
 		unsigned int freq_next;
-		freq_next = max_load_freq /
-				(dbs_tuners_ins.up_threshold -
-					dbs_tuners_ins.down_differential);
+		freq_next = max_load_freq / dbs_tuners_ins.up_threshold;
 
 		/* No longer fully busy, reset rate_mult */
 		this_dbs_info->rate_mult = 1;
@@ -667,15 +639,14 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 			freq_next = policy->min;
 
 		if (num_online_cpus() > 1) {
-			if (load_at_max_freq >
-			(dbs_tuners_ins.up_threshold_multi_core -
-			dbs_tuners_ins.down_differential) &&
-			freq_next < dbs_tuners_ins.sync_freq)
+			if (max_load_other_cpu >
+					dbs_tuners_ins.up_threshold_multi_core
+					&& freq_next <
+					dbs_tuners_ins.sync_freq)
 				freq_next = dbs_tuners_ins.sync_freq;
 
 			if (max_load_freq >
-					((dbs_tuners_ins.up_threshold_multi_core -
-					dbs_tuners_ins.down_differential_multi_core) *
+					(dbs_tuners_ins.up_threshold_multi_core *
 					policy->cur) &&
 					freq_next < dbs_tuners_ins.optimal_freq)
 				freq_next = dbs_tuners_ins.optimal_freq;
@@ -870,8 +841,6 @@ static int __init cpufreq_gov_dbs_init(void)
 	if (idle_time != -1ULL) {
 		/* Idle micro accounting is supported. Use finer thresholds */
 		dbs_tuners_ins.up_threshold = dbs_tuners_ins.micro_freq_up_threshold;
-		dbs_tuners_ins.down_differential =
-					dbs_tuners_ins.down_differential_multi_core;
 		/*
 		 * In nohz/micro accounting case we set the minimum frequency
 		 * not depending on HZ, but fixed (very low). The deferred
