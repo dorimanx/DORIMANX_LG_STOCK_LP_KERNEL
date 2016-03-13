@@ -15,7 +15,6 @@
  */
 
 #include <linux/context_tracking.h>
-#include <linux/kvm_host.h>
 #include <linux/rcupdate.h>
 #include <linux/sched.h>
 #include <linux/hardirq.h>
@@ -57,6 +56,13 @@ void user_enter(void)
 	local_irq_save(flags);
 	if (__this_cpu_read(context_tracking.active) &&
 	    __this_cpu_read(context_tracking.state) != IN_USER) {
+		/*
+		 * At this stage, only low level arch entry code remains and
+		 * then we'll run in userspace. We can assume there won't be
+		 * any RCU read-side critical section until the next call to
+		 * user_exit() or rcu_irq_enter(). Let's remove RCU's dependency
+		 * on the tick.
+		 */
 		vtime_user_enter(current);
 		rcu_user_enter();
 		__this_cpu_write(context_tracking.state, IN_USER);
@@ -125,6 +131,10 @@ void user_exit(void)
 
 	local_irq_save(flags);
 	if (__this_cpu_read(context_tracking.state) == IN_USER) {
+		/*
+		 * We are going to run code that may use RCU. Inform
+		 * RCU core about that (ie: we may need the tick again).
+		 */
 		rcu_user_exit();
 		vtime_user_exit(current);
 		__this_cpu_write(context_tracking.state, IN_KERNEL);
@@ -150,6 +160,20 @@ void guest_exit(void)
 }
 EXPORT_SYMBOL_GPL(guest_exit);
 
+
+/**
+ * context_tracking_task_switch - context switch the syscall callbacks
+ * @prev: the task that is being switched out
+ * @next: the task that is being switched in
+ *
+ * The context tracking uses the syscall slow path to implement its user-kernel
+ * boundaries probes on syscalls. This way it doesn't impact the syscall fast
+ * path on CPUs that don't do context tracking.
+ *
+ * But we need to clear the flag on the previous task because it may later
+ * migrate to some CPU that doesn't do the context tracking. As such the TIF
+ * flag may not be desired there.
+ */
 void context_tracking_task_switch(struct task_struct *prev,
 			     struct task_struct *next)
 {

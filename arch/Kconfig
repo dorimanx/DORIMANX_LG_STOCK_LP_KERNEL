@@ -362,6 +362,12 @@ config HAVE_CONTEXT_TRACKING
 config HAVE_VIRT_CPU_ACCOUNTING
 	bool
 
+config HAVE_IRQ_TIME_ACCOUNTING
+	bool
+	help
+	  Archs need to ensure they use a high enough resolution clock to
+	  support irq time accounting and then call enable_sched_clock_irqtime().
+
 config HAVE_ARCH_MMAP_RND_BITS
 	bool
 	help
