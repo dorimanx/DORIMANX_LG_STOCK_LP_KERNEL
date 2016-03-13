@@ -3568,7 +3568,6 @@ static int sigsuspend(sigset_t *set)
 	return -ERESTARTNOHAND;
 }
 
-#ifdef __ARCH_WANT_SYS_RT_SIGSUSPEND
 /**
  *  sys_rt_sigsuspend - replace the signal mask for a value with the
  *	@unewset value until a signal is received
@@ -3608,7 +3607,6 @@ COMPAT_SYSCALL_DEFINE2(rt_sigsuspend, compat_sigset_t __user *, unewset, compat_
 	return sys_rt_sigsuspend((sigset_t __user *)unewset, sigsetsize);
 #endif
 }
-#endif
 #endif
 
 #ifdef CONFIG_OLD_SIGSUSPEND
