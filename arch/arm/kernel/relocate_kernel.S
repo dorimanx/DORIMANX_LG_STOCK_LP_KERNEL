@@ -4,7 +4,6 @@
 
 #include <linux/linkage.h>
 #include <asm/kexec.h>
-
 #ifdef CONFIG_KEXEC_HARDBOOT
 #include <asm/memory.h>
 #if defined(CONFIG_ARCH_TEGRA_2x_SOC) || defined(CONFIG_ARCH_TEGRA_3x_SOC)
@@ -155,6 +154,7 @@ kexec_kernel_len:
 kexec_hardboot:
 	.long	0x0
 #endif
+
 ENDPROC(relocate_new_kernel)
 
 relocate_new_kernel_end:

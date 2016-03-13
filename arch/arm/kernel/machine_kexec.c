@@ -8,15 +8,15 @@
 #include <linux/reboot.h>
 #include <linux/io.h>
 #include <linux/irq.h>
+#include <linux/memblock.h>
 #include <asm/pgtable.h>
+#include <linux/of_fdt.h>
 #include <asm/pgalloc.h>
 #include <asm/mmu_context.h>
 #include <asm/cacheflush.h>
 #include <asm/fncpy.h>
 #include <asm/mach-types.h>
 #include <asm/system_misc.h>
-#include <linux/memblock.h>
-#include <linux/of_fdt.h>
 #include <asm/mmu_writeable.h>
 
 extern void relocate_new_kernel(void);
@@ -46,14 +46,16 @@ int machine_kexec_prepare(struct kimage *image)
 	__be32 header;
 	int i, err;
 
-	/* No segment at default ATAGs address. try to locate
-	 * a dtb using magic */
+	/*
+	 * No segment at default ATAGs address. try to locate
+	 * a dtb using magic.
+	 */
 	for (i = 0; i < image->nr_segments; i++) {
 		current_segment = &image->segment[i];
 
 		if (!memblock_is_region_memory(current_segment->mem,
-						current_segment->memsz))
-			return - EINVAL;
+					       current_segment->memsz))
+			return -EINVAL;
 
 #ifdef CONFIG_KEXEC_HARDBOOT
 		if(current_segment->mem == image->start)
