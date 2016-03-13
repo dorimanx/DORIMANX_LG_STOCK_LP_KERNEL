@@ -1,8 +1,8 @@
 config ARM_GIC
+	bool
 	select IRQ_DOMAIN
 	select MULTI_IRQ_HANDLER
 	select MSM_SHOW_RESUME_IRQ
-	bool
 
 config GIC_NON_BANKED
 	bool
@@ -12,9 +12,9 @@ config GIC_SECURE
 	depends on ARM_GIC
 
 config ARM_VIC
+	bool
 	select IRQ_DOMAIN
 	select MULTI_IRQ_HANDLER
-	bool
 
 config ARM_VIC_NR
 	int
