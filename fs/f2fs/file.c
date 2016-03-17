@@ -1212,8 +1212,6 @@ noalloc:
 	return ret;
 }
 
-#define FALLOC_FL_COLLAPSE_RANGE	0X08
-#define FALLOC_FL_ZERO_RANGE		0X10
 #define FALLOC_FL_INSERT_RANGE		0X20
 
 static long f2fs_fallocate(struct file *file, int mode,
