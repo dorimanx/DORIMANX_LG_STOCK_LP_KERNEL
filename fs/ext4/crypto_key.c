@@ -12,7 +12,7 @@
 #include <keys/user-type.h>
 #include <linux/random.h>
 #include <linux/scatterlist.h>
-#include <uapi/linux/keyctl.h>
+#include <linux/keyctl.h>
 
 #include "ext4.h"
 #include "xattr.h"

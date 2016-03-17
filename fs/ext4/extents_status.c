@@ -13,6 +13,7 @@
 #include <linux/list_sort.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
+#include <linux/module.h>
 #include "ext4.h"
 #include "extents_status.h"
 
