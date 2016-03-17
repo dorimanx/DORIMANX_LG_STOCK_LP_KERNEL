@@ -1773,11 +1773,10 @@ struct dentry *f2fs_get_parent(struct dentry *child);
  */
 extern unsigned char f2fs_filetype_table[F2FS_FT_MAX];
 void set_de_type(struct f2fs_dir_entry *, umode_t);
-
 struct f2fs_dir_entry *find_target_dentry(struct f2fs_filename *,
 			f2fs_hash_t, int *, struct f2fs_dentry_ptr *);
-bool f2fs_fill_dentries(struct file *, void *, filldir_t,
-			struct f2fs_dentry_ptr *, unsigned int, unsigned int, struct f2fs_str *);
+bool f2fs_fill_dentries(struct dir_context *, struct f2fs_dentry_ptr *,
+			unsigned int, struct f2fs_str *);
 void do_make_empty_dir(struct inode *, struct inode *,
 			struct f2fs_dentry_ptr *);
 struct page *init_inode_metadata(struct inode *, struct inode *,
@@ -2161,7 +2160,8 @@ int f2fs_add_inline_entry(struct inode *, const struct qstr *, struct inode *,
 void f2fs_delete_inline_entry(struct f2fs_dir_entry *, struct page *,
 						struct inode *, struct inode *);
 bool f2fs_empty_inline_dir(struct inode *);
-int f2fs_read_inline_dir(struct file *, void *, filldir_t, struct f2fs_str *);
+int f2fs_read_inline_dir(struct file *, struct dir_context *,
+						struct f2fs_str *);
 int f2fs_inline_data_fiemap(struct inode *,
 		struct fiemap_extent_info *, __u64, __u64);
 

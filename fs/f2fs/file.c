@@ -103,6 +103,9 @@ out:
 
 static const struct vm_operations_struct f2fs_file_vm_ops = {
 	.fault		= filemap_fault,
+#if 0
+	.map_pages	= filemap_map_pages,
+#endif
 	.page_mkwrite	= f2fs_vm_page_mkwrite,
 };
 
@@ -737,6 +740,9 @@ const struct inode_operations f2fs_file_inode_operations = {
 	.getattr	= f2fs_getattr,
 	.setattr	= f2fs_setattr,
 	.get_acl	= f2fs_get_acl,
+#if 0
+	.set_acl	= f2fs_set_acl,
+#endif
 #ifdef CONFIG_F2FS_FS_XATTR
 	.setxattr	= generic_setxattr,
 	.getxattr	= generic_getxattr,

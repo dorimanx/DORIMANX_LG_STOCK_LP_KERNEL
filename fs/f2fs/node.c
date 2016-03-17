@@ -1118,7 +1118,6 @@ void ra_node_pages(struct page *parent, int start)
 		nid = get_nid(parent, i, false);
 		ra_node_page(sbi, nid);
 	}
-
 	blk_finish_plug(&plug);
 }
 
@@ -1158,6 +1157,10 @@ repeat:
 		goto repeat;
 	}
 page_hit:
+	if (unlikely(!PageUptodate(page))) {
+		f2fs_put_page(page, 1);
+		return ERR_PTR(-EIO);
+	}
 	mark_page_accessed(page);
 	f2fs_bug_on(sbi, nid != nid_of_node(page));
 	return page;
