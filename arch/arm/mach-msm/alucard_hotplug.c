@@ -33,10 +33,10 @@
 static DEFINE_MUTEX(alucard_hotplug_mutex);
 
 struct hotplug_cpuinfo {
-	u64 prev_cpu_wall;
-	u64 prev_cpu_idle;
-	unsigned int prev_load;
-	ktime_t time_stamp;
+	unsigned int load;
+	unsigned int sampling_rate_us;
+	ktime_t now;
+	ktime_t pre;
 };
 
 static unsigned int last_online_cpus;
@@ -143,8 +143,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 	unsigned int sum_load = 0, sum_freq = 0;
 	bool rq_avg_calc = true;
 	int online_cpus = 0, delay;
-	unsigned int sampling_rate =
-		hotplug_tuners_ins.hotplug_sampling_rate;
+	unsigned int sampling_rate = 0;
 
 	if (hotplug_tuners_ins.suspended) {
 		upmaxcoreslimit = hotplug_tuners_ins.maxcoreslimit_sleep;
@@ -154,79 +153,16 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 	for_each_online_cpu(cpu) {
 		struct hotplug_cpuinfo *pcpu_info =
 			&per_cpu(ac_hp_cpuinfo, cpu);
-		u64 cur_wall_time, cur_idle_time;
-		unsigned int wall_time, idle_time;
 		unsigned int cur_load = 0;
 		unsigned int cur_freq = 0;
-		ktime_t time_now = ktime_get();
-		s64 delta_us;
 
-		delta_us = ktime_us_delta(time_now, pcpu_info->time_stamp);
-		/* Do nothing if cpu recently has become online */
-		if (delta_us < (s64)(sampling_rate / 2)) {
+		if (ktime_equal(pcpu_info->pre, pcpu_info->now)) {
 			continue;
 		}
-
-		cur_idle_time = get_cpu_idle_time(
-				cpu, &cur_wall_time,
-				0);
-
-		wall_time = (unsigned int)
-				(cur_wall_time -
-					pcpu_info->prev_cpu_wall);
-		pcpu_info->prev_cpu_wall = cur_wall_time;
-
-		idle_time = (unsigned int)
-				(cur_idle_time -
-					pcpu_info->prev_cpu_idle);
-		pcpu_info->prev_cpu_idle = cur_idle_time;
-
-		pcpu_info->time_stamp = time_now;
-
-		/* if wall_time < idle_time or wall_time == 0, evaluate cpu load next time */
-		if (unlikely(!wall_time || wall_time < idle_time))
-			continue;
-
-		/*
-		 * If the CPU had gone completely idle, and a task just woke up
-		 * on this CPU now, it would be unfair to calculate 'load' the
-		 * usual way for this elapsed time-window, because it will show
-		 * near-zero load, irrespective of how CPU intensive that task
-		 * actually is. This is undesirable for latency-sensitive bursty
-		 * workloads.
-		 *
-		 * To avoid this, we reuse the 'load' from the previous
-		 * time-window and give this task a chance to start with a
-		 * reasonably high CPU frequency. (However, we shouldn't over-do
-		 * this copy, lest we get stuck at a high load (high frequency)
-		 * for too long, even when the current system load has actually
-		 * dropped down. So we perform the copy only once, upon the
-		 * first wake-up from idle.)
-		 *
-		 * Detecting this situation is easy: the governor's deferrable
-		 * timer would not have fired during CPU-idle periods. Hence
-		 * an unusually large 'wall_time' (as compared to the sampling
-		 * rate) indicates this scenario.
-		 *
-		 * prev_load can be zero in two cases and we must recalculate it
-		 * for both cases:
-		 * - during long idle intervals
-		 * - explicitly set to zero
-		 */
-		if (unlikely(wall_time > (2 * sampling_rate) &&
-			     pcpu_info->prev_load)) {
-			cur_load = pcpu_info->prev_load;
-
-			/*
-			 * Perform a destructive copy, to ensure that we copy
-			 * the previous load only once, upon the first wake-up
-			 * from idle.
-			 */
-			pcpu_info->prev_load = 0;
-		} else {
-			cur_load = 100 * (wall_time - idle_time) / wall_time;
-			pcpu_info->prev_load = cur_load;
-		}
+		cur_load = pcpu_info->load;
+		if (pcpu_info->sampling_rate_us > sampling_rate)
+			sampling_rate = pcpu_info->sampling_rate_us;
+		pcpu_info->pre = pcpu_info->now;
 
 		/* get the cpu current frequency */
 		cur_freq = cpufreq_quick_get(cpu);
@@ -327,7 +263,10 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 	}
 
 next_loop:
-	delay = msecs_to_jiffies(sampling_rate);
+	if (!sampling_rate)
+		delay = msecs_to_jiffies(hotplug_tuners_ins.hotplug_sampling_rate);
+	else
+		delay = usecs_to_jiffies(sampling_rate);
 	/*
 	 * We want hotplug governor to do sampling
 	 * just one jiffy later on cpu governor sampling
@@ -381,21 +320,15 @@ static int state_notifier_callback(struct notifier_block *this,
 static int alucard_hotplug_callback(struct notifier_block *nb,
 			unsigned long action, void *data)
 {
-	unsigned int cpu = (unsigned long)data;
 	struct hotplug_cpuinfo *pcpu_info = NULL;
-	unsigned int prev_load;
+	struct cpufreq_govinfo *govinfo = data;
 
 	switch (action) {
-	case CPU_ONLINE:
-		pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
-		pcpu_info->prev_cpu_idle = get_cpu_idle_time(cpu,
-				&pcpu_info->prev_cpu_wall,
-				0);
-		pcpu_info->time_stamp = ktime_get();
-		prev_load = (unsigned int)
-				(pcpu_info->prev_cpu_wall - pcpu_info->prev_cpu_idle);
-		pcpu_info->prev_load = 100 * prev_load /
-				(unsigned int) pcpu_info->prev_cpu_wall;
+	case CPUFREQ_LOAD_CHANGE:
+		pcpu_info = &per_cpu(ac_hp_cpuinfo, govinfo->cpu);
+		pcpu_info->load = govinfo->load;
+		pcpu_info->sampling_rate_us = govinfo->sampling_rate_us;
+		pcpu_info->now = ktime_get();
 		break;
 	default:
 		break;
@@ -427,30 +360,23 @@ static int hotplug_start(void)
 		return -EINVAL;
 	}
 
-	get_online_cpus();
 	for_each_possible_cpu(cpu) {
-		struct hotplug_cpuinfo *pcpu_info = NULL;
+		struct hotplug_cpuinfo *pcpu_info =
+			&per_cpu(ac_hp_cpuinfo, cpu);
 		struct hotplug_cpuparm *pcpu_parm =
 			&per_cpu(ac_hp_cpuparm, cpu);
-		unsigned int prev_load;
-
-		if (cpu_online(cpu)) {
-			pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
-			pcpu_info->prev_cpu_idle = get_cpu_idle_time(cpu,
-					&pcpu_info->prev_cpu_wall,
-					0);
-			pcpu_info->time_stamp = ktime_get();
-			prev_load = (unsigned int)
-				(pcpu_info->prev_cpu_wall - pcpu_info->prev_cpu_idle);
-			pcpu_info->prev_load = 100 * prev_load /
-					(unsigned int) pcpu_info->prev_cpu_wall;
-		}
+		ktime_t now = ktime_get();
+		pcpu_info = &per_cpu(ac_hp_cpuinfo, cpu);
+		pcpu_info->load = 0;
+		pcpu_info->sampling_rate_us = 0;
+		pcpu_info->now = now;
+		pcpu_info->pre = now;
 		pcpu_parm->cur_up_rate = 1;
 		pcpu_parm->cur_down_rate = 1;
 	}
 	last_online_cpus = num_online_cpus();
-	register_hotcpu_notifier(&alucard_hotplug_nb);
-	put_online_cpus();
+	cpufreq_register_notifier(&alucard_hotplug_nb,
+					CPUFREQ_GOVINFO_NOTIFIER);
 
 	delay = msecs_to_jiffies(hotplug_tuners_ins.hotplug_sampling_rate);
 	/*
@@ -482,9 +408,8 @@ static void hotplug_stop(void)
 	notif.notifier_call = NULL;
 #endif
 	cancel_delayed_work_sync(&alucard_hotplug_work);
-	get_online_cpus();
-	unregister_hotcpu_notifier(&alucard_hotplug_nb);
-	put_online_cpus();
+	cpufreq_unregister_notifier(&alucard_hotplug_nb,
+						CPUFREQ_GOVINFO_NOTIFIER);
 	destroy_workqueue(alucard_hp_wq);
 	mutex_unlock(&alucard_hotplug_mutex);
 }
