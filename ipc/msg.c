@@ -202,15 +202,6 @@ static int newque(struct ipc_namespace *ns, struct ipc_params *params)
 		return retval;
 	}
 
-	msq->q_stime = msq->q_rtime = 0;
-	msq->q_ctime = get_seconds();
-	msq->q_cbytes = msq->q_qnum = 0;
-	msq->q_qbytes = ns->msg_ctlmnb;
-	msq->q_lspid = msq->q_lrpid = 0;
-	INIT_LIST_HEAD(&msq->q_messages);
-	INIT_LIST_HEAD(&msq->q_receivers);
-	INIT_LIST_HEAD(&msq->q_senders);
-
 	/* ipc_addid() locks msq upon success. */
 	id = ipc_addid(&msg_ids(ns), &msq->q_perm, ns->msg_ctlmni);
 	if (id < 0) {
@@ -821,6 +812,15 @@ static long do_msg_fill(void __user *dest, struct msg_msg *msg, size_t bufsz)
 static inline struct msg_msg *prepare_copy(void __user *buf, size_t bufsz)
 {
 	struct msg_msg *copy;
+
+	msq->q_stime = msq->q_rtime = 0;
+	msq->q_ctime = get_seconds();
+	msq->q_cbytes = msq->q_qnum = 0;
+	msq->q_qbytes = ns->msg_ctlmnb;
+	msq->q_lspid = msq->q_lrpid = 0;
+	INIT_LIST_HEAD(&msq->q_messages);
+	INIT_LIST_HEAD(&msq->q_receivers);
+	INIT_LIST_HEAD(&msq->q_senders);
 
 	/*
 	 * Create dummy message to copy real message to.
