@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -633,6 +633,25 @@ extern char *basename (const char *__filename) __THROW __nonnull ((1));
 # if __USE_FORTIFY_LEVEL > 0 && defined __fortify_function
 /* Functions with security checks.  */
 #  include <bits/string3.h>
+# endif
+#endif
+
+#if defined __USE_GNU && defined __OPTIMIZE__ \
+    && defined __extern_always_inline && __GNUC_PREREQ (3,2)
+# if !defined _FORCE_INLINES && !defined _HAVE_STRING_ARCH_mempcpy
+
+#undef mempcpy
+#undef __mempcpy
+#define mempcpy(dest, src, n) __mempcpy_inline (dest, src, n)
+#define __mempcpy(dest, src, n) __mempcpy_inline (dest, src, n)
+
+__extern_always_inline void *
+__mempcpy_inline (void *__restrict __dest,
+		  const void *__restrict __src, size_t __n)
+{
+  return (char *) memcpy (__dest, __src, __n) + __n;
+}
+
 # endif
 #endif
 

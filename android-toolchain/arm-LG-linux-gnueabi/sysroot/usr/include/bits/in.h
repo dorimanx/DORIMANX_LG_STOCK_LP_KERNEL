@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -92,6 +92,7 @@
 #define IP_MINTTL       21
 #define IP_NODEFRAG     22
 #define IP_CHECKSUM     23
+#define IP_BIND_ADDRESS_NO_PORT 24
 
 /* IP_MTU_DISCOVER arguments.  */
 #define IP_PMTUDISC_DONT   0	/* Never send DF frames.  */

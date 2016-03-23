@@ -716,8 +716,6 @@ era_d_t_fmt     "<U0EA7><U0EB1><U0E99>%A<U0E97><U0EB5><U0EC8><U0020>%e<U0020>%B<
 date_fmt       "<U0025><U0061><U0020><U0025><U0065><U0020><U0025><U0062>/
 <U0020><U0025><U0045><U0079><U0020><U0025><U0048><U003A><U0025><U004D>/
 <U003A><U0025><U0053><U0020><U0025><U005A>"
-% ICT-7ICT-7
-timezone	"<U0049><U0043><U0054><U002D><U0037><U0049><U0043><U0054><U002d><U0037>"
 END LC_TIME
 
 LC_MESSAGES
@@ -778,6 +776,6 @@ country_car   "<U004C><U0041><U004F>"
 %country_isbn  ""
 lang_name     "<U0EA5><U0EB2><U0EA7>"
 lang_ab       "<U006C><U006F>"
-lang_term     "<U006c><U0061><U006F>"
+lang_term     "<U006C><U0061><U006F>"
 lang_lib      "<U006C><U0061><U006F>"
 END LC_ADDRESS

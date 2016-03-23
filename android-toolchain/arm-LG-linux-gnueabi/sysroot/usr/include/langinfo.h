@@ -1,5 +1,5 @@
 /* Access to locale-dependent parameters.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -255,7 +255,6 @@ enum
   _NL_COLLATE_COLLSEQMB,
   _NL_COLLATE_COLLSEQWC,
   _NL_COLLATE_CODESET,
-  _NL_COLLATE_ENCODING_TYPE,
   _NL_NUM_LC_COLLATE,
 
   /* LC_CTYPE category: character classification.

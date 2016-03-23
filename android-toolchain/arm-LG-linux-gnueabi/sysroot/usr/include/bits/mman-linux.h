@@ -1,5 +1,5 @@
 /* Definitions for POSIX memory map interface.  Linux generic version.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -108,4 +108,6 @@
 # define MCL_CURRENT	1		/* Lock all currently mapped pages.  */
 # define MCL_FUTURE	2		/* Lock all additions to address
 					   space.  */
+# define MCL_ONFAULT	4		/* Lock all pages that are
+					   faulted in.  */
 #endif

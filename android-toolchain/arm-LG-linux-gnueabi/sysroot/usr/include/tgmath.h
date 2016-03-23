@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -401,7 +401,7 @@
 #define remainder(Val1, Val2) __TGMATH_BINARY_REAL_ONLY (Val1, Val2, remainder)
 
 /* Return X times (2 to the Nth power).  */
-#if defined __USE_MISC || defined __USE_XOPEN_EXTENDED
+#ifdef __USE_MISC
 # define scalb(Val1, Val2) __TGMATH_BINARY_REAL_ONLY (Val1, Val2, scalb)
 #endif
 

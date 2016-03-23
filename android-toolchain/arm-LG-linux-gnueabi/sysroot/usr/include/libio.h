@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Per Bothner <bothner@cygnus.com>.
 
@@ -145,11 +145,7 @@ struct _IO_jump_t;  struct _IO_FILE;
 
 /* Handle lock.  */
 #ifdef _IO_MTSAFE_IO
-# if defined __GLIBC__ && __GLIBC__ >= 2
-#  include <bits/stdio-lock.h>
-# else
-/*# include <comthread.h>*/
-# endif
+/* _IO_lock_t defined in internal headers during the glibc build.  */
 #else
 typedef void _IO_lock_t;
 #endif
@@ -297,14 +293,13 @@ struct _IO_FILE_complete
   struct _IO_wide_data *_wide_data;
   struct _IO_FILE *_freeres_list;
   void *_freeres_buf;
-  size_t _freeres_size;
 # else
   void *__pad1;
   void *__pad2;
   void *__pad3;
   void *__pad4;
-  size_t __pad5;
 # endif
+  size_t __pad5;
   int _mode;
   /* Make sure we don't get into trouble again.  */
   char _unused2[15 * sizeof (int) - 4 * sizeof (void *) - sizeof (size_t)];
