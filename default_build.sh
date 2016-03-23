@@ -145,7 +145,7 @@ BUILD_NOW()
 	fi;
 
 	# build zImage
-	time make ARCH=arm CROSS_COMPILE=android-toolchain/bin/arm-eabi- zImage-dtb -j ${NR_CPUS}
+	time make ARCH=arm CROSS_COMPILE=android-toolchain/bin/arm-eabi- CC='android-toolchain/bin/arm-eabi-gcc --sysroot=android-toolchain/arm-LG-linux-gnueabi/sysroot/' zImage-dtb -j ${NR_CPUS}
 
 	cp "$KERNELDIR"/.config "$KERNELDIR"/arch/arm/configs/"$KERNEL_CONFIG_FILE";
 
@@ -153,7 +153,7 @@ BUILD_NOW()
 
 	# compile the modules, and depmod to create the final zImage
 	echo "Compiling Modules............"
-	time make ARCH=arm CROSS_COMPILE=android-toolchain/bin/arm-eabi- modules -j ${NR_CPUS} || exit 1
+	time make ARCH=arm CROSS_COMPILE=android-toolchain/bin/arm-eabi- CC='android-toolchain/bin/arm-eabi-gcc --sysroot=android-toolchain/arm-LG-linux-gnueabi/sysroot/' modules -j ${NR_CPUS} || exit 1
 
 	# move the compiled zImage and modules into the READY-KERNEL working directory
 	echo "Move compiled objects........"

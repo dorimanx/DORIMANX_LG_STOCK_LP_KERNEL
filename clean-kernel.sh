@@ -29,6 +29,8 @@ if [ "$PYTHON_WAS_3" -eq "1" ]; then
 	ln -s /usr/bin/python3 /usr/bin/python
 fi;
 
+git checkout android-toolchain/
+
 # clean ccache
 read -t 5 -p "clean ccache, 5sec timeout (y/n)?";
 if [ "$REPLY" == "y" ]; then
