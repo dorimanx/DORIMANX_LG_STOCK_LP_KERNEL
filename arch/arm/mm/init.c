@@ -634,7 +634,7 @@ static void __init free_highpages(void)
 #define MLK_ROUNDUP(b, t) b, t, DIV_ROUND_UP(((t) - (b)), SZ_1K)
 
 #ifdef CONFIG_ENABLE_VMALLOC_SAVING
-void print_vmalloc_lowmem_info(void)
+static void print_vmalloc_lowmem_info(void)
 {
 	struct memblock_region *reg, *prev_reg = NULL;
 
