@@ -110,6 +110,9 @@ static inline void dma_free_noncoherent(struct device *dev, size_t size,
 {
 }
 
+extern int dma_supported(struct device *dev, u64 mask);
+
+extern int arm_dma_set_mask(struct device *dev, u64 dma_mask);
 
 /*
  * dma_coherent_pre_ops - barrier functions for coherent memory before DMA.
@@ -143,10 +146,6 @@ static inline void dma_coherent_post_ops(void)
 	barrier();
 #endif
 }
-
-extern int dma_supported(struct device *dev, u64 mask);
-
-extern int arm_dma_set_mask(struct device *dev, u64 dma_mask);
 
 /**
  * arm_dma_alloc - allocate consistent memory for DMA
@@ -336,8 +335,6 @@ extern int dmabounce_register_dev(struct device *, unsigned long,
  */
 extern void dmabounce_unregister_dev(struct device *);
 
-
-
 /**
  * dma_cache_pre_ops - clean or invalidate cache before dma transfer is
  *                     initiated and perform a barrier operation.
@@ -387,6 +384,7 @@ static inline void dma_cache_post_ops(void *virtual_addr,
 		___dma_single_cpu_to_dev(virtual_addr,
 					 size, DMA_FROM_DEVICE);
 }
+
 /*
  * The scatter list versions of the above methods.
  */
