@@ -2859,7 +2859,7 @@ static int kgsl_setup_useraddr(struct kgsl_mem_entry *entry,
 	size = ALIGN(size, PAGE_SIZE);
 
 	if (_check_region(offset & PAGE_MASK, size, len)) {
-		KGSL_CORE_ERR("Offset (%ld) + size (%d) is larger"
+		KGSL_CORE_ERR("Offset (%d) + size (%d) is larger"
 			      "than region length %d\n",
 			      offset & PAGE_MASK, size, len);
 		return -EINVAL;
