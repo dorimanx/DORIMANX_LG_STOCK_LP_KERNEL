@@ -27,7 +27,7 @@
 
 #ifdef CONFIG_F2FS_CHECK_FS
 #define f2fs_bug_on(sbi, condition)	BUG_ON(condition)
-#define f2fs_down_write(x, y)	down_write(x)
+#define f2fs_down_write(x, y)	down_write_nest_lock(x, y)
 #else
 #define f2fs_bug_on(sbi, condition)					\
 	do {								\
@@ -233,6 +233,15 @@ static inline bool __has_cursum_space(struct f2fs_journal *journal,
 #define F2FS_IOC_GETFLAGS		FS_IOC_GETFLAGS
 #define F2FS_IOC_SETFLAGS		FS_IOC_SETFLAGS
 #define F2FS_IOC_GETVERSION		FS_IOC_GETVERSION
+#define F2FS_IOC_SHUTDOWN	_IOR('X', 125, __u32)	/* Shutdown */
+
+/*
+ * Flags for going down operation used by FS_IOC_GOINGDOWN
+ */
+#define F2FS_GOING_DOWN_FULLSYNC	0x0	/* going down with full sync */
+#define F2FS_GOING_DOWN_METASYNC	0x1	/* going down with metadata */
+#define F2FS_GOING_DOWN_NOSYNC		0x2	/* going down */
+#define F2FS_GOING_DOWN_METAFLUSH	0x3	/* going down with meta flush */
 
 #define F2FS_IOCTL_MAGIC		0xf5
 #define F2FS_IOC_START_ATOMIC_WRITE	_IO(F2FS_IOCTL_MAGIC, 1)
@@ -247,16 +256,6 @@ static inline bool __has_cursum_space(struct f2fs_journal *journal,
 #define F2FS_IOC_SET_ENCRYPTION_POLICY	FS_IOC_SET_ENCRYPTION_POLICY
 #define F2FS_IOC_GET_ENCRYPTION_POLICY	FS_IOC_GET_ENCRYPTION_POLICY
 #define F2FS_IOC_GET_ENCRYPTION_PWSALT	FS_IOC_GET_ENCRYPTION_PWSALT
-
-/*
- * should be same as XFS_IOC_GOINGDOWN.
- * Flags for going down operation used by FS_IOC_GOINGDOWN
- */
-#define F2FS_IOC_SHUTDOWN	_IOR('X', 125, __u32)	/* Shutdown */
-#define F2FS_GOING_DOWN_FULLSYNC	0x0	/* going down with full sync */
-#define F2FS_GOING_DOWN_METASYNC	0x1	/* going down with metadata */
-#define F2FS_GOING_DOWN_NOSYNC		0x2	/* going down */
-#define F2FS_GOING_DOWN_METAFLUSH	0x3	/* going down with meta flush */
 
 #if defined(__KERNEL__) && defined(CONFIG_COMPAT)
 /*
@@ -1674,11 +1673,13 @@ static inline bool is_dot_dotdot(const struct qstr *str)
 
 static inline bool f2fs_may_extent_tree(struct inode *inode)
 {
+	mode_t mode = inode->i_mode;
+
 	if (!test_opt(F2FS_I_SB(inode), EXTENT_CACHE) ||
 			is_inode_flag_set(F2FS_I(inode), FI_NO_EXTENT))
 		return false;
 
-	return S_ISREG(inode->i_mode);
+	return S_ISREG(mode);
 }
 
 static inline void *f2fs_kvmalloc(size_t size, gfp_t flags)
@@ -2126,7 +2127,7 @@ int f2fs_convert_inline_inode(struct inode *);
 int f2fs_write_inline_data(struct inode *, struct page *);
 bool recover_inline_data(struct inode *, struct page *);
 struct f2fs_dir_entry *find_in_inline_dir(struct inode *,
-			       struct fscrypt_name *, struct page **);
+				struct fscrypt_name *, struct page **);
 struct f2fs_dir_entry *f2fs_parent_inline_dir(struct inode *, struct page **);
 int make_empty_inline_dir(struct inode *inode, struct inode *, struct page *);
 int f2fs_add_inline_entry(struct inode *, const struct qstr *, struct inode *,
@@ -2135,7 +2136,7 @@ void f2fs_delete_inline_entry(struct f2fs_dir_entry *, struct page *,
 						struct inode *, struct inode *);
 bool f2fs_empty_inline_dir(struct inode *);
 int f2fs_read_inline_dir(struct file *, struct dir_context *,
-					       struct fscrypt_str *);
+						struct fscrypt_str *);
 int f2fs_inline_data_fiemap(struct inode *,
 		struct fiemap_extent_info *, __u64, __u64);
 
@@ -2190,7 +2191,7 @@ static inline int f2fs_sb_has_crypto(struct super_block *sb)
 static inline bool f2fs_may_encrypt(struct inode *inode)
 {
 #ifdef CONFIG_F2FS_FS_ENCRYPTION
-	umode_t mode = inode->i_mode;
+	mode_t mode = inode->i_mode;
 
 	return (S_ISREG(mode) || S_ISDIR(mode) || S_ISLNK(mode));
 #else
