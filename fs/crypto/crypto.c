@@ -344,7 +344,7 @@ EXPORT_SYMBOL(fscrypt_zeroout_range);
  */
 static int fscrypt_d_revalidate(struct dentry *dentry, unsigned int flags)
 {
-	struct inode *dir = dentry->d_parent->d_inode;
+	struct inode *dir = d_inode(dentry->d_parent);
 	struct fscrypt_info *ci = dir->i_crypt_info;
 	int dir_has_key, cached_with_key;
 
@@ -373,7 +373,7 @@ static int fscrypt_d_revalidate(struct dentry *dentry, unsigned int flags)
 	 * We also fail the validation if the dentry was created with
 	 * the key present, but we no longer have the key, or vice versa.
 	 */
-	if (!cached_with_key ||
+	if ((!cached_with_key && d_is_negative(dentry)) ||
 			(!cached_with_key && dir_has_key) ||
 			(cached_with_key && !dir_has_key))
 		return 0;
