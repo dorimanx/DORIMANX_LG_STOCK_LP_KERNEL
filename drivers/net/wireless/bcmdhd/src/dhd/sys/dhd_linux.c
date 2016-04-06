@@ -6078,7 +6078,11 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 {
 	int ret = 0;
 	char eventmask[WL_EVENTING_MASK_LEN];
+#if defined (ROAM_AP_ENV_DETECTION) && defined(ENABLE_FW_ROAM_SUSPEND)
+	char iovbuf[WL_EVENTING_MASK_LEN - 2];	/*  Room for "event_msgs" + '\0' + bitvec  */
+#else
 	char iovbuf[WL_EVENTING_MASK_LEN + 12];	/*  Room for "event_msgs" + '\0' + bitvec  */
+#endif
 	uint32 buf_key_b4_m4 = 1;
 	uint8 msglen;
 	eventmsgs_ext_t *eventmask_msg = NULL;
