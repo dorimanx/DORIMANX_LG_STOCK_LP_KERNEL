@@ -97,6 +97,8 @@ extern void dhd_prot_dstats(dhd_pub_t *dhdp);
 
 extern int dhd_ioctl(dhd_pub_t * dhd_pub, dhd_ioctl_t *ioc, void * buf, uint buflen);
 
+extern void dhd_roam_preinit_ioctls(dhd_pub_t *dhd);
+extern int dhd_preinit_config(dhd_pub_t *dhd, int ifidx);
 extern int dhd_preinit_ioctls(dhd_pub_t *dhd);
 
 extern int dhd_process_pkt_reorder_info(dhd_pub_t *dhd, uchar *reorder_info_buf,

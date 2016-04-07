@@ -1,8 +1,5 @@
 # bcmdhd
 
-# GCC 4.8 + fix
-CFLAGS_dhd_linux.o += -Wframe-larger-than=1100
-
 ######################
 # default feature list
 ######################
