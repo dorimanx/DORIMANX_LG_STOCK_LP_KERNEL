@@ -555,9 +555,6 @@ int
 dhd_sync_with_dongle(dhd_pub_t *dhd)
 {
 	int ret = 0;
-#ifdef READ_CONFIG_FROM_FILE
-	int ret2 = 0;
-#endif
 	wlc_rev_info_t revinfo;
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
 
@@ -574,12 +571,9 @@ dhd_sync_with_dongle(dhd_pub_t *dhd)
 	dhd_roam_preinit_ioctls(dhd);
 	ret = dhd_preinit_ioctls(dhd);
 #ifdef READ_CONFIG_FROM_FILE
-	ret2 = dhd_preinit_config(dhd, 0);
-
-	if (!ret || !ret2)
-#else
-	if (!ret)
+	dhd_preinit_config(dhd, 0);
 #endif
+	if (!ret)
 		dhd_process_cid_mac(dhd, FALSE);
 
 	/* Always assumes wl for now */
