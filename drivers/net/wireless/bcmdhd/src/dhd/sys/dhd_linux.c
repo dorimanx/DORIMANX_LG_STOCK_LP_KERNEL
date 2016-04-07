@@ -6075,12 +6075,16 @@ err:
 
 void dhd_roam_preinit_ioctls(dhd_pub_t *dhd)
 {
-	int ret = 0;
 #ifdef ROAM_AP_ENV_DETECTION
 	int roam_env_mode = AP_ENV_INDETERMINATE;
 #endif
+#if defined(ROAM_ENABLE) || \
+		defined(DISABLE_BUILTIN_ROAM) || \
+		defined(ROAM_AP_ENV_DETECTION)
 	char iovbuf[WL_EVENTING_MASK_LEN + 12]; /*  Room for "event_msgs" + '\0' + bitvec  */
+#endif
 #ifdef ROAM_ENABLE
+	int ret = 0;
 	uint roamvar = 0;
 	int roam_trigger[2] = {CUSTOM_ROAM_TRIGGER_SETTING, WLC_BAND_ALL};
 	int roam_scan_period[2] = {10, WLC_BAND_ALL};
