@@ -37,7 +37,7 @@
 
 /* Version, author, desc, etc */
 #define DRIVER_AUTHOR "Dennis Rassmann <showp1984@gmail.com>"
-#define DRIVER_DESCRIPTION "Sweep2wake for almost any device"
+#define DRIVER_DESCRIPTION "Sweep2sleep for almost any device"
 /* Credits:
  * v1.5 Modded for G2 as sweep2sleep only by Ayysir
  * v1.6 Added sweep2sleep from right to left + cleanups by Dorimanx
@@ -141,7 +141,7 @@ static void sweep2sleep_reset(void) {
 	scr_on_touch = false;
 }
 
-/* Sweep2wake main function */
+/* Sweep2sleep main function */
 static void detect_sweep2sleep(int sweep_coord, int sweep_height, bool st)
 {
 	int prev_coord = 0, next_coord = 0;
