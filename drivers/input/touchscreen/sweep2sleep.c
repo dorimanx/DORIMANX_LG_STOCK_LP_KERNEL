@@ -1,5 +1,5 @@
 /*
- * drivers/input/touchscreen/sweep2wake.c
+ * drivers/input/touchscreen/sweep2sleep.c
  *
  *
  * Copyright (c) 2013, Dennis Rassmann <showp1984@gmail.com>
@@ -25,7 +25,7 @@
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/err.h>
-#include <linux/input/sweep2wake.h>
+#include <linux/input/sweep2sleep.h>
 #include <linux/slab.h>
 #include <linux/workqueue.h>
 #include <linux/hrtimer.h>
@@ -43,8 +43,8 @@
  * v1.6 Added sweep2sleep from right to left + cleanups by Dorimanx
  * v1.7 Added LCD Notify if POWERSUSPEND or EARLYSUSPEND is not merged. + cleanups by Dorimanx.
  */
-#define DRIVER_VERSION "1.7"
-#define LOGTAG "[sweep2wake]: "
+#define DRIVER_VERSION "1.8"
+#define LOGTAG "[sweep2sleep]: "
 
 /* Tuneables */
 #define S2W_DEBUG		0
@@ -82,7 +82,7 @@ static bool touch_x_called = false, touch_y_called = false;
 static bool exec_count = true;
 static bool scr_on_touch = false, barrier[2] = {false, false};
 static bool reverse_barrier[2] = {false, false};
-static struct input_dev * sweep2wake_pwrdev;
+static struct input_dev * sweep2sleep_pwrdev;
 static DEFINE_MUTEX(pwrkeyworklock);
 static struct workqueue_struct *s2w_input_wq;
 static struct work_struct s2w_input_work;
@@ -111,28 +111,28 @@ static int __init read_s2w_cmdline(char *s2w)
 __setup("s2w=", read_s2w_cmdline);
 
 /* PowerKey work func */
-static void sweep2wake_presspwr(struct work_struct *sweep2wake_presspwr_work) {
+static void sweep2sleep_presspwr(struct work_struct *sweep2sleep_presspwr_work) {
 	if (!mutex_trylock(&pwrkeyworklock))
                 return;
-	input_event(sweep2wake_pwrdev, EV_KEY, KEY_POWER, 1);
-	input_event(sweep2wake_pwrdev, EV_SYN, 0, 0);
+	input_event(sweep2sleep_pwrdev, EV_KEY, KEY_POWER, 1);
+	input_event(sweep2sleep_pwrdev, EV_SYN, 0, 0);
 	msleep(S2W_PWRKEY_DUR);
-	input_event(sweep2wake_pwrdev, EV_KEY, KEY_POWER, 0);
-	input_event(sweep2wake_pwrdev, EV_SYN, 0, 0);
+	input_event(sweep2sleep_pwrdev, EV_KEY, KEY_POWER, 0);
+	input_event(sweep2sleep_pwrdev, EV_SYN, 0, 0);
 	msleep(S2W_PWRKEY_DUR);
         mutex_unlock(&pwrkeyworklock);
 	return;
 }
-static DECLARE_WORK(sweep2wake_presspwr_work, sweep2wake_presspwr);
+static DECLARE_WORK(sweep2sleep_presspwr_work, sweep2sleep_presspwr);
 
 /* PowerKey trigger */
-static void sweep2wake_pwrswitch(void) {
-	schedule_work(&sweep2wake_presspwr_work);
+static void sweep2sleep_pwrswitch(void) {
+	schedule_work(&sweep2sleep_presspwr_work);
         return;
 }
 
 /* reset on finger release */
-static void sweep2wake_reset(void) {
+static void sweep2sleep_reset(void) {
 	exec_count = true;
 	barrier[0] = false;
 	barrier[1] = false;
@@ -142,7 +142,7 @@ static void sweep2wake_reset(void) {
 }
 
 /* Sweep2wake main function */
-static void detect_sweep2wake(int sweep_coord, int sweep_height, bool st)
+static void detect_sweep2sleep(int sweep_coord, int sweep_height, bool st)
 {
 	int prev_coord = 0, next_coord = 0;
 	int reverse_prev_coord = 0, reverse_next_coord = 0;
@@ -178,7 +178,7 @@ static void detect_sweep2wake(int sweep_coord, int sweep_height, bool st)
 							DEFAULT_S2W_X_B0) {
 						if (exec_count) {
 							pr_info(LOGTAG"OFF\n");
-							sweep2wake_pwrswitch();
+							sweep2sleep_pwrswitch();
 							exec_count = false;
 						}
 					}
@@ -208,7 +208,7 @@ static void detect_sweep2wake(int sweep_coord, int sweep_height, bool st)
 					if (sweep_coord > DEFAULT_S2W_X_B5) {
 						if (exec_count) {
 							pr_info(LOGTAG"OFF\n");
-							sweep2wake_pwrswitch();
+							sweep2sleep_pwrswitch();
 							exec_count = false;
 						}
 					}
@@ -220,7 +220,7 @@ static void detect_sweep2wake(int sweep_coord, int sweep_height, bool st)
 
 static void s2w_input_callback(struct work_struct *unused) {
 
-	detect_sweep2wake(touch_x, touch_y, true);
+	detect_sweep2sleep(touch_x, touch_y, true);
 
 	return;
 }
@@ -228,19 +228,19 @@ static void s2w_input_callback(struct work_struct *unused) {
 static void s2w_input_event(struct input_handle *handle, unsigned int type,
 				unsigned int code, int value) {
 #if S2W_DEBUG
-	pr_info("sweep2wake: code: %s|%u, val: %i\n",
+	pr_info("sweep2sleep: code: %s|%u, val: %i\n",
 		((code==ABS_MT_POSITION_X) ? "X" :
 		(code==ABS_MT_POSITION_Y) ? "Y" :
 		(code==ABS_MT_TRACKING_ID) ? "ID" :
 		"undef"), code, value);
 #endif
 	if (code == ABS_MT_SLOT) {
-		sweep2wake_reset();
+		sweep2sleep_reset();
 		return;
 	}
 
 	if (code == ABS_MT_TRACKING_ID && value == -1) {
-		sweep2wake_reset();
+		sweep2sleep_reset();
 		return;
 	}
 
@@ -390,7 +390,7 @@ static ssize_t s2w_version_dump(struct device *dev,
 	return count;
 }
 
-static DEVICE_ATTR(sweep2wake_version, (S_IWUSR|S_IRUGO),
+static DEVICE_ATTR(sweep2sleep_version, (S_IWUSR|S_IRUGO),
 	s2w_version_show, s2w_version_dump);
 
 /*
@@ -399,21 +399,21 @@ static DEVICE_ATTR(sweep2wake_version, (S_IWUSR|S_IRUGO),
 struct kobject *sweep2sleep_kobj;
 EXPORT_SYMBOL_GPL(sweep2sleep_kobj);
 
-static int __init sweep2wake_init(void)
+static int __init sweep2sleep_init(void)
 {
 	int rc = 0;
 
-	sweep2wake_pwrdev = input_allocate_device();
-	if (!sweep2wake_pwrdev) {
+	sweep2sleep_pwrdev = input_allocate_device();
+	if (!sweep2sleep_pwrdev) {
 		pr_err("Can't allocate suspend autotest power button\n");
 		goto err_alloc_dev;
 	}
 
-	input_set_capability(sweep2wake_pwrdev, EV_KEY, KEY_POWER);
-	sweep2wake_pwrdev->name = "s2w_pwrkey";
-	sweep2wake_pwrdev->phys = "s2w_pwrkey/input0";
+	input_set_capability(sweep2sleep_pwrdev, EV_KEY, KEY_POWER);
+	sweep2sleep_pwrdev->name = "s2w_pwrkey";
+	sweep2sleep_pwrdev->phys = "s2w_pwrkey/input0";
 
-	rc = input_register_device(sweep2wake_pwrdev);
+	rc = input_register_device(sweep2sleep_pwrdev);
 	if (rc) {
 		pr_err("%s: input_register_device err=%d\n", __func__, rc);
 		goto err_input_dev;
@@ -438,37 +438,37 @@ static int __init sweep2wake_init(void)
 	}
 	rc = sysfs_create_file(sweep2sleep_kobj, &dev_attr_sweep2sleep.attr);
 	if (rc) {
-		pr_warn("%s: sysfs_create_file failed for sweep2wake\n",
+		pr_warn("%s: sysfs_create_file failed for sweep2sleep\n",
 				__func__);
 	}
 	rc = sysfs_create_file(sweep2sleep_kobj,
-			&dev_attr_sweep2wake_version.attr);
+			&dev_attr_sweep2sleep_version.attr);
 	if (rc) {
 		pr_warn("%s: sysfs_create_file failed for \
-				sweep2wake_version\n", __func__);
+				sweep2sleep_version\n", __func__);
 	}
 
 err_input_dev:
-	input_free_device(sweep2wake_pwrdev);
+	input_free_device(sweep2sleep_pwrdev);
 err_alloc_dev:
 	pr_info(LOGTAG"%s done\n", __func__);
 
 	return 0;
 }
 
-static void __exit sweep2wake_exit(void)
+static void __exit sweep2sleep_exit(void)
 {
 	kobject_del(sweep2sleep_kobj);
 
 	input_unregister_handler(&s2w_input_handler);
 	destroy_workqueue(s2w_input_wq);
-	input_unregister_device(sweep2wake_pwrdev);
-	input_free_device(sweep2wake_pwrdev);
+	input_unregister_device(sweep2sleep_pwrdev);
+	input_free_device(sweep2sleep_pwrdev);
 	return;
 }
 
-module_init(sweep2wake_init);
-module_exit(sweep2wake_exit);
+module_init(sweep2sleep_init);
+module_exit(sweep2sleep_exit);
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESCRIPTION);
