@@ -291,6 +291,9 @@ CLEAN_KERNEL()
 		rm /usr/bin/python
 		ln -s /usr/bin/python3 /usr/bin/python
 	fi;
+
+	# restore toolchain libs*.a
+	git checkout android-toolchain/
 }
 
 echo "What to cook for you?!";
