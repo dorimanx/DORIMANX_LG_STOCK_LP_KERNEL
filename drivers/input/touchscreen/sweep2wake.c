@@ -338,9 +338,35 @@ static ssize_t s2w_sweep2sleep_show(struct device *dev,
 static ssize_t s2w_sweep2sleep_dump(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
+	int s2w_switch_old = s2w_switch;
+	int rc = 0;
+
 	if (buf[0] >= '0' && buf[0] <= '1' && buf[1] == '\n')
                 if (s2w_switch != buf[0] - '0')
 		        s2w_switch = buf[0] - '0';
+
+	if (s2w_switch > 1)
+		s2w_switch = 1;
+	if (s2w_switch < 0)
+		s2w_switch = 0;
+
+	if (s2w_switch_old == s2w_switch)
+		return count;
+
+	if (s2w_switch) {
+		s2w_input_wq = create_workqueue("s2wiwq");
+		if (!s2w_input_wq) {
+			pr_err("%s: Failed to create s2wiwq workqueue\n", __func__);
+			return -EFAULT;
+		}
+		INIT_WORK(&s2w_input_work, s2w_input_callback);
+		rc = input_register_handler(&s2w_input_handler);
+		if (rc)
+			pr_err("%s: Failed to register s2w_input_handler\n", __func__);
+	} else {
+		input_unregister_handler(&s2w_input_handler);
+		destroy_workqueue(s2w_input_wq);
+	}
 
 	return count;
 }
@@ -393,15 +419,17 @@ static int __init sweep2wake_init(void)
 		goto err_input_dev;
 	}
 
-	s2w_input_wq = create_workqueue("s2wiwq");
-	if (!s2w_input_wq) {
-		pr_err("%s: Failed to create s2wiwq workqueue\n", __func__);
-		return -EFAULT;
+	if (s2w_switch) {
+		s2w_input_wq = create_workqueue("s2wiwq");
+		if (!s2w_input_wq) {
+			pr_err("%s: Failed to create s2wiwq workqueue\n", __func__);
+			return -EFAULT;
+		}
+		INIT_WORK(&s2w_input_work, s2w_input_callback);
+		rc = input_register_handler(&s2w_input_handler);
+		if (rc)
+			pr_err("%s: Failed to register s2w_input_handler\n", __func__);
 	}
-	INIT_WORK(&s2w_input_work, s2w_input_callback);
-	rc = input_register_handler(&s2w_input_handler);
-	if (rc)
-		pr_err("%s: Failed to register s2w_input_handler\n", __func__);
 
 	sweep2sleep_kobj = kobject_create_and_add("sweep2sleep", NULL) ;
 	if (sweep2sleep_kobj == NULL) {
