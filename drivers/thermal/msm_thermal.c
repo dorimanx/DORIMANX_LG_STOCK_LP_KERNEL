@@ -129,6 +129,7 @@ static bool freq_mitigation_enabled;
 static bool interrupt_mode_enable;
 static bool msm_thermal_probed;
 static bool therm_reset_enabled;
+static bool online_core;
 static int *tsens_id_map;
 static DEFINE_MUTEX(psm_mutex);
 static uint32_t min_freq_limit;
@@ -686,22 +687,36 @@ static int __ref update_offline_cores(int val)
 {
 	uint32_t cpu = 0;
 	int ret = 0;
+	uint32_t previous_cpus_offlined = 0;
 
-	cpus_offlined = msm_thermal_info_local.core_control_mask & val;
 	if (!core_control)
 		return 0;
 
+	previous_cpus_offlined = cpus_offlined;
+	cpus_offlined = msm_thermal_info_local.core_control_mask & val;
+
 	for_each_possible_cpu(cpu) {
-		if (!(cpus_offlined & BIT(cpu)))
-			continue;
-		if (!cpu_online(cpu))
-			continue;
-		ret = cpu_down(cpu);
-		if (ret)
-			pr_err("Unable to offline CPU%d. err:%d\n",
-				cpu, ret);
-		else
-			pr_debug("Offlined CPU%d\n", cpu);
+		if (cpus_offlined & BIT(cpu)) {
+			if (!cpu_online(cpu))
+				continue;
+			ret = cpu_down(cpu);
+			if (ret)
+				pr_err("Unable to offline CPU%d. err:%d\n",
+					cpu, ret);
+			else
+				pr_debug("Offlined CPU%d\n", cpu);
+		} else if (online_core && (previous_cpus_offlined & BIT(cpu))) {
+			if (cpu_online(cpu))
+				continue;
+			ret = cpu_up(cpu);
+			if (ret && ret == notifier_to_errno(NOTIFY_BAD))
+				pr_debug("Onlining CPU%d is vetoed\n", cpu);
+			else if (ret)
+				pr_err("Unable to online CPU%d. err:%d\n",
+						cpu, ret);
+			else
+				pr_debug("Onlined CPU%d\n", cpu);
+		}
 	}
 	return ret;
 }
@@ -2099,6 +2114,12 @@ static int __devinit msm_thermal_dev_probe(struct platform_device *pdev)
 	ret = probe_psm(node, &data, pdev);
 	if (ret == -EPROBE_DEFER)
 		goto fail;
+
+	key = "qcom,online-hotplug-core";
+	if (of_property_read_bool(node, key))
+		online_core = true;
+	else
+		online_core = false;
 
 	/*
 	 * In case sysfs add nodes get called before probe function.
