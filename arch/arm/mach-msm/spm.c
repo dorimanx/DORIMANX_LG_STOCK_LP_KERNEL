@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2015, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -109,16 +109,10 @@ static struct saw2_data saw2_info[] = {
 	},
 };
 
-static inline uint32_t msm_spm_drv_get_num_spm_entry(
-		struct msm_spm_driver_data *dev)
-{
-	return 32;
-}
-
 static void msm_spm_drv_flush_shadow(struct msm_spm_driver_data *dev,
 		unsigned int reg_index)
 {
-	__raw_writel(dev->reg_shadow[reg_index],
+	spm_raw_write(dev->reg_shadow[reg_index],
 		dev->reg_base_addr + dev->reg_offsets[reg_index]);
 }
 
@@ -128,6 +122,14 @@ static void msm_spm_drv_load_shadow(struct msm_spm_driver_data *dev,
 	dev->reg_shadow[reg_index] =
 		__raw_readl(dev->reg_base_addr +
 				dev->reg_offsets[reg_index]);
+}
+
+static inline uint32_t msm_spm_drv_get_num_spm_entry(
+		struct msm_spm_driver_data *dev)
+{
+	BUG_ON(!dev);
+	msm_spm_drv_load_shadow(dev, MSM_SPM_REG_SAW2_ID);
+	return (dev->reg_shadow[MSM_SPM_REG_SAW2_ID] >> 24) & 0xFF;
 }
 
 static inline void msm_spm_drv_set_start_addr(
@@ -219,7 +221,6 @@ inline int msm_spm_drv_set_spm_enable(
 		dev->reg_shadow[MSM_SPM_REG_SAW2_SPM_CTL] |= value;
 
 		msm_spm_drv_flush_shadow(dev, MSM_SPM_REG_SAW2_SPM_CTL);
-		wmb();
 	}
 	return 0;
 }
@@ -234,12 +235,11 @@ void msm_spm_drv_flush_seq_entry(struct msm_spm_driver_data *dev)
 	}
 
 	for (i = 0; i < num_spm_entry; i++) {
-		__raw_writel(dev->reg_seq_entry_shadow[i],
+		spm_raw_write(dev->reg_seq_entry_shadow[i],
 			dev->reg_base_addr
 			+ dev->reg_offsets[MSM_SPM_REG_SAW2_SEQ_ENTRY]
 			+ 4 * i);
 	}
-	mb();
 }
 
 int msm_spm_drv_write_seq_data(struct msm_spm_driver_data *dev,
@@ -286,7 +286,6 @@ int msm_spm_drv_set_low_power_mode(struct msm_spm_driver_data *dev,
 	msm_spm_drv_set_start_addr(dev, addr, pc_mode);
 
 	msm_spm_drv_flush_shadow(dev, MSM_SPM_REG_SAW2_SPM_CTL);
-	wmb();
 
 	if (msm_spm_debug_mask & MSM_SPM_DEBUG_SHADOW) {
 		int i;
@@ -443,7 +442,6 @@ int msm_spm_drv_set_pmic_data(struct msm_spm_driver_data *dev,
 	dev->reg_shadow[MSM_SPM_REG_SAW2_VCTL] &= ~0x700FF;
 	dev->reg_shadow[MSM_SPM_REG_SAW2_VCTL] |= pmic_data;
 	msm_spm_drv_flush_shadow(dev, MSM_SPM_REG_SAW2_VCTL);
-	mb();
 
 	timeout_us = dev->vctl_timeout_us;
 	/**
@@ -477,7 +475,6 @@ void msm_spm_drv_reinit(struct msm_spm_driver_data *dev)
 		msm_spm_drv_flush_shadow(dev, i);
 
 	msm_spm_drv_flush_seq_entry(dev);
-	mb();
 }
 
 int __devinit msm_spm_drv_init(struct msm_spm_driver_data *dev,
@@ -517,10 +514,6 @@ int __devinit msm_spm_drv_init(struct msm_spm_driver_data *dev,
 
 	for (i = 0; i < MSM_SPM_REG_NR_INITIALIZE; i++)
 		msm_spm_drv_flush_shadow(dev, i);
-	/* barrier to ensure write completes before we update shadow
-	 * registers
-	 */
-	mb();
 
 	for (i = 0; i < MSM_SPM_REG_NR_INITIALIZE; i++)
 		msm_spm_drv_load_shadow(dev, i);

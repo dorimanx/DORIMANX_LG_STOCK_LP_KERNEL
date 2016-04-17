@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2014, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2015, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -226,14 +226,12 @@ int msm_spm_turn_on_cpu_rail(unsigned long base, unsigned int cpu)
 	 * regulator is already configured in LV range.
 	 */
 	val = 0x40000E6;
-	writel_relaxed(val, reg);
-	mb();
+	spm_write_relaxed(val, reg);
 	udelay(timeout);
 
 	/* Enable CPU supply regulator */
 	val = 0x2030080;
-	writel_relaxed(val, reg);
-	mb();
+	spm_write_relaxed(val, reg);
 	udelay(timeout);
 
 	iounmap(reg);
