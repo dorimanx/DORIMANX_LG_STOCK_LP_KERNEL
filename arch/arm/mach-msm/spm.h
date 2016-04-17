@@ -87,7 +87,7 @@ struct msm_spm_platform_data {
 	struct msm_spm_seq_entry *modes;
 };
 
-#if defined(CONFIG_MSM_SPM_V2)
+#if defined(CONFIG_MSM_SPM)
 
 /* Public functions */
 
@@ -143,7 +143,7 @@ static inline int msm_spm_enable_fts_lpm(uint32_t mode)
 	return -ENOSYS;
 }
 #endif /* defined(CONFIG_MSM_L2_SPM) */
-#else /* defined(CONFIG_MSM_SPM_V2) */
+#else /* defined(CONFIG_MSM_SPM) */
 static inline int msm_spm_set_low_power_mode(unsigned int mode, bool notify_rpm)
 {
 	return -ENOSYS;
@@ -174,5 +174,5 @@ static inline int msm_spm_device_init(void)
 	return -ENOSYS;
 }
 
-#endif  /* defined (CONFIG_MSM_SPM_V2) */
+#endif  /* defined (CONFIG_MSM_SPM) */
 #endif  /* __ARCH_ARM_MACH_MSM_SPM_H */

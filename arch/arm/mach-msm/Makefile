@@ -160,7 +160,7 @@ obj-$(CONFIG_MSM_NOPM) += no-pm.o
 obj-$(CONFIG_MSM_PCIE) += pcie.o pcie_irq.o
 
 obj-$(CONFIG_MSM_SPM_V1) += spm.o
-obj-$(CONFIG_MSM_SPM_V2) += spm-v2.o spm_devices.o
+obj-$(CONFIG_MSM_SPM) += spm.o spm_devices.o
 
 obj-$(CONFIG_MSM_DMA_TEST) += dma_test.o
 obj-$(CONFIG_SURF_FFA_GPIO_KEYPAD) += keypad-surf-ffa.o
