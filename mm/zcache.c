@@ -40,16 +40,20 @@
 #include <linux/zbud.h>
 
 /*
- * Enable/disable zcache (disabled by default)
+ * Enable/disable zcache (enabled by default)
  */
-static bool zcache_enabled __read_mostly;
+static bool zcache_enabled = true;
 module_param_named(enabled, zcache_enabled, bool, 0);
 
 /*
  * Compressor to be used by zcache
  */
 #define ZCACHE_COMPRESSOR_DEFAULT "lzo"
+#ifndef CONFIG_CRYPTO_LZ4
 static char *zcache_compressor = ZCACHE_COMPRESSOR_DEFAULT;
+#else
+static char *zcache_compressor = "lz4";
+#endif
 module_param_named(compressor, zcache_compressor, charp, 0);
 
 /*
@@ -175,20 +179,7 @@ static void zcache_rbnode_cache_destroy(void)
 	kmem_cache_destroy(zcache_rbnode_cache);
 }
 
-static unsigned long zcache_count(struct shrinker *s,
-				  struct shrink_control *sc)
-{
-	unsigned long active_file;
-	long file_gap;
-
-	active_file = global_page_state(NR_ACTIVE_FILE);
-	file_gap = zcache_pages() - active_file;
-	if (file_gap < 0)
-		file_gap = 0;
-	return file_gap;
-}
-
-static unsigned long zcache_scan(struct shrinker *s, struct shrink_control *sc)
+static int zcache_shrink(struct shrinker *s, struct shrink_control *sc)
 {
 	unsigned long active_file;
 	unsigned long file;
@@ -254,8 +245,7 @@ end:
 }
 
 static struct shrinker zcache_shrinker = {
-	.scan_objects = zcache_scan,
-	.count_objects = zcache_count,
+	.shrink = zcache_shrink,
 	.seeks = DEFAULT_SEEKS * 16
 };
 
@@ -555,7 +545,6 @@ static int zcache_store_zaddr(struct zcache_pool *zpool,
 	spin_lock_irqsave(&rbnode->ra_lock, flags);
 	dup_zaddr = radix_tree_delete(&rbnode->ratree, ra_index);
 	if (unlikely(dup_zaddr)) {
-		WARN_ON("duplicated, will be replaced!\n");
 		if (dup_zaddr == ZERO_HANDLE) {
 			atomic_dec(&zcache_stored_zero_pages);
 		} else {

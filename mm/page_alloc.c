@@ -6480,6 +6480,9 @@ static const struct trace_print_flags pageflag_names[] = {
 #ifdef CONFIG_KSM_CHECK_PAGE
 	{1UL << PG_ksm_scan0,           "PG_ksm_scan0"  },
 #endif
+#ifdef CONFIG_ZCACHE
+	{1UL << PG_was_active,           "PG_was_active"  },
+#endif
 };
 
 static void dump_page_flags(unsigned long flags)
