@@ -899,7 +899,7 @@ int smd_pkt_open(struct inode *inode, struct file *file)
 
 		r = wait_event_interruptible_timeout(
 				smd_pkt_devp->ch_opened_wait_queue,
-				smd_pkt_devp->is_open, (2 * HZ));
+				smd_pkt_devp->is_open, msecs_to_jiffies(2000));
 		if (r == 0) {
 			r = -ETIMEDOUT;
 			/* close the ch to sync smd's state with smd_pkt */

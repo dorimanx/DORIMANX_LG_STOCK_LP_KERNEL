@@ -31,7 +31,7 @@
 
 #define USB_THRESHOLD 512
 #define USB_BAM_MAX_STR_LEN 50
-#define USB_BAM_TIMEOUT (10*HZ)
+#define USB_BAM_TIMEOUT 10000
 
 enum usb_bam_sm {
 	USB_BAM_SM_INIT = 0,
@@ -1075,7 +1075,7 @@ static void wait_for_prod_granted(enum usb_bam cur_bam)
 	} else if (ret == -EINPROGRESS) {
 		pr_debug("%s: Waiting for PROD_GRANTED\n", __func__);
 		if (!wait_for_completion_timeout(&info.prod_avail[cur_bam],
-			USB_BAM_TIMEOUT))
+			msecs_to_jiffies(USB_BAM_TIMEOUT)))
 			pr_err("%s: Timeout wainting for PROD_GRANTED\n",
 				__func__);
 	} else
@@ -1119,7 +1119,7 @@ static void wait_for_prod_release(enum usb_bam cur_bam)
 	} else if (ret == -EINPROGRESS) {
 		pr_debug("%s: Waiting for PROD_RELEASED\n", __func__);
 		if (!wait_for_completion_timeout(&info.prod_released[cur_bam],
-						USB_BAM_TIMEOUT))
+					msecs_to_jiffies(USB_BAM_TIMEOUT)))
 			pr_err("%s: Timeout waiting for PROD_RELEASED\n",
 			__func__);
 	} else
@@ -2075,7 +2075,7 @@ void usb_bam_reset_complete(void)
 {
 	pr_debug("Waiting for reset compelte");
 	if (wait_for_completion_interruptible_timeout(&ctx.reset_done,
-			10*HZ) <= 0)
+			msecs_to_jiffies(10000)) <= 0)
 		pr_warn("Timeout while waiting for reset");
 
 	pr_debug("Finished Waiting for reset complete");

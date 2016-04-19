@@ -509,7 +509,7 @@ static void qmi_notify(void *priv, unsigned event)
 		int sz;
 		sz = smd_cur_packet_size(ctxt->ch);
 		if ((sz > 0) && (sz <= smd_read_avail(ctxt->ch))) {
-			wake_lock_timeout(&ctxt->wake_lock, HZ / 2);
+			wake_lock_timeout(&ctxt->wake_lock, msecs_to_jiffies(500));
 			queue_work(qmi_wq, &ctxt->read_work);
 		}
 		break;

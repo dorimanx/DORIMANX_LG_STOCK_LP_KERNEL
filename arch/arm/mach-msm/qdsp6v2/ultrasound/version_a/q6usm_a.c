@@ -37,7 +37,7 @@
 #define WRITEDONE_IDX_STATUS    0
 
 /* Standard timeout in the asynchronous ops */
-#define Q6USM_TIMEOUT_JIFFIES	(1*HZ) /* 1 sec */
+#define Q6USM_TIMEOUT_JIFFIES	1000 /* 1 sec */
 
 static DEFINE_MUTEX(session_lock);
 
@@ -102,7 +102,7 @@ static int q6usm_memory_map(struct us_client *usc, uint32_t buf_add, int dir,
 
 	rc = wait_event_timeout(this_mmap.cmd_wait,
 				(atomic_read(&this_mmap.cmd_state) == 0),
-				Q6USM_TIMEOUT_JIFFIES);
+				msecs_to_jiffies(Q6USM_TIMEOUT_JIFFIES));
 	if (!rc) {
 		rc = -ETIME;
 		pr_err("%s: timeout. waited for memory_map\n", __func__);
@@ -136,7 +136,7 @@ int q6usm_memory_unmap(struct us_client *usc, uint32_t buf_add, int dir)
 
 	rc = wait_event_timeout(this_mmap.cmd_wait,
 				(atomic_read(&this_mmap.cmd_state) == 0),
-				Q6USM_TIMEOUT_JIFFIES);
+				msecs_to_jiffies(Q6USM_TIMEOUT_JIFFIES));
 	if (!rc) {
 		rc = -ETIME;
 		pr_err("%s: timeout. waited for memory_map\n", __func__);
@@ -629,7 +629,7 @@ int q6usm_open_read(struct us_client *usc,
 	}
 	rc = wait_event_timeout(usc->cmd_wait,
 				(atomic_read(&usc->cmd_state) == 0),
-				Q6USM_TIMEOUT_JIFFIES);
+				msecs_to_jiffies(Q6USM_TIMEOUT_JIFFIES));
 	if (!rc) {
 		rc = -ETIME;
 		pr_err("%s: timeout, waited for OPEN_READ rc[%d]\n",
@@ -736,7 +736,7 @@ int q6usm_enc_cfg_blk(struct us_client *usc, struct us_encdec_cfg *us_cfg)
 	}
 	rc = wait_event_timeout(usc->cmd_wait,
 				(atomic_read(&usc->cmd_state) == 0),
-				Q6USM_TIMEOUT_JIFFIES);
+				msecs_to_jiffies(Q6USM_TIMEOUT_JIFFIES));
 	if (!rc) {
 		rc = -ETIME;
 		pr_err("%s: timeout opcode[0x%x]\n",
@@ -826,7 +826,7 @@ int q6usm_dec_cfg_blk(struct us_client *usc, struct us_encdec_cfg *us_cfg)
 	}
 	rc = wait_event_timeout(usc->cmd_wait,
 				(atomic_read(&usc->cmd_state) == 0),
-				Q6USM_TIMEOUT_JIFFIES);
+				msecs_to_jiffies(Q6USM_TIMEOUT_JIFFIES));
 	if (!rc) {
 		rc = -ETIME;
 		pr_err("%s: timeout opcode[0x%x]\n",
@@ -874,7 +874,7 @@ int q6usm_open_write(struct us_client *usc,
 	}
 	rc = wait_event_timeout(usc->cmd_wait,
 				(atomic_read(&usc->cmd_state) == 0),
-				Q6USM_TIMEOUT_JIFFIES);
+				msecs_to_jiffies(Q6USM_TIMEOUT_JIFFIES));
 	if (!rc) {
 		rc = -ETIME;
 		pr_err("%s:timeout. waited for OPEN_WRITR rc[%d]\n",
@@ -912,7 +912,7 @@ int q6usm_run(struct us_client *usc, uint32_t flags,
 
 	rc = wait_event_timeout(usc->cmd_wait,
 				(atomic_read(&usc->cmd_state) == 0),
-				Q6USM_TIMEOUT_JIFFIES);
+				msecs_to_jiffies(Q6USM_TIMEOUT_JIFFIES));
 	if (!rc) {
 		rc = -ETIME;
 		pr_err("%s: timeout. waited for run success rc[%d]\n",
@@ -1106,7 +1106,7 @@ int q6usm_cmd(struct us_client *usc, int cmd)
 		goto fail_cmd;
 	}
 	rc = wait_event_timeout(usc->cmd_wait, (atomic_read(state) == 0),
-				Q6USM_TIMEOUT_JIFFIES);
+				msecs_to_jiffies(Q6USM_TIMEOUT_JIFFIES));
 	if (!rc) {
 		rc = -ETIME;
 		pr_err("%s:timeout. waited for response opcode[0x%x]\n",
@@ -1146,11 +1146,11 @@ int q6usm_set_us_detection(struct us_client *usc,
 	}
 	rc = wait_event_timeout(usc->cmd_wait,
 				(atomic_read(&usc->cmd_state) == 0),
-				Q6USM_TIMEOUT_JIFFIES);
+				msecs_to_jiffies(Q6USM_TIMEOUT_JIFFIES));
 	if (!rc) {
 		rc = -ETIME;
 		pr_err("%s: CMD_SIGNAL_DETECT_MODE: timeout=%d\n",
-		       __func__, Q6USM_TIMEOUT_JIFFIES);
+		       __func__, msecs_to_jiffies(Q6USM_TIMEOUT_JIFFIES));
 	} else
 		rc = 0;
 

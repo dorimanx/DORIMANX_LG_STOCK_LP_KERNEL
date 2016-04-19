@@ -510,7 +510,8 @@ static int smd_tty_port_activate(struct tty_port *tport,
 			pr_info("%s: checking DS modem status\n", __func__);
 			res = wait_event_interruptible_timeout(
 					info->ch_opened_wait_queue,
-					info->is_dsmodem_ready, (lge_ds_modem_wait * HZ));
+					info->is_dsmodem_ready, (lge_ds_modem_wait *
+					msecs_to_jiffies(1000)));
 			if (res == 0) {
 				res = -ETIMEDOUT;
 				pr_err("%s: timeout to wait for %s modem: %d\n",
@@ -545,7 +546,7 @@ static int smd_tty_port_activate(struct tty_port *tport,
 	}
 
 	res = wait_event_interruptible_timeout(info->ch_opened_wait_queue,
-					       info->is_open, (2 * HZ));
+					       info->is_open, msecs_to_jiffies(2000));
 	if (res == 0)
 		res = -ETIMEDOUT;
 	if (res < 0) {
@@ -625,7 +626,8 @@ static void smd_tty_port_shutdown(struct tty_port *tport)
 	/* wait for reopen ready status in seconds */
 	res = wait_event_interruptible_timeout(
 			info->ch_opened_wait_queue,
-			!info->is_open, (lge_ds_modem_wait * HZ));
+			!info->is_open, (lge_ds_modem_wait *
+			msecs_to_jiffies(1000)));
 	if (res == 0) {
 		/* just in case, remain result value */
 		res = -ETIMEDOUT;

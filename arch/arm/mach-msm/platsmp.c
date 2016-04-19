@@ -223,7 +223,7 @@ static int __cpuinit release_from_pen(unsigned int cpu)
 	 */
 	arch_send_wakeup_ipi_mask(cpumask_of(cpu));
 
-	timeout = jiffies + (1 * HZ);
+	timeout = jiffies + msecs_to_jiffies(1000);
 	while (time_before(jiffies, timeout)) {
 		smp_rmb();
 		if (pen_release == -1)

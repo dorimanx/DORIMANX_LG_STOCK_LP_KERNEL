@@ -48,7 +48,7 @@
 #define PDRIVER_NAME_MAX_SIZE 32
 #define MOCA_MODULE_NAME		"MOCA"
 
-#define WAKELOCK_TIMEOUT (2*HZ)
+#define WAKELOCK_TIMEOUT 2000
 
 struct lge_moca_dev {
 	struct cdev cdev;
@@ -191,7 +191,7 @@ static void lge_moca_packet_arrival_worker(struct work_struct *work)
 	spin_lock_irqsave(&lge_moca_devp->pa_spinlock, flags);
 	if (lge_moca_devp->ch && lge_moca_devp->wakelock_locked) {
 		wake_lock_timeout(&lge_moca_devp->pa_wake_lock,
-				  WAKELOCK_TIMEOUT);
+				  msecs_to_jiffies(WAKELOCK_TIMEOUT));
 	}
 	spin_unlock_irqrestore(&lge_moca_devp->pa_spinlock, flags);
 	mutex_unlock(&lge_moca_devp->ch_lock);
@@ -694,7 +694,7 @@ int lge_moca_open(struct inode *inode, struct file *file)
 
 		r = wait_event_interruptible_timeout(
 				lge_moca_devp->ch_opened_wait_queue,
-				lge_moca_devp->is_open, (2 * HZ));
+				lge_moca_devp->is_open, msecs_to_jiffies(2000));
 		if (r == 0) {
 			r = -ETIMEDOUT;
 			/* close the ch to sync smd's state with lge_moca */

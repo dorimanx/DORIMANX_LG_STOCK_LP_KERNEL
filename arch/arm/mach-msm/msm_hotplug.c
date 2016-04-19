@@ -31,8 +31,8 @@
 
 #define MSM_HOTPLUG			"msm_hotplug"
 #define HOTPLUG_ENABLED			1
-#define DEFAULT_UPDATE_RATE		HZ / 10
-#define START_DELAY			HZ * 10
+#define DEFAULT_UPDATE_RATE		100
+#define START_DELAY			10000
 #define MIN_INPUT_INTERVAL		150 * 1000L
 #define DEFAULT_HISTORY_SIZE		10
 #define DEFAULT_DOWN_LOCK_DUR		1000
@@ -733,7 +733,7 @@ static int __ref msm_hotplug_start(void)
 	}
 
 	queue_delayed_work_on(0, hotplug_wq, &hotplug_work,
-			      START_DELAY);
+			      msecs_to_jiffies(START_DELAY));
 
 	return ret;
 err_dev:
