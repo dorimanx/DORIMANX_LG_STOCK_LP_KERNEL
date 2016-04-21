@@ -1659,7 +1659,9 @@ static int __init init_f2fs_fs(void)
 		err = -ENOMEM;
 		goto free_extent_cache;
 	}
-	register_shrinker(&f2fs_shrinker_info);
+	err = register_shrinker(&f2fs_shrinker_info);
+	if (err)
+		goto free_kset;
 
 	err = register_filesystem(&f2fs_fs_type);
 	if (err)
@@ -1674,6 +1676,7 @@ free_filesystem:
 	unregister_filesystem(&f2fs_fs_type);
 free_shrinker:
 	unregister_shrinker(&f2fs_shrinker_info);
+free_kset:
 	kset_unregister(f2fs_kset);
 free_extent_cache:
 	destroy_extent_cache();
