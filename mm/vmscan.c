@@ -202,8 +202,8 @@ static int debug_shrinker_show(struct seq_file *s, void *unused)
 	list_for_each_entry(shrinker, &shrinker_list, list) {
 		int num_objs;
 
-		num_objs = shrinker->shrink(shrinker, &sc);
-		seq_printf(s, "%pf %d\n", shrinker->shrink, num_objs);
+		num_objs = shrinker->count_objects(shrinker, &sc);
+		seq_printf(s, "%pf %d\n", shrinker->scan_objects, num_objs);
 	}
 	up_read(&shrinker_rwsem);
 	return 0;
