@@ -2689,7 +2689,9 @@ static void dec_hmp_sched_stats_fair(struct rq *rq, struct task_struct *p)
 	_dec_hmp_sched_stats_fair(rq, p, 1);
 }
 
+#ifdef CONFIG_SCHED_HMP
 static int task_will_be_throttled(struct task_struct *p);
+#endif
 
 #else	/* CONFIG_CFS_BANDWIDTH */
 
@@ -4506,6 +4508,7 @@ static inline int cfs_rq_throttled(struct cfs_rq *cfs_rq)
 	return cfs_bandwidth_used() && cfs_rq->throttled;
 }
 
+#ifdef CONFIG_SCHED_HMP
 /*
  * Check if task is part of a hierarchy where some cfs_rq does not have any
  * runtime left.
@@ -4532,6 +4535,7 @@ static int task_will_be_throttled(struct task_struct *p)
 
 	return 0;
 }
+#endif
 
 /* check whether cfs_rq, or any parent, is throttled */
 static inline int throttled_hierarchy(struct cfs_rq *cfs_rq)
@@ -4611,8 +4615,9 @@ static void throttle_cfs_rq(struct cfs_rq *cfs_rq)
 		if (dequeue)
 			dequeue_entity(qcfs_rq, se, DEQUEUE_SLEEP);
 		qcfs_rq->h_nr_running -= task_delta;
+#ifdef CONFIG_SCHED_HMP
 		dec_throttled_cfs_rq_hmp_stats(&qcfs_rq->hmp_stats, cfs_rq);
-
+#endif
 		if (qcfs_rq->load.weight)
 			dequeue = 0;
 	}
@@ -4620,7 +4625,9 @@ static void throttle_cfs_rq(struct cfs_rq *cfs_rq)
 	if (!se) {
 		sched_update_nr_prod(cpu_of(rq), task_delta, false);
 		rq->nr_running -= task_delta;
+#ifdef CONFIG_SCHED_HMP
 		dec_throttled_cfs_rq_hmp_stats(&rq->hmp_stats, cfs_rq);
+#endif
 	}
 
 	cfs_rq->throttled = 1;
@@ -4635,12 +4642,14 @@ static void throttle_cfs_rq(struct cfs_rq *cfs_rq)
 		__start_cfs_bandwidth(cfs_b, false);
 	raw_spin_unlock(&cfs_b->lock);
 
+#ifdef CONFIG_SCHED_HMP
 	/* Log effect on hmp stats after throttling */
 	trace_sched_cpu_load(rq, idle_cpu(cpu_of(rq)),
 			     mostly_idle_cpu(cpu_of(rq)),
 			     sched_irqload(cpu_of(rq)),
 			     power_cost_at_freq(cpu_of(rq), 0),
 			     cpu_temp(cpu_of(rq)));
+#endif
 }
 
 void unthrottle_cfs_rq(struct cfs_rq *cfs_rq)
@@ -4650,7 +4659,9 @@ void unthrottle_cfs_rq(struct cfs_rq *cfs_rq)
 	struct sched_entity *se;
 	int enqueue = 1;
 	long task_delta;
+#ifdef CONFIG_SCHED_HMP
 	struct cfs_rq *tcfs_rq = cfs_rq;
+#endif
 
 	se = cfs_rq->tg->se[cpu_of(rq)];
 
@@ -4678,7 +4689,9 @@ void unthrottle_cfs_rq(struct cfs_rq *cfs_rq)
 		if (enqueue)
 			enqueue_entity(cfs_rq, se, ENQUEUE_WAKEUP);
 		cfs_rq->h_nr_running += task_delta;
+#ifdef CONFIG_SCHED_HMP
 		inc_throttled_cfs_rq_hmp_stats(&cfs_rq->hmp_stats, tcfs_rq);
+#endif
 
 		if (cfs_rq_throttled(cfs_rq))
 			break;
@@ -4687,19 +4700,23 @@ void unthrottle_cfs_rq(struct cfs_rq *cfs_rq)
 	if (!se) {
 		sched_update_nr_prod(cpu_of(rq), task_delta, true);
 		rq->nr_running += task_delta;
+#ifdef CONFIG_SCHED_HMP
 		inc_throttled_cfs_rq_hmp_stats(&rq->hmp_stats, tcfs_rq);
+#endif
 	}
 
 	/* determine whether we need to wake up potentially idle cpu */
 	if (rq->curr == rq->idle && rq->cfs.nr_running)
 		resched_task(rq->curr);
 
+#ifdef CONFIG_SCHED_HMP
 	/* Log effect on hmp stats after un-throttling */
 	trace_sched_cpu_load(rq, idle_cpu(cpu_of(rq)),
 			     mostly_idle_cpu(cpu_of(rq)),
 			     sched_irqload(cpu_of(rq)),
 			     power_cost_at_freq(cpu_of(rq), 0),
 			     cpu_temp(cpu_of(rq)));
+#endif
 }
 
 static u64 distribute_cfs_runtime(struct cfs_bandwidth *cfs_b,
