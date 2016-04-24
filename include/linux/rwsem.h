@@ -72,8 +72,7 @@ static inline int rwsem_is_locked(struct rw_semaphore *sem)
 #endif
 
 #define __RWSEM_INITIALIZER(name)				\
-	{ .count = RWSEM_UNLOCKED_VALUE,			\
-	  .wait_list = LIST_HEAD_INIT((name).wait_list),	\
+	{ .wait_list = LIST_HEAD_INIT((name).wait_list),	\
 	  .wait_lock = __RAW_SPIN_LOCK_UNLOCKED(name.wait_lock)	\
 	  __RWSEM_OPT_INIT(name)				\
 	  __RWSEM_DEP_MAP_INIT(name) }
