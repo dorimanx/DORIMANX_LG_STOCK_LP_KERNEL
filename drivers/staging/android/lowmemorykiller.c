@@ -130,7 +130,7 @@ module_param_named(enable_adaptive_lmk, enable_adaptive_lmk, int,
  * 90-94. Usually this is a pseudo minfree value, higher than the
  * highest configured value in minfree array.
  */
-static int vmpressure_file_min = 66560; /* (65 * 1024) * 4 = 266 MB */
+static int vmpressure_file_min = 73728; /* (72 * 1024) * 4 = 294 MB */
 module_param_named(vmpressure_file_min, vmpressure_file_min, int,
 	S_IRUGO | S_IWUSR);
 
