@@ -7,6 +7,7 @@
 #include <linux/rcupdate.h>
 #include <linux/sched.h>
 #include <linux/errno.h>
+#include <linux/export.h>
 
 int __percpu_init_rwsem(struct percpu_rw_semaphore *brw,
 			const char *name, struct lock_class_key *rwsem_key)
