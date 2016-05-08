@@ -28,8 +28,6 @@
 
 #define MMC_QUEUE_BOUNCESZ	65536
 
-#define MMC_REQ_SPECIAL_MASK	(REQ_DISCARD | REQ_FLUSH)
-
 /*
  * Based on benchmark tests the default num of requests to trigger the write
  * packing was determined, to keep the read latency as low as possible and
