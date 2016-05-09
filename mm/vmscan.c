@@ -3054,7 +3054,6 @@ static bool kswapd_shrink_zone(struct zone *zone,
 			       unsigned long lru_pages,
 			       unsigned long *nr_attempted)
 {
-	unsigned long nr_slab;
 	int testorder = sc->order;
 	unsigned long balance_gap;
 	struct reclaim_state *reclaim_state = current->reclaim_state;
@@ -3100,7 +3099,7 @@ static bool kswapd_shrink_zone(struct zone *zone,
 	node_set(zone_to_nid(zone), shrink.nodes_to_scan);
 
 	reclaim_state->reclaimed_slab = 0;
-	nr_slab = shrink_slab(&shrink, sc->nr_scanned, lru_pages);
+	shrink_slab(&shrink, sc->nr_scanned, lru_pages);
 	sc->nr_reclaimed += reclaim_state->reclaimed_slab;
 
 	/* Account for the number of pages attempted to reclaim */
