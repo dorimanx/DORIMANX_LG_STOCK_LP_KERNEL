@@ -60,10 +60,10 @@
 #include <linux/pid.h>
 #include <linux/nsproxy.h>
 #include <linux/ptrace.h>
-#include <linux/freezer.h>
-#include <linux/hugetlb.h>
-#include <linux/bootmem.h>
 #include <linux/sched/rt.h>
+#include <linux/hugetlb.h>
+#include <linux/freezer.h>
+#include <linux/bootmem.h>
 
 #include <asm/futex.h>
 
@@ -87,8 +87,8 @@
  * hash bucket lock. Then it looks for waiters on that futex in the hash
  * bucket and wakes them.
  *
- * In scenarios where wakeups are called and no tasks are blocked on a futex,
- * taking the hb spinlock can be avoided and simply return. In order for this
+ * In futex wake up scenarios where no tasks are blocked on a futex, taking
+ * the hb spinlock can be avoided and simply return. In order for this
  * optimization to work, ordering guarantees must exist so that the waiter
  * being added to the list is acknowledged when the list is concurrently being
  * checked by the waker, avoiding scenarios like the following:
@@ -117,7 +117,7 @@
  * the changed user space value before blocking or is woken by a
  * concurrent waker:
  *
- * CPU 0                               CPU 1
+ * CPU 0                                 CPU 1
  * val = *futex;
  * sys_futex(WAIT, futex, val);
  *   futex_wait(futex, val);
@@ -270,14 +270,12 @@ static struct {
 static inline void futex_get_mm(union futex_key *key)
 {
 	atomic_inc(&key->private.mm->mm_count);
-#ifdef CONFIG_SMP
 	/*
 	 * Ensure futex_get_mm() implies a full barrier such that
 	 * get_futex_key() implies a full barrier. This is relied upon
 	 * as smp_mb(); (B), see the ordering comment above.
 	 */
 	smp_mb__after_atomic();
-#endif
 }
 
 /*
@@ -384,8 +382,6 @@ static void drop_futex_key_refs(union futex_key *key)
 	case FUT_OFF_MMSHARED:
 		mmdrop(key->private.mm);
 		break;
-	default:
-		smp_mb(); /* explicit MB (B) */
 	}
 }
 
@@ -1838,8 +1834,8 @@ retry_private:
 
 out_unlock:
 	double_unlock_hb(hb1, hb2);
-	hb_waiters_dec(hb2);
 	wake_up_q(&wake_q);
+	hb_waiters_dec(hb2);
 
 	/*
 	 * drop_futex_key_refs() must be called outside the spinlocks. During
@@ -2654,7 +2650,7 @@ int handle_early_requeue_pi_wakeup(struct futex_hash_bucket *hb,
  * futex_wait_requeue_pi() - Wait on uaddr and take uaddr2
  * @uaddr:	the futex we initially wait on (non-pi)
  * @flags:	futex flags (FLAGS_SHARED, FLAGS_CLOCKRT, etc.), they must be
- * 		the same type, no requeueing from private to shared, etc.
+ *		the same type, no requeueing from private to shared, etc.
  * @val:	the expected value of uaddr
  * @abs_time:	absolute timeout
  * @bitset:	32 bit wakeup bitset set by userspace, defaults to all
