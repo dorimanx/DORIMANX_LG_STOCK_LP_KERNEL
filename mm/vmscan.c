@@ -315,11 +315,6 @@ unsigned long shrink_slab(struct shrink_control *shrinkctl,
 		long batch_size = shrinker->batch ? shrinker->batch
 						  : SHRINK_BATCH;
 
-		long min_cache_size = batch_size;
-
-		if (current_is_kswapd())
-			min_cache_size = 0;
-
 		if (shrinker->count_objects)
 			max_pass = shrinker->count_objects(shrinker, shrinkctl);
 		else
@@ -373,10 +368,7 @@ unsigned long shrink_slab(struct shrink_control *shrinkctl,
 					nr_pages_scanned, lru_pages,
 					max_pass, delta, total_scan);
 
-		while (total_scan > min_cache_size) {
-
-			if (total_scan < batch_size)
-				batch_size = total_scan;
+		while (total_scan >= batch_size) {
 
 			if (shrinker->scan_objects) {
 				unsigned long ret;
