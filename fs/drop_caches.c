@@ -8,6 +8,7 @@
 #include <linux/writeback.h>
 #include <linux/sysctl.h>
 #include <linux/gfp.h>
+#include <linux/syscalls.h>
 #include "internal.h"
 
 /* A global variable is a bit ugly, but it keeps the code simple */
@@ -60,6 +61,9 @@ int drop_caches_sysctl_handler(struct ctl_table *table, int write,
 		return ret;
 	if (write) {
 		static int stfu;
+
+		/* sync file system before cache clean. Dorimanx. */
+		sys_sync();
 
 		if (sysctl_drop_caches & 1) {
 			iterate_supers(drop_pagecache_sb, NULL);
