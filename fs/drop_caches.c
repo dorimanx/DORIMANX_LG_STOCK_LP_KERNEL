@@ -40,6 +40,7 @@ static void drop_pagecache_sb(struct super_block *sb, void *unused)
 
 static void drop_slab(void)
 {
+#if 0 /* for now do not allow to use drop_caches = 3, FS stuck for some users possible bug in F2FS */
 	int nr_objects;
 	struct shrink_control shrink = {
 		.gfp_mask = GFP_KERNEL,
@@ -49,6 +50,9 @@ static void drop_slab(void)
 	do {
 		nr_objects = shrink_slab(&shrink, 1000, 1000);
 	} while (nr_objects > 10);
+#else
+	pr_info("drop_caches = 3 is not allowed by kernel dev. dorimanx\n");
+#endif
 }
 
 int drop_caches_sysctl_handler(struct ctl_table *table, int write,
