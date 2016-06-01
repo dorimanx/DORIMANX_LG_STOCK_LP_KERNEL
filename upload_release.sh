@@ -23,31 +23,36 @@ case "${build_selector}" in
 	d800)
 	(
 		ncftpput -f /root/ftp_login_mirror1.cfg /LG-LP/D800/ READY-RELEASES/*D800*
-		ncftpput -f /root/ftp_login_mirror2.cfg /LG-LP/D800/ READY-RELEASES/*D800*
+		#ncftpput -f /root/ftp_login_mirror2.cfg /LG-LP/D800/ READY-RELEASES/*D800*
+		cp READY-RELEASES/*D800* ../LG-G2-LP-DOWNLOADS/
 	)&
 	;;
 	d801)
 	(
 		ncftpput -f /root/ftp_login_mirror1.cfg /LG-LP/D801/ READY-RELEASES/*D801*
-		ncftpput -f /root/ftp_login_mirror2.cfg /LG-LP/D801/ READY-RELEASES/*D801*
+		#ncftpput -f /root/ftp_login_mirror2.cfg /LG-LP/D801/ READY-RELEASES/*D801*
+		cp READY-RELEASES/*D801* ../LG-G2-LP-DOWNLOADS/
 	)&
 	;;
 	d802)
 	(
 		ncftpput -f /root/ftp_login_mirror1.cfg /LG-LP/D802/ READY-RELEASES/*D802*
-		ncftpput -f /root/ftp_login_mirror2.cfg /LG-LP/D802/ READY-RELEASES/*D802*
+		#ncftpput -f /root/ftp_login_mirror2.cfg /LG-LP/D802/ READY-RELEASES/*D802*
+		cp READY-RELEASES/*D802* ../LG-G2-LP-DOWNLOADS/
 	)&
 	;;
 	ls980)
 	(
 		ncftpput -f /root/ftp_login_mirror1.cfg /LG-LP/LS980/ READY-RELEASES/*LS980*
-		ncftpput -f /root/ftp_login_mirror2.cfg /LG-LP/LS980/ READY-RELEASES/*LS980*
+		#ncftpput -f /root/ftp_login_mirror2.cfg /LG-LP/LS980/ READY-RELEASES/*LS980*
+		cp READY-RELEASES/*LS980* ../LG-G2-LP-DOWNLOADS/
 	)&
 	;;
 	vs980)
 	(
 		ncftpput -f /root/ftp_login_mirror1.cfg /LG-LP/VS980/ READY-RELEASES/*VS980*
-		ncftpput -f /root/ftp_login_mirror2.cfg /LG-LP/VS980/ READY-RELEASES/*VS980*
+		#ncftpput -f /root/ftp_login_mirror2.cfg /LG-LP/VS980/ READY-RELEASES/*VS980*
+		cp READY-RELEASES/*VS980* ../LG-G2-LP-DOWNLOADS/
 	)&
 	;;
 	*)
