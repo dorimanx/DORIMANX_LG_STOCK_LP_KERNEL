@@ -17,8 +17,8 @@
 
 static unsigned long dir_blocks(struct inode *inode)
 {
-	return ((unsigned long long) (i_size_read(inode) + PAGE_CACHE_SIZE - 1))
-							>> PAGE_CACHE_SHIFT;
+	return ((unsigned long long) (i_size_read(inode) + PAGE_SIZE - 1))
+							>> PAGE_SHIFT;
 }
 
 static unsigned int dir_buckets(unsigned int level, int dir_level)
@@ -708,7 +708,7 @@ void f2fs_delete_entry(struct f2fs_dir_entry *dentry, struct page *page,
 	dentry_blk = page_address(page);
 	bit_pos = dentry - dentry_blk->dentry;
 	for (i = 0; i < slots; i++)
-		test_and_clear_bit_le(bit_pos + i, &dentry_blk->dentry_bitmap);
+		clear_bit_le(bit_pos + i, &dentry_blk->dentry_bitmap);
 
 	/* Let's check and deallocate this dentry page */
 	bit_pos = find_next_bit_le(&dentry_blk->dentry_bitmap,
