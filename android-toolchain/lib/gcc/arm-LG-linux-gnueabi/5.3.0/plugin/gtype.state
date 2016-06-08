@@ -14780,27 +14780,27 @@
    (!type already_seen 752)
   )
   gc_pointed_to "vec<pending_noexcept,va_gc>"
-  (!srcfileloc  "cp/except.c" 1195)
+  (!srcfileloc  "cp/except.c" 1196)
   (!fields 2 
    (!pair  "va_gc"
     (!type already_seen 3)
-    (!srcfileloc  "cp/except.c" 1195)
+    (!srcfileloc  "cp/except.c" 1196)
     nil )
    (!pair  "pending_noexcept"
     (!type struct 754 nil  gc_used "pending_noexcept"
-     (!srcfileloc  "cp/except.c" 1194)
+     (!srcfileloc  "cp/except.c" 1195)
      (!fields 2 
       (!pair  "fn"
        (!type already_seen 5)
-       (!srcfileloc  "cp/except.c" 1192)
+       (!srcfileloc  "cp/except.c" 1193)
        nil )
       (!pair  "loc"
        (!type already_seen 9)
-       (!srcfileloc  "cp/except.c" 1193)
+       (!srcfileloc  "cp/except.c" 1194)
        nil )
      )
      nil 516 nil nil )
-    (!srcfileloc  "cp/except.c" 1195)
+    (!srcfileloc  "cp/except.c" 1196)
     nil )
   )
  )
@@ -24697,11 +24697,11 @@
   nil )
  (!pair  "vec<pending_noexcept,va_gc>"
   (!type already_seen 752)
-  (!srcfileloc  "cp/except.c" 1195)
+  (!srcfileloc  "cp/except.c" 1196)
   nil )
  (!pair  "pending_noexcept"
   (!type already_seen 754)
-  (!srcfileloc  "cp/except.c" 1194)
+  (!srcfileloc  "cp/except.c" 1195)
   nil )
  (!pair  "secondary_vptr_vtt_init_data"
   (!type already_seen 755)
@@ -28366,7 +28366,7 @@
   nil )
  (!pair  "pending_noexcept_checks"
   (!type already_seen 753)
-  (!srcfileloc  "cp/except.c" 1195)
+  (!srcfileloc  "cp/except.c" 1196)
   nil )
  (!pair  "cp_eh_personality_decl"
   (!type already_seen 5)
