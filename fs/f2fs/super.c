@@ -526,7 +526,7 @@ static struct inode *f2fs_alloc_inode(struct super_block *sb)
 
 	init_once((void *) fi);
 
-	if (percpu_counter_init(&fi->dirty_pages, 0, GFP_NOFS)) {
+	if (percpu_counter_init(&fi->dirty_pages, 0)) {
 		kmem_cache_free(f2fs_inode_cachep, fi);
 		return NULL;
 	}
@@ -1380,17 +1380,16 @@ static int init_percpu_info(struct f2fs_sb_info *sbi)
 	int i, err;
 
 	for (i = 0; i < NR_COUNT_TYPE; i++) {
-		err = percpu_counter_init(&sbi->nr_pages[i], 0, GFP_KERNEL);
+		err = percpu_counter_init(&sbi->nr_pages[i], 0);
 		if (err)
 			return err;
 	}
 
-	err = percpu_counter_init(&sbi->alloc_valid_block_count, 0, GFP_KERNEL);
+	err = percpu_counter_init(&sbi->alloc_valid_block_count, 0);
 	if (err)
 		return err;
 
-	return percpu_counter_init(&sbi->total_valid_inode_count, 0,
-								GFP_KERNEL);
+	return percpu_counter_init(&sbi->total_valid_inode_count, 0);
 }
 
 /*
