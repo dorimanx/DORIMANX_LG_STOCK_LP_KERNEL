@@ -876,8 +876,8 @@ static void unpin_tag(unsigned long handle)
 
 static void reset_page(struct page *page)
 {
-	clear_bit(PG_private, &page->flags);
-	clear_bit(PG_private_2, &page->flags);
+	ClearPagePrivate(page);
+	ClearPagePrivate2(page);
 	set_page_private(page, 0);
 	page->index = 0;
 }
