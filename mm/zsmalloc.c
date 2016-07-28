@@ -737,7 +737,7 @@ static void remove_zspage(struct size_class *class,
 	if (fullness >= ZS_EMPTY)
 		return;
 
-	BUG_ON(list_empty(&class->fullness_list[fullness]));
+	VM_BUG_ON(list_empty(&class->fullness_list[fullness]));
 
 	list_del_init(&zspage->list);
 	zs_stat_dec(class, fullness == ZS_ALMOST_EMPTY ?
@@ -894,7 +894,7 @@ static void free_zspage(struct zs_pool *pool, struct zspage *zspage)
 {
 	struct page *page, *next;
 
-	BUG_ON(get_zspage_inuse(zspage));
+	VM_BUG_ON(get_zspage_inuse(zspage));
 
 	next = page = zspage->first_page;
 	do {
@@ -1276,8 +1276,6 @@ void *zs_map_object(struct zs_pool *pool, unsigned long handle,
 	struct page *pages[2];
 	void *ret;
 
-	BUG_ON(!handle);
-
 	/*
 	 * Because we use per-cpu mapping areas shared among the
 	 * pools/users, we can't allow mapping in interrupt context
@@ -1329,8 +1327,6 @@ void zs_unmap_object(struct zs_pool *pool, unsigned long handle)
 	enum fullness_group fg;
 	struct size_class *class;
 	struct mapping_area *area;
-
-	BUG_ON(!handle);
 
 	obj = handle_to_obj(handle);
 	obj_to_location(obj, &page, &obj_idx);
@@ -1463,8 +1459,6 @@ static void obj_free(struct size_class *class, unsigned long obj)
 	unsigned int f_objidx;
 	void *vaddr;
 
-	BUG_ON(!obj);
-
 	obj &= ~OBJ_ALLOCATED_TAG;
 	obj_to_location(obj, &f_page, &f_objidx);
 	f_offset = (class->size * f_objidx) & ~PAGE_MASK;
@@ -1563,7 +1557,6 @@ static void zs_object_copy(struct size_class *class, unsigned long dst,
 			kunmap_atomic(d_addr);
 			kunmap_atomic(s_addr);
 			s_page = get_next_page(s_page);
-			BUG_ON(!s_page);
 			s_addr = kmap_atomic(s_page);
 			d_addr = kmap_atomic(d_page);
 			s_size = class->size - written;
@@ -1573,7 +1566,6 @@ static void zs_object_copy(struct size_class *class, unsigned long dst,
 		if (d_off >= PAGE_SIZE) {
 			kunmap_atomic(d_addr);
 			d_page = get_next_page(d_page);
-			BUG_ON(!d_page);
 			d_addr = kmap_atomic(d_page);
 			d_size = class->size - written;
 			d_off = 0;
@@ -1748,8 +1740,6 @@ static void __zs_compact(struct zs_pool *pool, struct size_class *class)
 
 	spin_lock(&class->lock);
 	while ((src_zspage = isolate_zspage(class, true))) {
-
-		BUG_ON(!is_first_page(src_page));
 
 		if (!zs_can_compact(class))
 			break;
