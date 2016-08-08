@@ -19,18 +19,10 @@
 
 build_selector=$1;
 
-ADD_TO_GIT()
-{
-	cd ../LG-G2-LP-DOWNLOADS/
-	git add --all
-	cd ../DORIMANX_LG_STOCK_LP_KERNEL/
-}
-
 case "${build_selector}" in
 	d800)
 	(
 		cp READY-RELEASES/*D800* ../LG-G2-LP-DOWNLOADS/D800/
-		ADD_TO_GIT;
 		ncftpput -f /root/ftp_login_mirror1.cfg /LG-LP/D800/ READY-RELEASES/*D800*
 		#ncftpput -f /root/ftp_login_mirror2.cfg /LG-LP/D800/ READY-RELEASES/*D800*
 	)&
@@ -38,7 +30,6 @@ case "${build_selector}" in
 	d801)
 	(
 		cp READY-RELEASES/*D801* ../LG-G2-LP-DOWNLOADS/D801/
-		ADD_TO_GIT;
 		ncftpput -f /root/ftp_login_mirror1.cfg /LG-LP/D801/ READY-RELEASES/*D801*
 		#ncftpput -f /root/ftp_login_mirror2.cfg /LG-LP/D801/ READY-RELEASES/*D801*
 	)&
@@ -46,7 +37,6 @@ case "${build_selector}" in
 	d802)
 	(
 		cp READY-RELEASES/*D802* ../LG-G2-LP-DOWNLOADS/D802/
-		ADD_TO_GIT;
 		ncftpput -f /root/ftp_login_mirror1.cfg /LG-LP/D802/ READY-RELEASES/*D802*
 		#ncftpput -f /root/ftp_login_mirror2.cfg /LG-LP/D802/ READY-RELEASES/*D802*
 	)&
@@ -54,7 +44,6 @@ case "${build_selector}" in
 	ls980)
 	(
 		cp READY-RELEASES/*LS980* ../LG-G2-LP-DOWNLOADS/LS980/
-		ADD_TO_GIT;
 		ncftpput -f /root/ftp_login_mirror1.cfg /LG-LP/LS980/ READY-RELEASES/*LS980*
 		#ncftpput -f /root/ftp_login_mirror2.cfg /LG-LP/LS980/ READY-RELEASES/*LS980*
 	)&
@@ -62,9 +51,11 @@ case "${build_selector}" in
 	vs980)
 	(
 		cp READY-RELEASES/*VS980* ../LG-G2-LP-DOWNLOADS/VS980/
-		ADD_TO_GIT;
 		ncftpput -f /root/ftp_login_mirror1.cfg /LG-LP/VS980/ READY-RELEASES/*VS980*
 		#ncftpput -f /root/ftp_login_mirror2.cfg /LG-LP/VS980/ READY-RELEASES/*VS980*
+		cd ../LG-G2-LP-DOWNLOADS/
+		git add --all
+		cd ../DORIMANX_LG_STOCK_LP_KERNEL/
 	)&
 	;;
 	*)
