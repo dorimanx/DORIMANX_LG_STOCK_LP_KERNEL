@@ -888,7 +888,7 @@ static int socinfo_get_speed_bin(void)
     if (redundant_sel == 1)
         speed_bin = (pte_efuse >> 27) & 0xF;
 
-	return speed_bin;
+    return speed_bin;
 }
 
 static int socinfo_get_pvs(void)
@@ -905,10 +905,12 @@ static int socinfo_get_pvs(void)
     if (redundant_sel == 2)
         pvs = (pte_efuse >> 27) & 0xF;
 
-	pte_efuse = (u32)readl(tmp + 0x4);
+    pte_efuse = (u32)readl(tmp + 0x4);
+
     if (!!(pte_efuse & BIT(21)))
 		return pvs;
-	return -1;
+
+    return -1;
 }
 
 static ssize_t

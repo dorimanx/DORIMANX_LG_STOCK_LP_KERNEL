@@ -101,8 +101,8 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			audio->enabled);
 		if (audio->stopped == 1)
 			audio->stopped = 0;
-			break;
-		}
+		break;
+	}
 	case AUDIO_GET_AMRWBPLUS_CONFIG_V2: {
 		if ((audio) && (arg) && (audio->codec_cfg)) {
 			if (copy_to_user((void *)arg, audio->codec_cfg,

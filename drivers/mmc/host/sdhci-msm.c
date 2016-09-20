@@ -1143,8 +1143,8 @@ static int sdhci_msm_dt_parse_vreg_info(struct device *dev,
     /* Bohyun, Jung (D3-5T-FS@lge.com)
        Because lpm_sup is defined on common dtsi, add attribute 'disable' for g3 global for minimum change. */
 	prop = of_get_property(np, prop_name, &len);
-    if (prop != NULL && len >0 && of_compat_cmp((const char*)prop, "disable", strlen("disable")) == 0)
-        vreg->lpm_sup = false;
+        if (prop != NULL && len >0 && of_compat_cmp((const char*)prop, "disable", strlen("disable")) == 0)
+                vreg->lpm_sup = false;
 
 	snprintf(prop_name, MAX_PROP_SIZE,
 			"qcom,%s-voltage-level", vreg_name);

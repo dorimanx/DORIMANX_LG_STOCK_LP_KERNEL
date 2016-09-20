@@ -69,11 +69,6 @@ static const struct of_device_id adp1660_i2c_trigger_dt_match[] = {
 
 MODULE_DEVICE_TABLE(of, adp1660_i2c_trigger_dt_match);
 
-static const struct i2c_device_id flash_i2c_id[] = {
-	{"qcom,led-flash", (kernel_ulong_t)&fctrl},
-	{ }
-};
-
 static const struct i2c_device_id adp1660_i2c_id[] = {
 	{FLASH_NAME, (kernel_ulong_t)&fctrl},
 	{ }

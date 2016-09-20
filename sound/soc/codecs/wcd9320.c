@@ -318,7 +318,6 @@ static const DECLARE_TLV_DB_SCALE(digital_gain, 0, 1, 0);
 static const DECLARE_TLV_DB_SCALE(line_gain, 0, 7, 1);
 static const DECLARE_TLV_DB_SCALE(analog_gain, 0, 25, 1);
 static struct snd_soc_dai_driver taiko_dai[];
-static const DECLARE_TLV_DB_SCALE(aux_pga_gain, 0, 2, 0);
 
 /* Codec supports 2 IIR filters */
 enum {
@@ -1124,11 +1123,6 @@ static int taiko_config_compander(struct snd_soc_dapm_widget *w,
 static const char *const taiko_anc_func_text[] = {"OFF", "ON"};
 static const struct soc_enum taiko_anc_func_enum =
 		SOC_ENUM_SINGLE_EXT(2, taiko_anc_func_text);
-
-static const char *const tabla_ear_pa_gain_text[] = {"POS_6_DB", "POS_2_DB"};
-static const struct soc_enum tabla_ear_pa_gain_enum[] = {
-		SOC_ENUM_SINGLE_EXT(2, tabla_ear_pa_gain_text),
-};
 
 /*cut of frequency for high pass filter*/
 static const char * const cf_text[] = {

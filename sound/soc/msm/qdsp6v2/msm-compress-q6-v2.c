@@ -3806,12 +3806,14 @@ static int msm_compr_gapless_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+#if !defined(CONFIG_SND_LGE_EFFECT) || !defined(CONFIG_SND_LGE_NORMALIZER) || !defined(CONFIG_SND_LGE_MABL)
 static const struct snd_kcontrol_new msm_compr_gapless_controls[] = {
 	SOC_SINGLE_EXT("Compress Gapless Playback",
 			0, 0, 1, 0,
 			msm_compr_gapless_get,
 			msm_compr_gapless_put),
 };
+#endif
 
 static int msm_compr_add_dec_runtime_params_control(
 						struct snd_soc_pcm_runtime *rtd)

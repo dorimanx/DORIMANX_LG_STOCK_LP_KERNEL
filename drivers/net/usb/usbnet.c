@@ -84,8 +84,6 @@
 // randomly generated ethernet address
 static u8	node_id [ETH_ALEN];
 
-static const char driver_name [] = "usbnet";
-
 struct workqueue_struct	*usbnet_wq;
 
 static DECLARE_WAIT_QUEUE_HEAD(unlink_wakeup);

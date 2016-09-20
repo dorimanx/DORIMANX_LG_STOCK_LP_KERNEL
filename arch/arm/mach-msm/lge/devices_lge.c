@@ -764,7 +764,7 @@ int __init lge_laf_mode_init(char *s)
     if (strcmp(s, "") && strcmp(s, "MID"))
         lge_laf_mode = LGE_LAF_MODE_LAF;
 
-	return 1;
+    return 1;
 }
 __setup("androidboot.laf=", lge_laf_mode_init);
 

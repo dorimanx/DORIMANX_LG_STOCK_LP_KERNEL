@@ -1427,7 +1427,7 @@ static int synaptics_rmi4_irq_enable(struct synaptics_rmi4_data *rmi4_data,
 		if (retval < 0)
 			return retval;
 
-			printk("[Touch D] intr = 0x%d \n", rmi4_data->num_of_intr_regs);
+		printk("[Touch D] intr = 0x%d \n", rmi4_data->num_of_intr_regs);
 
 		retval = request_threaded_irq(rmi4_data->irq, synaptics_rmi4_irq,
 			      synaptics_rmi4_thread_irq, platform_data->irq_flags| IRQF_ONESHOT,
