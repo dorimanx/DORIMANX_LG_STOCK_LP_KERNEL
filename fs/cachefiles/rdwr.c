@@ -935,6 +935,15 @@ int cachefiles_write_page(struct fscache_storage *op, struct page *page)
 	cache = container_of(object->fscache.cache,
 			     struct cachefiles_cache, cache);
 
+	pos = (loff_t)page->index << PAGE_SHIFT;
+
+	/* We mustn't write more data than we have, so we have to beware of a
+	 * partial page at EOF.
+	 */
+	eof = object->fscache.store_limit_l;
+	if (pos >= eof)
+		goto error;
+
 	/* write the page to the backing filesystem and let it store it in its
 	 * own time */
 	path.mnt = cache->mnt;

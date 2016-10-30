@@ -26,6 +26,8 @@
 #include "tick-internal.h"
 #include "ntp_internal.h"
 
+extern ktime_t ntp_get_next_leap(void);
+
 static struct timekeeper timekeeper;
 static DEFINE_RAW_SPINLOCK(timekeeper_lock);
 static seqcount_t timekeeper_seq;
@@ -73,6 +75,17 @@ static void tk_set_wall_to_mono(struct timekeeper *tk, struct timespec wtm)
 	set_normalized_timespec(&tmp, -wtm.tv_sec, -wtm.tv_nsec);
 	tk->offs_real = timespec_to_ktime(tmp);
 	tk->offs_tai = ktime_add(tk->offs_real, ktime_set(tk->tai_offset, 0));
+}
+
+/*
+ *   tk_update_leap_state - helper to update the next_leap_ktime
+ */
+static inline void tk_update_leap_state(struct timekeeper *tk)
+{
+	tk->next_leap_ktime = ntp_get_next_leap();
+	if (tk->next_leap_ktime.tv64 != KTIME_MAX)
+		/* Convert to monotonic time */
+		tk->next_leap_ktime = ktime_sub(tk->next_leap_ktime, tk->offs_real);
 }
 
 static void tk_set_sleep_time(struct timekeeper *tk, struct timespec t)
@@ -247,6 +260,7 @@ static void timekeeping_update(struct timekeeper *tk, bool clearntp, bool mirror
 		tk->ntp_error = 0;
 		ntp_clear();
 	}
+	tk_update_leap_state(&timekeeper);
 	update_vsyscall(tk);
 	update_pvclock_gtod(tk);
 
@@ -1640,10 +1654,16 @@ ktime_t ktime_get_update_offsets(ktime_t *offs_real, ktime_t *offs_boot,
 		*offs_real = tk->offs_real;
 		*offs_boot = tk->offs_boot;
 		*offs_tai = tk->offs_tai;
+
+		now = ktime_add_ns(ktime_set(secs, 0), nsecs);
+		now = ktime_sub(now, *offs_real);
+
+		/* Handle leapsecond insertion adjustments */
+		if (unlikely(now.tv64 >= timekeeper.next_leap_ktime.tv64))
+			*offs_real = ktime_sub(timekeeper.offs_real, ktime_set(1, 0));
+
 	} while (read_seqcount_retry(&timekeeper_seq, seq));
 
-	now = ktime_add_ns(ktime_set(secs, 0), nsecs);
-	now = ktime_sub(now, *offs_real);
 	return now;
 }
 #endif
