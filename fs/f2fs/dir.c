@@ -260,7 +260,7 @@ out:
  * Entry is guaranteed to be valid.
  */
 struct f2fs_dir_entry *f2fs_find_entry(struct inode *dir,
-			const struct qstr *child, struct page **res_page)
+			struct qstr *child, struct page **res_page)
 {
 	struct f2fs_dir_entry *de = NULL;
 	struct fscrypt_name fname;

@@ -619,7 +619,8 @@ alloc:
 	return 0;
 }
 
-ssize_t f2fs_preallocate_blocks(struct inode *inode, loff_t pos, size_t count, bool dio)
+ssize_t f2fs_preallocate_blocks(struct inode *inode, loff_t pos,
+					size_t count, bool dio)
 {
 	struct f2fs_map_blocks map;
 	ssize_t ret = 0;
@@ -1797,7 +1798,8 @@ void f2fs_invalidate_page(struct page *page, unsigned int offset,
 	struct inode *inode = page->mapping->host;
 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
 
-	if (inode->i_ino >= F2FS_ROOT_INO(sbi) && (offset % PAGE_SIZE))
+	if (inode->i_ino >= F2FS_ROOT_INO(sbi) &&
+		(offset % PAGE_SIZE || length != PAGE_SIZE))
 		return;
 
 	if (PageDirty(page)) {
