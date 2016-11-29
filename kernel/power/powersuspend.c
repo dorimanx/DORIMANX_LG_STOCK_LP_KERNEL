@@ -4,6 +4,7 @@
  * Copyright (C) 2013 Paul Reioux
  *
  * Modified by Jean-Pierre Rasquin <yank555.lu@gmail.com>
+ * Further modified by Rob Patershuk <robpatershuk@gmail.com>
  *
  *  v1.1 - make powersuspend not depend on a userspace initiator anymore,
  *         but use a hook in autosleep instead.
@@ -20,6 +21,16 @@
  *  v1.6 - remove autosleep and hybrid modes (autosleep not working on LP)
  *
  *  v1.7 - do only run state change if change actually requests a new state
+ *
+ * v1.7.1 - Add autosleep and hybrid modes back
+ *
+ * v1.7.2 Cleanup
+ *
+ * v1.8.0 Changed "userspace" mode to disabled, and removed the ability to store
+ *        to the syfs. Now The driver is autonomous, without any userspace
+ *        interaction required/allowed. Also a little bit of sysfs
+ *		  ordering cleanup.
+ *
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -38,7 +49,8 @@
 #include <linux/workqueue.h>
 
 #define MAJOR_VERSION	1
-#define MINOR_VERSION	7
+#define MINOR_VERSION	8
+#define SUB_MINOR_VERSION 0
 
 /*
  * debug = 1 will print all
@@ -65,9 +77,9 @@ static DECLARE_WORK(power_suspend_work, power_suspend);
 static DECLARE_WORK(power_resume_work, power_resume);
 static DEFINE_SPINLOCK(state_lock);
 
-/* Yank555.lu : Current powersave state (screen on / off) */
+/* Yank555.lu : Current powersuspend state (screen on / off) */
 static int state;
-/* Yank555.lu : Current powersave suspend_mode  (kernel / userspace / panel) */
+/* Yank555.lu : Current powersuspend suspend_mode  (kernel / userspace / panel) */
 static int suspend_mode;
 
 void register_power_suspend(struct power_suspend *handler)
@@ -187,66 +199,27 @@ static ssize_t power_suspend_state_show(struct kobject *kobj,
         return sprintf(buf, "%u\n", state);
 }
 
-static ssize_t power_suspend_state_store(struct kobject *kobj,
-		struct kobj_attribute *attr, const char *buf, size_t count)
-{
-	int new_state = 0;
-
-	/* Yank555.lu : Only allow sysfs changes from userspace suspend_mode */
-	if (suspend_mode != POWER_SUSPEND_USERSPACE)
-		return -EINVAL;
-
-	sscanf(buf, "%d\n", &new_state);
-
-	dprintk("[POWERSUSPEND] userspace resquests %s.\n", new_state == POWER_SUSPEND_ACTIVE ? "sleep" : "wakeup");
-	if(new_state == POWER_SUSPEND_ACTIVE || new_state == POWER_SUSPEND_INACTIVE)
-		set_power_suspend_state(new_state);
-
-	return count;
-}
-
-static struct kobj_attribute power_suspend_state_attribute =
-	__ATTR(power_suspend_state, 0666,
-		power_suspend_state_show,
-		power_suspend_state_store);
-
 static ssize_t power_suspend_mode_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
         return sprintf(buf, "%u\n", suspend_mode);
 }
 
-static ssize_t power_suspend_mode_store(struct kobject *kobj,
-		struct kobj_attribute *attr, const char *buf, size_t count)
-{
-	int data = 0;
-
-	sscanf(buf, "%d\n", &data);
-
-#if 0 /* do not allow user/app to mess with this control */
-	switch (data) {
-		case POWER_SUSPEND_PANEL:
-		case POWER_SUSPEND_USERSPACE:
-			suspend_mode = data;
-			return count;
-		default:
-			return -EINVAL;
-	}
-#else
-	return count;
-#endif
-}
-
-static struct kobj_attribute power_suspend_mode_attribute =
-	__ATTR(power_suspend_mode, 0666,
-		power_suspend_mode_show,
-		power_suspend_mode_store);
-
 static ssize_t power_suspend_version_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
-	return sprintf(buf, "version: %d.%d\n", MAJOR_VERSION, MINOR_VERSION);
+	return sprintf(buf, "version: %d.%d.%d\n", MAJOR_VERSION, MINOR_VERSION, SUB_MINOR_VERSION);
 }
+
+static struct kobj_attribute power_suspend_state_attribute =
+	__ATTR(power_suspend_state, 0444,
+		power_suspend_state_show,
+		NULL);
+
+static struct kobj_attribute power_suspend_mode_attribute =
+	__ATTR(power_suspend_mode, 0444,
+		power_suspend_mode_show,
+		NULL);
 
 static struct kobj_attribute power_suspend_version_attribute =
 	__ATTR(power_suspend_version, 0444,
@@ -289,15 +262,13 @@ static int __init power_suspend_init(void)
                 kobject_put(power_suspend_kobj);
                 return -ENOMEM;
         }
-	suspend_work_queue = create_singlethread_workqueue("p-suspend");
+
+	suspend_work_queue = create_singlethread_workqueue("pwr-suspend");
 
 	if (suspend_work_queue == NULL) {
 		return -ENOMEM;
 	}
 
-#if 0 /* INFO */
-	suspend_mode = POWER_SUSPEND_USERSPACE;	/* Yank555.lu : Default to userspace suspend_mode */
-#endif
 	suspend_mode = POWER_SUSPEND_PANEL; /* Yank555.lu : Default to display panel suspend_mode */
 
 	return 0;
@@ -309,12 +280,13 @@ static void __exit power_suspend_exit(void)
 		kobject_put(power_suspend_kobj);
 
 	destroy_workqueue(suspend_work_queue);
-} 
+}
 
 core_initcall(power_suspend_init);
 module_exit(power_suspend_exit);
 
-MODULE_AUTHOR("Paul Reioux <reioux@gmail.com> / Jean-Pierre Rasquin <yank555.lu@gmail.com>");
+MODULE_AUTHOR("Paul Reioux <reioux@gmail.com> / Jean-Pierre Rasquin <yank555.lu@gmail.com> \
+				Rob Patershuk <robpatershuk@gmail.com>");
 MODULE_DESCRIPTION("power_suspend - A replacement kernel PM driver for"
         "Android's deprecated early_suspend/late_resume PM driver!");
 MODULE_LICENSE("GPL v2");
