@@ -50,7 +50,7 @@
 
 #define MAJOR_VERSION	1
 #define MINOR_VERSION	8
-#define SUB_MINOR_VERSION 0
+#define SUB_MINOR_VERSION 1
 
 /*
  * debug = 1 will print all
@@ -67,7 +67,6 @@ do { 				\
 		pr_info(msg);	\
 } while (0)
 
-struct workqueue_struct *suspend_work_queue;
 
 static DEFINE_MUTEX(power_suspend_lock);
 static LIST_HEAD(power_suspend_handlers);
@@ -169,11 +168,11 @@ void set_power_suspend_state(int new_state)
 		if (state == POWER_SUSPEND_INACTIVE && new_state == POWER_SUSPEND_ACTIVE) {
 			dprintk("[POWERSUSPEND] state activated.\n");
 			state = new_state;
-			queue_work(suspend_work_queue, &power_suspend_work);
+			schedule_work(&power_suspend_work);
 		} else if (state == POWER_SUSPEND_ACTIVE && new_state == POWER_SUSPEND_INACTIVE) {
 			dprintk("[POWERSUSPEND] state deactivated.\n");
 			state = new_state;
-			queue_work(suspend_work_queue, &power_resume_work);
+			schedule_work(&power_resume_work);
 		}
 		spin_unlock_irqrestore(&state_lock, irqflags);
 	} else {
@@ -247,26 +246,21 @@ static int __init power_suspend_init(void)
 
 	int sysfs_result;
 
-        power_suspend_kobj = kobject_create_and_add("power_suspend",
-				kernel_kobj);
-        if (!power_suspend_kobj) {
-                pr_err("%s kobject create failed!\n", __FUNCTION__);
-                return -ENOMEM;
-        }
+	power_suspend_kobj = kobject_create_and_add("power_suspend",
+		kernel_kobj);
 
-        sysfs_result = sysfs_create_group(power_suspend_kobj,
-			&power_suspend_attr_group);
+	if (!power_suspend_kobj) {
+		pr_err("%s kobject create failed!\n", __FUNCTION__);
+	return -ENOMEM;
+	}
 
-        if (sysfs_result) {
-                pr_info("%s group create failed!\n", __FUNCTION__);
-                kobject_put(power_suspend_kobj);
-                return -ENOMEM;
-        }
+	sysfs_result = sysfs_create_group(power_suspend_kobj,
+		&power_suspend_attr_group);
 
-	suspend_work_queue = create_singlethread_workqueue("pwr-suspend");
-
-	if (suspend_work_queue == NULL) {
-		return -ENOMEM;
+	if (sysfs_result) {
+		pr_info("%s group create failed!\n", __FUNCTION__);
+		kobject_put(power_suspend_kobj);
+	return -ENOMEM;
 	}
 
 	suspend_mode = POWER_SUSPEND_PANEL; /* Yank555.lu : Default to display panel suspend_mode */
@@ -278,8 +272,6 @@ static void __exit power_suspend_exit(void)
 {
 	if (power_suspend_kobj != NULL)
 		kobject_put(power_suspend_kobj);
-
-	destroy_workqueue(suspend_work_queue);
 }
 
 core_initcall(power_suspend_init);
