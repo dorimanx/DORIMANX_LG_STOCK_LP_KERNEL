@@ -18,6 +18,7 @@
 #include <linux/interrupt.h>	/* request_irq() */
 #include <linux/memory.h>	/* memset */
 #include <linux/vmalloc.h>
+#include <linux/module.h>
 
 #include "sps_bam.h"
 #include "bam.h"
@@ -267,6 +268,9 @@ static irqreturn_t bam_isr(int irq, void *ctxt)
 	return IRQ_HANDLED;
 }
 
+static unsigned int allow_suspend = 1;
+module_param_named(allow_suspend, allow_suspend, uint, 0644);
+
 /**
  * BAM device enable
  */
@@ -305,10 +309,18 @@ int sps_bam_enable(struct sps_bam *dev)
 					"sps:BAM %pa uses edge for IRQ# %d\n",
 					BAM_ID(dev), dev->props.irq);
 			} else {
-				result = request_irq(dev->props.irq,
-					(irq_handler_t) bam_isr,
-					IRQF_TRIGGER_HIGH | IRQF_NO_SUSPEND,
-					"sps", dev);
+				if (!allow_suspend)
+					result = request_irq(dev->props.irq,
+						(irq_handler_t) bam_isr,
+						IRQF_TRIGGER_HIGH |
+						IRQF_NO_SUSPEND,
+						"sps", dev);
+				else
+					result = request_irq(dev->props.irq,
+						(irq_handler_t) bam_isr,
+						IRQF_TRIGGER_HIGH,
+						"sps", dev);
+
 				SPS_DBG(
 					"sps:BAM %pa uses level for IRQ# %d\n",
 					BAM_ID(dev), dev->props.irq);
