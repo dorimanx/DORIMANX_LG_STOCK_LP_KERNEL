@@ -2311,7 +2311,7 @@ static ssize_t f2fs_file_aio_write(struct kiocb *iocb, const struct iovec *iov,
 	inode_lock(inode);
 	ret = generic_write_checks(file, &pos, &count, S_ISBLK(inode->i_mode));
 	if (!ret) {
-		int ret = f2fs_preallocate_blocks(inode, pos, count,
+		int err = f2fs_preallocate_blocks(inode, pos, count,
 				iocb->ki_filp->f_flags & O_DIRECT);
 		if (err) {
 			inode_unlock(inode);
