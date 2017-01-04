@@ -30,10 +30,9 @@ CT_LOCAL_TARBALLS_DIR="${CT_TOP_DIR}/src"
 CT_SAVE_TARBALLS=y
 CT_WORK_DIR="${CT_TOP_DIR}/.build"
 CT_PREFIX_DIR="${CT_TOP_DIR}/builds/${CT_TARGET}"
-CT_INSTALL_DIR="${CT_PREFIX_DIR}"
 CT_RM_RF_PREFIX_DIR=y
 CT_REMOVE_DOCS=y
-CT_INSTALL_DIR_RO=y
+CT_PREFIX_DIR_RO=y
 CT_STRIP_HOST_TOOLCHAIN_EXECUTABLES=y
 # CT_STRIP_TARGET_TOOLCHAIN_EXECUTABLES is not set
 
@@ -219,22 +218,21 @@ CT_BUILD_SUFFIX=""
 #
 CT_KERNEL_SUPPORTS_SHARED_LIBS=y
 CT_KERNEL="linux"
-CT_KERNEL_VERSION="3.4.110"
+CT_KERNEL_VERSION="3.4.113"
 # CT_KERNEL_bare_metal is not set
 CT_KERNEL_linux=y
 CT_KERNEL_bare_metal_AVAILABLE=y
 CT_KERNEL_linux_AVAILABLE=y
 # CT_KERNEL_LINUX_CUSTOM is not set
+# CT_KERNEL_V_4_8 is not set
 # CT_KERNEL_V_4_4 is not set
-# CT_KERNEL_V_4_3 is not set
 # CT_KERNEL_V_4_1 is not set
 # CT_KERNEL_V_3_18 is not set
-# CT_KERNEL_V_3_14 is not set
+# CT_KERNEL_V_3_16 is not set
 # CT_KERNEL_V_3_12 is not set
 # CT_KERNEL_V_3_10 is not set
 CT_KERNEL_V_3_4=y
 # CT_KERNEL_V_3_2 is not set
-# CT_KERNEL_V_2_6_32 is not set
 CT_KERNEL_windows_AVAILABLE=y
 
 #
@@ -301,7 +299,7 @@ CT_BINUTILS_FOR_TARGET_BFD=y
 # C-library
 #
 CT_LIBC="glibc"
-CT_LIBC_VERSION="2.23"
+CT_LIBC_VERSION="2.24"
 CT_LIBC_glibc=y
 # CT_LIBC_musl is not set
 # CT_LIBC_uClibc is not set
@@ -310,7 +308,8 @@ CT_LIBC_glibc_AVAILABLE=y
 CT_THREADS="nptl"
 # CT_LIBC_GLIBC_CUSTOM is not set
 CT_CC_GLIBC_SHOW_LINARO=y
-CT_LIBC_GLIBC_V_2_23=y
+CT_LIBC_GLIBC_V_2_24=y
+# CT_LIBC_GLIBC_V_2_23 is not set
 # CT_LIBC_GLIBC_V_2_22 is not set
 # CT_LIBC_GLIBC_V_2_21 is not set
 # CT_LIBC_GLIBC_LINARO_V_2_20 is not set
@@ -362,13 +361,13 @@ CT_CC_CORE_PASS_1_NEEDED=y
 CT_CC_CORE_PASS_2_NEEDED=y
 CT_CC_gcc=y
 # CT_CC_GCC_CUSTOM is not set
-CT_CC_GCC_VERSION="6.1.0"
+CT_CC_GCC_VERSION="6.2.0"
 CT_CC_GCC_SHOW_LINARO=y
-CT_CC_GCC_V_6_1_0=y
+CT_CC_GCC_V_6_2_0=y
 # CT_CC_GCC_V_5_4_0 is not set
 # CT_CC_GCC_V_linaro_5_2 is not set
 # CT_CC_GCC_V_linaro_4_9 is not set
-# CT_CC_GCC_V_4_9_3 is not set
+# CT_CC_GCC_V_4_9_4 is not set
 # CT_CC_GCC_V_linaro_4_8 is not set
 # CT_CC_GCC_V_4_8_5 is not set
 CT_CC_GCC_4_8_or_later=y
@@ -388,6 +387,7 @@ CT_CC_GCC_USE_GMP_MPFR=y
 CT_CC_GCC_USE_MPC=y
 CT_CC_GCC_HAS_LIBQUADMATH=y
 CT_CC_GCC_HAS_LIBSANITIZER=y
+CT_CC_GCC_HAS_LIBMPX=y
 # CT_CC_LANG_FORTRAN is not set
 CT_CC_GCC_ENABLE_CXX_FLAGS=""
 CT_CC_GCC_CORE_EXTRA_CONFIG_ARRAY=""
@@ -448,10 +448,6 @@ CT_CC_LANG_OTHERS=""
 # Debug facilities
 #
 # CT_DEBUG_dmalloc is not set
-# CT_DEBUG_duma is not set
-# CT_DEBUG_gdb is not set
-# CT_DEBUG_ltrace is not set
-# CT_DEBUG_strace is not set
 
 #
 # Companion libraries
@@ -472,8 +468,8 @@ CT_ISL=y
 CT_MPC=y
 CT_LIBICONV_V_1_14=y
 CT_LIBICONV_VERSION="1.14"
-CT_GETTEXT_V_0_19_6=y
-CT_GETTEXT_VERSION="0.19.6"
+CT_GETTEXT_V_0_19_7=y
+CT_GETTEXT_VERSION="0.19.7"
 CT_GMP_V_6_1_0=y
 # CT_GMP_V_6_0_0 is not set
 # CT_GMP_V_5_1_3 is not set
@@ -517,11 +513,24 @@ CT_MPC_VERSION="1.0.3"
 #
 # Companion tools
 #
+CT_COMP_TOOLS_FORCE_make_3_81=y
 
 #
 # READ HELP before you say 'Y' below !!!
 #
-# CT_COMP_TOOLS is not set
+CT_COMP_TOOLS=y
+# CT_COMP_TOOLS_FOR_HOST is not set
+# CT_COMP_TOOLS_autoconf is not set
+# CT_COMP_TOOLS_automake is not set
+# CT_COMP_TOOLS_libtool is not set
+# CT_COMP_TOOLS_m4 is not set
+CT_COMP_TOOLS_make=y
+CT_MAKE_V_4_2_1=y
+# CT_MAKE_V_4_1 is not set
+# CT_MAKE_V_4_0 is not set
+# CT_MAKE_V_3_81 is not set
+# CT_MAKE_GMAKE_SYMLINK is not set
+CT_MAKE_VERSION="4.2.1"
 
 #
 # Test suite

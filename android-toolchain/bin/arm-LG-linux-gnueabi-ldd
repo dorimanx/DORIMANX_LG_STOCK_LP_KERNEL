@@ -4,8 +4,8 @@
 export LC_ALL=C
 version="crosstool-ng-1.21.0-286-g6ac8e31"
 bits="32"
-sed="${SED:-/usr/bin/sed}"
-grep="${GREP:-/usr/bin/grep}"
+sed="${SED:-sed}"
+grep="${GREP:-grep}"
 
 my_name="$( basename "${0}" )"
 prefix="${0%-ldd}"

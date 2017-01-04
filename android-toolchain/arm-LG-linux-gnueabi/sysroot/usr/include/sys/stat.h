@@ -115,7 +115,7 @@ __BEGIN_DECLS
 # ifdef __S_IFLNK
 #  define S_IFLNK	__S_IFLNK
 # endif
-# if (defined __USE_MISC || defined __USE_UNIX98) \
+# if (defined __USE_MISC || defined __USE_XOPEN_EXTENDED) \
      && defined __S_IFSOCK
 #  define S_IFSOCK	__S_IFSOCK
 # endif
@@ -140,7 +140,7 @@ __BEGIN_DECLS
 # define S_ISLNK(mode)  0
 #endif
 
-#if (defined __USE_UNIX98 || defined __USE_XOPEN2K) \
+#if (defined __USE_XOPEN_EXTENDED || defined __USE_XOPEN2K) \
     && defined __S_IFSOCK
 # define S_ISSOCK(mode) __S_ISTYPE((mode), __S_IFSOCK)
 #elif defined __USE_XOPEN2K
@@ -292,7 +292,7 @@ extern int lchmod (const char *__file, __mode_t __mode)
 #endif
 
 /* Set file access permissions of the file FD is open on to MODE.  */
-#ifdef __USE_POSIX
+#if defined __USE_POSIX199309 || defined __USE_XOPEN_EXTENDED
 extern int fchmod (int __fd, __mode_t __mode) __THROW;
 #endif
 

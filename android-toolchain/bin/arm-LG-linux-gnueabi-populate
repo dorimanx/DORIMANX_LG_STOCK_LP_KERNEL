@@ -5,10 +5,10 @@
 set -e
 
 # Use the tools discovered by crosstool-NG's ./configure:
-install="/usr/bin/install -c"
-grep="/usr/bin/grep"
-sed="/usr/bin/sed"
-awk="/usr/bin/gawk"
+install="install"
+grep="grep"
+sed="sed"
+awk="awk"
 
 # Detect where the toolchain is:
 CT_PREFIX_DIR="$(cd "$(dirname "$0")/.."; pwd)"

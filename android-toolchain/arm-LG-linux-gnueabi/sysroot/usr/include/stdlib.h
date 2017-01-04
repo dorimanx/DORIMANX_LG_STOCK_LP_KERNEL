@@ -41,54 +41,15 @@ __BEGIN_DECLS
 # include <bits/waitflags.h>
 # include <bits/waitstatus.h>
 
-# ifdef __USE_MISC
-
-/* Lots of hair to allow traditional BSD use of `union wait'
-   as well as POSIX.1 use of `int' for the status word.  */
-
-#  if defined __GNUC__ && !defined __cplusplus
-#   define __WAIT_INT(status) \
-  (__extension__ (((union { __typeof(status) __in; int __i; }) \
-		   { .__in = (status) }).__i))
-#  else
-#   define __WAIT_INT(status)	(*(int *) &(status))
-#  endif
-
-/* This is the type of the argument to `wait'.  The funky union
-   causes redeclarations with either `int *' or `union wait *' to be
-   allowed without complaint.  __WAIT_STATUS_DEFN is the type used in
-   the actual function definitions.  */
-
-#  if !defined __GNUC__ || __GNUC__ < 2 || defined __cplusplus
-#   define __WAIT_STATUS	void *
-#   define __WAIT_STATUS_DEFN	void *
-#  else
-/* This works in GCC 2.6.1 and later.  */
-typedef union
-  {
-    union wait *__uptr;
-    int *__iptr;
-  } __WAIT_STATUS __attribute__ ((__transparent_union__));
-#   define __WAIT_STATUS_DEFN	int *
-#  endif
-
-# else /* Don't use misc.  */
-
-#  define __WAIT_INT(status)	(status)
-#  define __WAIT_STATUS		int *
-#  define __WAIT_STATUS_DEFN	int *
-
-# endif /* Use misc.  */
-
 /* Define the macros <sys/wait.h> also would define this way.  */
-# define WEXITSTATUS(status)	__WEXITSTATUS (__WAIT_INT (status))
-# define WTERMSIG(status)	__WTERMSIG (__WAIT_INT (status))
-# define WSTOPSIG(status)	__WSTOPSIG (__WAIT_INT (status))
-# define WIFEXITED(status)	__WIFEXITED (__WAIT_INT (status))
-# define WIFSIGNALED(status)	__WIFSIGNALED (__WAIT_INT (status))
-# define WIFSTOPPED(status)	__WIFSTOPPED (__WAIT_INT (status))
+# define WEXITSTATUS(status)	__WEXITSTATUS (status)
+# define WTERMSIG(status)	__WTERMSIG (status)
+# define WSTOPSIG(status)	__WSTOPSIG (status)
+# define WIFEXITED(status)	__WIFEXITED (status)
+# define WIFSIGNALED(status)	__WIFSIGNALED (status)
+# define WIFSTOPPED(status)	__WIFSTOPPED (status)
 # ifdef __WIFCONTINUED
-#  define WIFCONTINUED(status)	__WIFCONTINUED (__WAIT_INT (status))
+#  define WIFCONTINUED(status)	__WIFCONTINUED (status)
 # endif
 #endif	/* X/Open or XPG7 and <sys/wait.h> not included.  */
 
@@ -376,7 +337,7 @@ extern int rand (void) __THROW;
 extern void srand (unsigned int __seed) __THROW;
 __END_NAMESPACE_STD
 
-#ifdef __USE_POSIX
+#ifdef __USE_POSIX199506
 /* Reentrant interface according to POSIX.1.  */
 extern int rand_r (unsigned int *__seed) __THROW;
 #endif
@@ -915,7 +876,7 @@ extern void setkey (const char *__key) __THROW __nonnull ((1));
 extern int posix_openpt (int __oflag) __wur;
 #endif
 
-#ifdef __USE_XOPEN
+#ifdef __USE_XOPEN_EXTENDED
 /* The next four functions all take a master pseudo-tty fd and
    perform an operation on the associated slave:  */
 
@@ -949,6 +910,12 @@ extern int getpt (void);
    three, but may be less than NELEM), or -1 if an error occurred.  */
 extern int getloadavg (double __loadavg[], int __nelem)
      __THROW __nonnull ((1));
+#endif
+
+#if defined __USE_XOPEN_EXTENDED && !defined __USE_XOPEN2K
+/* Return the index into the active-logins file (utmp) for
+   the controlling terminal.  */
+extern int ttyslot (void) __THROW;
 #endif
 
 #include <bits/stdlib-float.h>
